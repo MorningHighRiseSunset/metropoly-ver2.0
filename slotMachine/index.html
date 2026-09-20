@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slots</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #050008;
+    overflow: hidden;
+  }
+
+  body.iframe-mode {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #slot-frame {
+    width: 100vw;
+    height: 100vh;
+    border: none;
+  }
+
+  body.iframe-mode #slot-frame {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<iframe id="slot-frame" src="slot-machine.html"></iframe>
+<script>
+  // Detect if running in iframe
+  function isInIframe() {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Get observer mode from URL parameter
+  function isObserverMode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('observer') === 'true';
+  }
+
+  // Add iframe mode class if needed
+  if (isInIframe()) {
+    document.body.classList.add('iframe-mode');
+  }
+
+  // Set observer mode flag for AI auto-play
+  window.__isObserverMode = isObserverMode();
+
+  const iframe = document.getElementById('slot-frame');
+  let balanceCallback = null;
+  let startingBalance = 2500;
+
+  // When slot-machine.html loads, pass the balance
+  iframe.onload = function() {
+    try {
+      const balance = startingBalance;
+      iframe.contentWindow.postMessage({ type: 'SET_BALANCE', balance }, '*');
+    } catch (e) {
+      // Silent fail
+    }
+  };
+
+  // Listen for balance updates from slot game
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'BALANCE_UPDATE') {
+      try {
+        // Update local balance
+        window.__casinoBalance = event.data.balance;
+        window.playerBalance = event.data.balance;
+
+        // Notify parent window of balance change
+        if (balanceCallback) {
+          balanceCallback(event.data.balance);
+        }
+      } catch (e) {
+        // Silent fail
+      }
+    }
+  });
+
+  // Expose balance for parent window to read
+  window.__casinoBalance = startingBalance;
+  window.playerBalance = startingBalance;
+
+  // Expose init function for main game integration
+  window.initSlotsMinigame = function(container, initialBalance, callback) {
+    // Set balance callback for the parent
+    if (callback) {
+      balanceCallback = callback;
+    }
+
+    // Update starting balance
+    startingBalance = initialBalance || 2500;
+    window.__casinoBalance = startingBalance;
+    window.playerBalance = startingBalance;
+
+    // Send initial balance to iframe
+    try {
+      iframe.contentWindow.postMessage({ type: 'SET_BALANCE', balance: startingBalance }, '*');
+    } catch (e) {
+      // Silent fail
+    }
+  };
+
+  // Alias for main game compatibility
+  window.initSlotMachine = window.initSlotsMinigame;
+</script>
+</body>
+</html>

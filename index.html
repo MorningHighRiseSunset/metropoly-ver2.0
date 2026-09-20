@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metropoly — 3D Board</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+</head>
+<body>
+  <!-- Lobby Overlay -->
+  <div class="lobby-overlay" id="lobbyOverlay">
+    <div class="lobby-container">
+      <h1 class="lobby-title">🎰 Vegas Metropoly</h1>
+
+      <!-- Token Selection -->
+      <div class="token-section">
+        <h3>Select Your Token</h3>
+        <div class="token-grid" id="tokenGrid">
+          <div class="token-option" data-token="RollsRoyce" data-model="Models/RollsRoyce/rollsRoyceCarAnim.glb">
+            <img src="tokenimages/rolls_royce.png" alt="Rolls Royce">
+            <span>Rolls Royce</span>
+          </div>
+          <div class="token-option" data-token="Helicopter" data-model="Models/Helicopter/helicopter.glb">
+            <img src="tokenimages/helicopter.png" alt="Helicopter">
+            <span>Helicopter</span>
+          </div>
+          <div class="token-option" data-token="TopHat" data-model="Models/TopHat/tophat.glb">
+            <img src="tokenimages/top_hat.png" alt="Top Hat">
+            <span>Top Hat</span>
+          </div>
+          <div class="token-option" data-token="Shoe" data-model="Models/Shoe/shoe.glb">
+            <img src="tokenimages/shoe.png" alt="Shoe">
+            <span>Shoe</span>
+          </div>
+          <div class="token-option" data-token="Cheeseburger" data-model="Models/Cheeseburger/cheeseburger.glb">
+            <img src="tokenimages/burger.png" alt="Burger">
+            <span>Burger</span>
+          </div>
+          <div class="token-option" data-token="CoffeeCup" data-model="Models/CoffeeCup/coffee.gltf">
+            <img src="tokenimages/coffee.png" alt="Coffee">
+            <span>Coffee</span>
+          </div>
+          <div class="token-option" data-token="Football" data-model="Models/Football/football.glb">
+            <img src="tokenimages/football.png" alt="Football">
+            <span>Football</span>
+          </div>
+          <div class="token-option" data-token="WhiteGirlIdle" data-model="Models/WhiteGirlIdle/Standing Idle.fbx">
+            <img src="tokenimages/whitegirlmodel.png" alt="Model">
+            <span>Model</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiplayer Options -->
+      <div class="multiplayer-section">
+        <div class="ai-section" id="aiSection" style="display: block;">
+          <div class="ai-controls">
+            <button class="ai-add-btn" id="addAiBtn">+ Add AI</button>
+            <span class="ai-count" id="aiCount">0 AI opponents</span>
+          </div>
+        </div>
+
+        <div class="invite-section">
+          <p>Share this link to invite opponents:</p>
+          <div class="invite-link-container">
+            <input type="text" class="invite-link" id="inviteLink" readonly>
+            <button class="copy-btn" id="copyBtn">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player List -->
+      <div class="player-section">
+        <h3>Players (<span id="playerCount">1</span>/4)</h3>
+        <div class="player-list" id="playerList">
+          <div class="player-item" id="hostPlayer">
+            <img src="" class="player-token-img" id="hostToken" alt="Your Token" style="display: none;">
+            <span class="player-token" id="hostTokenEmoji">❓</span>
+            <span class="player-name">You (Host)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Game Button -->
+      <button class="start-game-btn" id="startGameBtn" disabled>Start Game</button>
+    </div>
+  </div>
+
+  <!-- Game UI (Hidden initially) -->
+  <div class="game-ui" id="gameUI" style="display: none;">
+    <!-- Jail UI Overlay -->
+    <div class="jail-overlay" id="jailOverlay" style="display: none;">
+      <div class="jail-container">
+        <div class="jail-video-container">
+          <video id="jailVideo" class="jail-video" autoplay loop playsinline></video>
+        </div>
+        <div class="jail-content">
+          <h2 class="jail-title">🚔 JAIL</h2>
+          <p class="jail-message" id="jailMessage">You landed in jail!</p>
+          <button class="jail-btn" id="jailProceedBtn">Proceed</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jail Pay UI Overlay -->
+    <div class="jail-overlay" id="jailPayOverlay" style="display: none;">
+      <div class="jail-container">
+        <div class="jail-content">
+          <h2 class="jail-title">🚔 JAIL</h2>
+          <p class="jail-message">Pay $50 to get out of jail and roll dice</p>
+          <button class="jail-btn" id="jailPayBtn">Pay $50</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Property Purchase UI Overlay -->
+    <div class="property-overlay" id="propertyOverlay" style="display: none;">
+      <div class="property-container">
+        <div class="property-video-container">
+          <video id="propertyVideo" class="property-video" autoplay loop playsinline></video>
+        </div>
+        <div class="property-content">
+          <h2 class="property-title" id="propertyTitle">Property Name</h2>
+          <p class="property-address" id="propertyAddress">Address</p>
+          <div class="property-price-section">
+            <span class="property-price-label">Buy Price:</span>
+            <span class="property-price-value" id="propertyPrice">$0</span>
+          </div>
+          <div class="property-rent-section">
+            <span class="property-rent-label">Rent:</span>
+            <span class="property-rent-value" id="propertyRentValue">$0</span>
+          </div>
+          <div class="property-buttons">
+            <button class="property-btn property-btn-buy" id="propertyBuyBtn">Buy</button>
+            <button class="property-btn property-btn-pass" id="propertyPassBtn">Pass</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chance/Community Card UI Overlay -->
+    <div class="card-overlay" id="cardOverlay" style="display: none;">
+      <div class="card-container">
+        <h2 class="card-title" id="cardTitle">Chance</h2>
+        <p class="card-message" id="cardMessage">You drew a card!</p>
+        <button class="card-btn" id="cardOkBtn">OK</button>
+      </div>
+    </div>
+
+    <!-- Tax/Utility UI Overlay -->
+    <div class="tax-overlay" id="taxOverlay" style="display: none;">
+      <div class="tax-container">
+        <div class="tax-image-container" id="taxImageContainer">
+          <img id="taxImage" class="tax-image" src="" alt="">
+        </div>
+        <div class="tax-content">
+          <h2 class="tax-title" id="taxTitle">Income Tax</h2>
+          <p class="tax-message" id="taxMessage">Pay $150</p>
+          <button class="tax-btn" id="taxOkBtn">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header with game info -->
+    <header class="game-header">
+      <div class="game-title">
+        <h1>🏛️ METROPOLY</h1>
+        <div class="game-id">Game: <span id="gameCode">LOCAL</span></div>
+      </div>
+      
+      <!-- Settings Button -->
+      <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+    </header>
+
+    <!-- Main game area -->
+    <main class="game-main">
+      <!-- Left sidebar - Players list -->
+      <aside class="sidebar players-sidebar">
+        <h3 class="sidebar-panel-title">Players</h3>
+        <div id="playersList" class="players-list panel-scroll">
+        </div>
+        
+        <div class="sidebar-panel sidebar-panel--ai-moves">
+          <h3 class="sidebar-panel-title">AI Moves</h3>
+          <div id="aiMoves" class="ai-moves panel-scroll">
+          </div>
+        </div>
+        
+        <div class="sidebar-panel sidebar-panel--chat">
+          <h3 class="sidebar-panel-title">Chat</h3>
+          <div id="chatMessages" class="chat-messages panel-scroll">
+          </div>
+          <div class="chat-compose">
+            <input type="text" id="chatInput" placeholder="Message..." maxlength="100">
+            <button id="sendChatBtn" class="btn btn-small btn-send">Send</button>
+          </div>
+        </div>
+        
+        <div class="sidebar-panel sidebar-panel--video">
+          <h3 class="sidebar-panel-title">Video Chat</h3>
+          <div class="video-chat-content">
+            <div class="video-container">
+              <video id="localVideo" class="local-video" muted playsinline autoplay></video>
+              <video id="remoteVideo" class="remote-video" playsinline autoplay></video>
+            </div>
+            <div class="video-controls">
+              <div id="connectionStatus" class="connection-status">Not connected</div>
+              <button id="startVideoCall" class="btn btn-primary btn-block">Start Call</button>
+              <button id="endVideoCall" class="btn btn-danger btn-block" style="display: none;">End Call</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center - Game Board -->
+      <section class="game-board-section">
+        <div class="board-container">
+          <div id="three-container"></div>
+        </div>
+      </section>
+
+      <!-- Right sidebar -->
+      <aside class="sidebar right-sidebar">
+        <div class="sidebar-panel sidebar-panel--properties">
+          <h3 class="sidebar-panel-title">My Properties</h3>
+          <div id="myProperties" class="properties-list panel-scroll">
+          </div>
+        </div>
+
+        <div class="sidebar-panel sidebar-panel--actions">
+          <div class="actions-balance">
+            <span class="actions-balance-label">Balance</span>
+            <span class="actions-balance-value" id="playerMoney">$2500</span>
+          </div>
+          <button id="rollDiceBtn" class="btn btn-primary btn-roll btn-block">Roll Dice</button>
+          <button id="endTurnBtn" class="btn btn-secondary btn-block" disabled>End Turn</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

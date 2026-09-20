@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #07060c;
+    --purple: #a855f7;
+    --purple-bright: #c084fc;
+    --purple-glow: rgba(168, 85, 247, 0.4);
+    --gold: #fbbf24;
+    --text: #f3e8ff;
+    --text-dim: #a78bfa;
+    --card-face: #faf5ff;
+    --green: #34d399;
+    --red: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(107, 33, 168, 0.35), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(88, 28, 135, 0.2), transparent);
+    padding: 20px 12px;
+    overflow: hidden;
+  }
+
+  body.iframe-mode {
+    padding: 15px 12px;
+    min-height: 100%;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+
+
+  .game {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    padding-bottom: 60px;
+  }
+
+  .game .result-button-container {
+    width: 100%;
+    max-width: 500px;
+  }
+
+
+
+  /* CHIPS / BET BAR */
+  .top-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+
+
+  /* INFO BAR - Horizontal row above game */
+  .info-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+
+
+  .info-bar .bet-row {
+    flex: 2;
+    min-width: 0;
+  }
+
+  .info-bar .balance-pot-row {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .info-bar .bet-row {
+    padding: 8px 12px;
+  }
+
+  .info-bar .balance-box, .info-bar .pot-box {
+    padding: 4px 8px;
+    min-height: 32px;
+  }
+
+  .info-bar .balance-box span, .info-bar .pot-box span {
+    font-size: 0.6rem;
+  }
+
+  .info-bar .balance-box .value, .info-bar .pot-box .value {
+    font-size: 0.85rem;
+  }
+
+  .chip-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3)),
+      radial-gradient(ellipse at center, rgba(251, 191, 36, 0.1), transparent 70%);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    box-shadow: 
+      0 4px 16px rgba(0,0,0,0.4),
+      0 0 20px rgba(251, 191, 36, 0.15),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .chip-display span { color: var(--text-dim); font-weight: 400; font-size: 0.7rem; margin-right: 5px; }
+
+  .pot-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--purple-bright);
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.1), transparent 70%);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    box-shadow: 
+      0 4px 16px rgba(0,0,0,0.4),
+      0 0 20px rgba(168, 85, 247, 0.15),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .pot-display span { color: var(--text-dim); font-weight: 400; font-size: 0.7rem; margin-right: 5px; }
+
+  /* TABLE */
+  .table-rail {
+    width: 100%;
+    background: 
+      linear-gradient(180deg, #4c1d95 0%, #3b0764 30%, #2e1065 70%, #1e1b4b 100%),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(168, 85, 247, 0.03) 2px,
+        rgba(168, 85, 247, 0.03) 4px
+      );
+    border-radius: 24px;
+    padding: 14px;
+    box-shadow:
+      0 0 0 4px #581c87,
+      0 0 0 8px #2e1065,
+      0 0 0 12px #1e1b4b,
+      0 20px 60px rgba(0,0,0,0.7),
+      0 0 80px rgba(168, 85, 247, 0.15),
+      inset 0 2px 4px rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+
+
+  .table-rail::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 18px;
+    border: 2px solid rgba(196, 181, 253, 0.2);
+    pointer-events: none;
+  }
+
+  .table-felt {
+    background: 
+      radial-gradient(ellipse at 30% 20%, rgba(76, 29, 149, 0.9) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(88, 28, 135, 0.8) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, #4c1d95 0%, #3b0764 40%, #2e1065 70%, #1a0b2e 100%);
+    border-radius: 16px;
+    min-height: 420px;
+    padding: 24px 30px;
+    position: relative;
+    box-shadow: 
+      inset 0 0 80px rgba(0,0,0,0.6),
+      inset 0 0 120px rgba(139, 92, 246, 0.1),
+      0 0 0 1px rgba(168, 85, 247, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  .table-felt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168, 85, 247, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 120%, rgba(139, 92, 246, 0.1), transparent);
+    pointer-events: none;
+  }
+
+  .table-felt::after {
+    content: '';
+    position: absolute;
+    inset: 20px 36px;
+    border: 2px solid rgba(196, 181, 253, 0.15);
+    border-radius: 12px;
+    pointer-events: none;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+  }
+
+  .seat {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .seat-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--purple-bright);
+    background: rgba(0,0,0,0.4);
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    text-shadow: 0 0 10px var(--purple-glow);
+  }
+
+  .cards-row {
+    display: flex;
+    gap: 12px;
+    min-height: 110px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .center {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .board {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 22px;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    border-radius: 20px;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    min-height: 120px;
+    box-shadow: 
+      0 8px 32px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.05),
+      0 0 20px rgba(168, 85, 247, 0.1);
+    position: relative;
+  }
+
+  .board::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .board-slot {
+    width: 56px;
+    height: 80px;
+    border-radius: 10px;
+    border: 2px dashed rgba(168, 85, 247, 0.25);
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.08), transparent 70%);
+    box-shadow: 
+      inset 0 2px 8px rgba(0,0,0,0.4),
+      0 0 15px rgba(168, 85, 247, 0.05);
+    position: relative;
+  }
+
+  .board-slot::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(196, 181, 253, 0.1);
+    pointer-events: none;
+  }
+
+  /* CARDS */
+  .card {
+    width: 56px;
+    height: 80px;
+    border-radius: 10px;
+    background: 
+      linear-gradient(145deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 
+      0 8px 24px rgba(0,0,0,0.4),
+      0 2px 6px rgba(0,0,0,0.2),
+      0 0 0 1px rgba(0,0,0,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    position: relative;
+    animation: dealIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    user-select: none;
+  }
+
+  @keyframes dealIn {
+    from { opacity: 0; transform: translateY(-24px) scale(0.8) rotate(-5deg); }
+    to   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  }
+
+  .card.red { color: #dc2626; }
+  .card.black { color: #1e1b4b; }
+
+  .card .r-top { align-self: flex-start; line-height: 1; }
+  .card .suit-mid {
+    font-size: 1.3rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+  .card .r-bot { align-self: flex-end; transform: rotate(180deg); line-height: 1; }
+
+  .card.back {
+    background: 
+      linear-gradient(145deg, #6d28d9 0%, #5b21b6 30%, #4c1d95 60%, #3b0764 100%),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 3px,
+        rgba(168, 85, 247, 0.05) 3px,
+        rgba(168, 85, 247, 0.05) 6px
+      );
+    border: 2px solid var(--purple);
+    color: transparent;
+    box-shadow: 
+      0 8px 24px rgba(0,0,0,0.5),
+      0 2px 8px rgba(168, 85, 247, 0.3),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .card.back::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 2px solid rgba(196, 181, 253, 0.4);
+    border-radius: 8px;
+    box-shadow: inset 0 0 12px rgba(168, 85, 247, 0.2);
+  }
+  .card.back::after {
+    content: '♠';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--purple-bright);
+    opacity: 0.8;
+    text-shadow: 0 0 20px var(--purple-glow), 0 0 40px rgba(168, 85, 247, 0.3);
+  }
+
+  /* RESULT */
+  .result {
+    text-align: center;
+    min-height: 52px;
+    font-size: 0.85rem;
+    color: var(--purple-bright);
+    font-weight: 500;
+    white-space: normal;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Result and button container */
+  .result-button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    align-items: center;
+  }
+
+  .result-button-container .result {
+    margin-top: 0;
+  }
+
+  .result-button-container button {
+    flex-shrink: 0;
+  }
+  .result .hand-name {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: 600;
+    white-space: normal;
+  }
+  .result.win { color: var(--green); }
+  .result.lose { color: var(--red); }
+  .result.tie { color: var(--gold); }
+
+
+
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    padding: 18px 48px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: 
+      linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7c3aed 100%);
+    color: white;
+    box-shadow: 
+      0 6px 28px var(--purple-glow),
+      0 2px 8px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.2s;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .btn:hover {
+    background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #9333ea 100%);
+    transform: translateY(-3px);
+    box-shadow: 
+      0 8px 36px var(--purple-glow),
+      0 4px 12px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .btn:active { transform: translateY(-1px); }
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .info-btn {
+    padding: 12px 20px !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    max-width: 120px !important;
+    border-radius: 8px !important;
+    height: 36px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+  }
+  .info-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .bet-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    box-shadow: 
+      0 4px 20px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .bet-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .bet-row label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .bet-row-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+
+  .bet-row input[type="range"] {
+    width: 100%;
+    height: 12px !important;
+    accent-color: var(--purple);
+    cursor: pointer;
+  }
+
+  .bet-row input[type="range"]::-webkit-slider-runnable-track {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 4px;
+  }
+
+  .balance-pot-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .balance-box, .pot-box {
+    flex: 1;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    text-align: center;
+    min-height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .balance-box span, .pot-box span {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1px;
+  }
+
+  .balance-box .value, .pot-box .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .table-rail { border-radius: 16px; padding: 10px; }
+    .table-felt { border-radius: 12px; padding: 24px 14px; min-height: 400px; }
+    .table-felt::after { inset: 10px 12px; border-radius: 8px; }
+    .card, .board-slot { width: 52px; height: 76px; font-size: 0.95rem; }
+    .card .suit-mid { font-size: 1.2rem; }
+    .board { gap: 6px; padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="game">
+
+  <div class="info-bar">
+    <div class="bet-row" id="bet-row">
+      <div class="bet-row-header">
+        <label>Bet Amount</label>
+        <span class="bet-row-value" id="bet-value-display">$50</span>
+      </div>
+      <input type="range" id="bet-slider" min="10" value="50" step="10">
+    </div>
+    <div class="balance-pot-row">
+      <div class="balance-box">
+        <span>Balance</span>
+        <span class="value" id="chips">2500</span>
+      </div>
+      <div class="pot-box">
+        <span>Pot</span>
+        <span class="value" id="pot">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-rail">
+    <div class="table-felt">
+
+      <div class="seat">
+        <div class="seat-label">AI</div>
+        <div class="cards-row" id="ai-hand"></div>
+      </div>
+
+      <div class="center">
+        <div class="board" id="community">
+          <div class="board-slot"></div>
+          <div class="board-slot"></div>
+          <div class="board-slot"></div>
+          <div class="board-slot"></div>
+          <div class="board-slot"></div>
+        </div>
+      </div>
+
+      <div class="seat">
+        <div class="cards-row" id="player-hand"></div>
+        <div class="seat-label">You</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="result-button-container">
+    <div class="result" id="result"></div>
+    <button class="btn info-btn" id="btn" onclick="next()">Place Bet</button>
+  </div>
+
+</div>
+
+<script>
+// Initialize function for main game integration - defined immediately
+window.initPokerMinigame = function(container, initialBalance, balanceCallback) {
+    state.chips = initialBalance || 1000;
+    syncBetUI();
+    render();
+
+    // Listen for balance from parent window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'SET_BALANCE') {
+            state.chips = event.data.balance;
+            syncBetUI();
+            render();
+        }
+    });
+
+    // Expose balance for parent window
+    window.__casinoBalance = state.chips;
+    window.playerBalance = state.chips;
+
+    // Store callback for balance sync
+    window.balanceCallback = balanceCallback;
+};
+
+// Detect if running in iframe
+function isInIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
+// Add iframe mode class if needed
+if (isInIframe()) {
+  document.body.classList.add('iframe-mode');
+}
+
+const SUITS = ['♠', '♥', '♦', '♣'];
+const SUIT_COLOR = { '♠': 'black', '♥': 'red', '♦': 'red', '♣': 'black' };
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+
+let state = {
+  stage: 'bet',       // bet | dealt | flop | turn | river | done
+  deck: [],
+  playerCards: [],
+  aiCards: [],
+  community: [],
+  chips: window.parent?.playerMoney || 1000,
+  pot: 0,
+  bet: 0
+};
+
+// Balance sync with parent window
+let parentBalanceCallback = null;
+
+function syncBalanceToParent() {
+  try {
+    // Update local balance variables first
+    window.__casinoBalance = state.chips;
+    window.playerBalance = state.chips;
+    
+    // Try to notify parent window
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'BALANCE_UPDATE', balance: state.chips }, '*');
+    }
+  } catch (e) {
+    // Silent fail for balance sync errors
+  }
+}
+
+// Listen for balance from parent window
+window.addEventListener('message', function(event) {
+  if (event.data.type === 'SET_BALANCE') {
+    state.chips = event.data.balance;
+    syncBetUI();
+    render();
+  }
+});
+
+function $(id) { return document.getElementById(id); }
+
+const betSlider = $('bet-slider');
+const betValueDisplay = $('bet-value-display');
+
+function syncBetUI() {
+  // Calculate maximum allowed bet based on balance
+  const max = Math.max(10, state.chips);
+  betSlider.max = max;
+  
+  // Ensure current value is within valid range
+  let currentValue = parseInt(betSlider.value, 10) || 10;
+  if (currentValue > max) {
+    currentValue = max;
+    betSlider.value = currentValue;
+  }
+  if (currentValue < 10) {
+    currentValue = 10;
+    betSlider.value = currentValue;
+  }
+  
+  betValueDisplay.textContent = '$' + currentValue;
+}
+
+// Prevent slider from exceeding balance in real-time
+betSlider.addEventListener('input', () => {
+  let currentValue = parseInt(betSlider.value, 10) || 10;
+  const max = Math.max(10, state.chips);
+  
+  // Prevent betting more than balance
+  if (currentValue > max) {
+    currentValue = max;
+    betSlider.value = currentValue;
+  }
+  
+  betValueDisplay.textContent = '$' + currentValue;
+});
+
+function cardHTML(card, faceUp = true) {
+  if (!faceUp) return '<div class="card back"></div>';
+  const color = SUIT_COLOR[card.suit];
+  return `<div class="card ${color}">
+    <span class="r-top">${card.rank}</span>
+    <span class="suit-mid">${card.suit}</span>
+    <span class="r-bot">${card.rank}</span>
+  </div>`;
+}
+
+function render() {
+  const showAI = state.stage === 'done';
+  $('player-hand').innerHTML = state.playerCards.map(c => cardHTML(c, true)).join('');
+  $('ai-hand').innerHTML = state.aiCards.map(c => cardHTML(c, showAI)).join('');
+
+  const slots = [];
+  for (let i = 0; i < 5; i++) {
+    if (state.community[i]) {
+      slots.push(cardHTML(state.community[i], true));
+    } else {
+      slots.push('<div class="board-slot"></div>');
+    }
+  }
+  $('community').innerHTML = slots.join('');
+
+  $('chips').textContent = state.chips;
+  $('pot').textContent = state.pot;
+
+  // Expose balance for parent window
+  window.__casinoBalance = state.chips;
+  window.playerBalance = state.chips;
+}
+
+function createDeck() {
+  const d = [];
+  for (const s of SUITS)
+    for (const r of RANKS)
+      d.push({ rank: r, suit: s });
+  return d;
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function evaluateHand(cards) {
+  const vals = cards.map(c => RANK_VAL[c.rank]).sort((a, b) => b - a);
+  const suits = cards.map(c => c.suit);
+  const count = {};
+  vals.forEach(v => count[v] = (count[v] || 0) + 1);
+  const groups = Object.entries(count)
+    .map(([v, c]) => ({ v: +v, c }))
+    .sort((a, b) => b.c - a.c || b.v - a.v);
+
+  const suitCount = {};
+  suits.forEach(s => suitCount[s] = (suitCount[s] || 0) + 1);
+  const flushSuit = Object.keys(suitCount).find(s => suitCount[s] >= 5);
+  const isFlush = !!flushSuit;
+
+  const unique = [...new Set(vals)].sort((a, b) => b - a);
+  let straightHigh = 0;
+  if (unique.includes(14) && unique.includes(5) && unique.includes(4) && unique.includes(3) && unique.includes(2))
+    straightHigh = 5;
+  for (let i = 0; i <= unique.length - 5; i++) {
+    if (unique[i] - unique[i + 4] === 4) { straightHigh = unique[i]; break; }
+  }
+  const isStraight = straightHigh > 0;
+
+  if (isFlush && isStraight) {
+    const flushCards = cards.filter(c => c.suit === flushSuit).map(c => RANK_VAL[c.rank]).sort((a, b) => b - a);
+    const fu = [...new Set(flushCards)];
+    let sfHigh = 0;
+    if (fu.includes(14) && fu.includes(5) && fu.includes(4) && fu.includes(3) && fu.includes(2)) sfHigh = 5;
+    for (let i = 0; i <= fu.length - 5; i++) {
+      if (fu[i] - fu[i + 4] === 4) { sfHigh = fu[i]; break; }
+    }
+    if (sfHigh === 14) return { rank: 9, values: [14], name: 'Royal Flush' };
+    if (sfHigh > 0) return { rank: 8, values: [sfHigh], name: 'Straight Flush' };
+  }
+  if (groups[0].c === 4) {
+    const kicker = groups.find(g => g.c === 1)?.v || 0;
+    return { rank: 7, values: [groups[0].v, kicker], name: 'Four of a Kind' };
+  }
+  if (groups[0].c === 3 && groups[1]?.c >= 2)
+    return { rank: 6, values: [groups[0].v, groups[1].v], name: 'Full House' };
+  if (isFlush) {
+    const fv = cards.filter(c => c.suit === flushSuit).map(c => RANK_VAL[c.rank]).sort((a, b) => b - a).slice(0, 5);
+    return { rank: 5, values: fv, name: 'Flush' };
+  }
+  if (isStraight) return { rank: 4, values: [straightHigh], name: 'Straight' };
+  if (groups[0].c === 3) {
+    const kickers = groups.filter(g => g.c === 1).map(g => g.v).sort((a, b) => b - a).slice(0, 2);
+    return { rank: 3, values: [groups[0].v, ...kickers], name: 'Three of a Kind' };
+  }
+  if (groups[0].c === 2 && groups[1]?.c === 2) {
+    const hi = Math.max(groups[0].v, groups[1].v);
+    const lo = Math.min(groups[0].v, groups[1].v);
+    const kicker = groups.find(g => g.c === 1)?.v || 0;
+    return { rank: 2, values: [hi, lo, kicker], name: 'Two Pair' };
+  }
+  if (groups[0].c === 2) {
+    const kickers = groups.filter(g => g.c === 1).map(g => g.v).sort((a, b) => b - a).slice(0, 3);
+    return { rank: 1, values: [groups[0].v, ...kickers], name: 'One Pair' };
+  }
+  return { rank: 0, values: unique.slice(0, 5), name: 'High Card' };
+}
+
+function bestHand(hole, community) {
+  const all = [...hole, ...community];
+  if (all.length < 5) return evaluateHand(all);
+  let best = null;
+  const n = all.length;
+  function comb(start, chosen) {
+    if (chosen.length === 5) {
+      const ev = evaluateHand(chosen);
+      if (!best || compareHands(ev, best) > 0) best = ev;
+      return;
+    }
+    for (let i = start; i < n; i++) {
+      chosen.push(all[i]);
+      comb(i + 1, chosen);
+      chosen.pop();
+    }
+  }
+  comb(0, []);
+  return best;
+}
+
+function compareHands(a, b) {
+  if (a.rank !== b.rank) return a.rank - b.rank;
+  for (let i = 0; i < Math.max(a.values.length, b.values.length); i++) {
+    const va = a.values[i] || 0, vb = b.values[i] || 0;
+    if (va !== vb) return va - vb;
+  }
+  return 0;
+}
+
+function next() {
+  const btn = $('btn');
+  const result = $('result');
+
+  // --- PLACE BET ---
+  if (state.stage === 'bet' || state.stage === 'done') {
+    if (state.chips < 10) {
+      state.chips = 1000;
+      syncBetUI();
+      result.textContent = 'Balance reset to 1000';
+      result.className = 'result';
+      render();
+      syncBalanceToParent();
+    }
+
+    let bet = parseInt(betSlider.value, 10) || 10;
+    
+    // CRITICAL: Prevent betting more than balance
+    if (bet > state.chips) {
+      result.textContent = 'Insufficient balance for this bet';
+      syncBalanceToParent();
+      return;
+    }
+    
+    bet = Math.max(10, Math.min(bet, state.chips));
+
+    // player bet + AI matches
+    state.bet = bet;
+    state.chips -= bet;
+    state.pot = bet * 2; // AI matches
+
+    state.deck = shuffle(createDeck());
+    state.playerCards = [state.deck.pop(), state.deck.pop()];
+    state.aiCards = [state.deck.pop(), state.deck.pop()];
+    state.community = [];
+    state.stage = 'dealt';
+
+    result.textContent = '';
+    result.className = 'result';
+    betSlider.disabled = true;
+    btn.textContent = 'Click to flop';
+    render();
+    syncBalanceToParent(); // Sync bet deduction immediately
+    return;
+  }
+
+  // --- FLOP ---
+  if (state.stage === 'dealt') {
+    state.deck.pop();
+    state.community.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
+    state.stage = 'flop';
+    btn.textContent = 'Click to turn';
+    render();
+    return;
+  }
+
+  // --- TURN ---
+  if (state.stage === 'flop') {
+    state.deck.pop();
+    state.community.push(state.deck.pop());
+    state.stage = 'turn';
+    btn.textContent = 'Click to river';
+    render();
+    return;
+  }
+
+  // --- RIVER ---
+  if (state.stage === 'turn') {
+    state.deck.pop();
+    state.community.push(state.deck.pop());
+    state.stage = 'river';
+    btn.textContent = 'Click to showdown';
+    render();
+    return;
+  }
+
+  // --- SHOWDOWN ---
+  if (state.stage === 'river') {
+    state.stage = 'done';
+    render();
+
+    const pHand = bestHand(state.playerCards, state.community);
+    const aHand = bestHand(state.aiCards, state.community);
+    const cmp = compareHands(pHand, aHand);
+
+    result.className = 'result';
+    if (cmp > 0) {
+      state.chips += state.pot;
+      result.classList.add('win');
+      // If hand names are the same, it means same hand type but better kickers
+      if (pHand.name === aHand.name) {
+        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} (better kickers)</span>`;
+      } else {
+        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} beats ${aHand.name}</span>`;
+      }
+      syncBalanceToParent();
+    } else if (cmp < 0) {
+      result.classList.add('lose');
+      if (pHand.name === aHand.name) {
+        result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} (better kickers)</span>`;
+      } else {
+        result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} beats ${pHand.name}</span>`;
+      }
+      syncBalanceToParent();
+    } else {
+      // True tie - split the pot (player gets their bet back + half of AI's bet)
+      const playerWinnings = Math.floor(state.bet + (state.bet / 2)); // Original bet + half of AI's bet
+      state.chips += playerWinnings;
+      result.classList.add('tie');
+      result.innerHTML = `Tie — pot split (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
+      syncBalanceToParent();
+    }
+
+    state.pot = 0;
+    render();
+    betSlider.disabled = false;
+    syncBetUI();
+    btn.textContent = 'Place Bet';
+  }
+}
+
+// Expose balance for parent window to read
+window.__casinoBalance = state.chips;
+window.playerBalance = state.chips;
+
+syncBetUI();
+render();
+</script>
+</body>
+</html>
