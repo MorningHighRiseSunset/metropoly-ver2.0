@@ -1,4 +1,4 @@
-// ===== GAME STATE =====
+// ===== GAME STATE ======
 const gameState = {
   selectedToken: null,
   selectedModel: null,
