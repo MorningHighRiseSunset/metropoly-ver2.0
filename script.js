@@ -2558,4 +2558,105 @@ if (endTurnBtn) {
   });
 }
 
+// ===== DEBUG/TELEPORT COMMANDS =====
+// Console commands to instantly teleport to casino squares
+window.teleportToVenetian = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 13; // Venetian position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Venetian`);
+};
+
+window.teleportToBellagio = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 15; // Bellagio position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Bellagio`);
+};
+
+window.teleportToSantaFe = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 18; // Santa Fe Hotel and Casino position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Santa Fe Hotel and Casino`);
+};
+
+window.teleportToHardRock = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 21; // Hard Rock Hotel position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Hard Rock Hotel`);
+};
+
+window.teleportToCaesars = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 29; // Caesars Palace position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Caesars Palace`);
+};
+
+window.teleportToWynn = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 35; // Wynn Las Vegas position
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to Wynn Las Vegas`);
+};
+
+// General teleport function to any position
+window.teleportTo = (position) => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = position % 40;
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  });
+  console.log(`Teleported ${currentPlayer.name} to position ${newPosition}`);
+};
+
 // ===== INITIALIZE =====
