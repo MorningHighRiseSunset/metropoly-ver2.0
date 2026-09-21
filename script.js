@@ -982,8 +982,8 @@ function loadCarouselTexture(imagePath, callback) {
   textureLoader.load(
     fullUrl,
     (texture) => {
-      texture.minFilter = THREE.NearestFilter;
-      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
       callback(null, texture);
     },
     undefined,
@@ -1219,45 +1219,45 @@ function create3DBoard() {
   // Board configuration
   boardConfig = [
     { name: 'GO', type: 'corner', position: 0, videos: [] },
-    { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 200, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
+    { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 140, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
     { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
-    { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 180, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
+    { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
     { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: 'free_parking.jpg' },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, position: 5, videos: ['Las Vegas Monorail1.mp4', 'Las Vegas Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['Las Vegas Monorail1.mp4', 'Las Vegas Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
     { name: 'Chance', type: 'chance', position: 7, videos: [] },
-    { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 180, position: 8, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Golden%20Knights.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] },
-    { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 200, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
+    { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 165, position: 8, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Golden%20Knights.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] },
+    { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 192, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
     { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
     { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'electric_company.jpg', address: '', rent: [] },
-    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 150, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 100, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 160, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 100, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
+    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
+    { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
-    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 120, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 150, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
+    { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'FREE PARKING', type: 'corner', position: 20, videos: [] },
-    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 120, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
+    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
     { name: 'Chance', type: 'chance', position: 22, videos: [] },
-    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 140, position: 23, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%204.mp4'], address: '1700 Village Center Circle Las Vegas NV 89134', rent: [35, 71, 214, 638, 880, 1045] },
-    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 130, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], address: '', rent: [33, 66, 198, 594, 825, 990] },
-    { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 150, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 192, position: 23, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%204.mp4'], address: '1700 Village Center Circle Las Vegas NV 89134', rent: [35, 71, 214, 638, 880, 1045] },
+    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], address: '', rent: [33, 66, 198, 594, 825, 990] },
+    { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
-    { name: 'Sphere', type: 'property', color: '#008000', price: 180, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Water Works', type: 'utility', price: 100, position: 28, videos: [], image: 'water_works.jpg', address: '', rent: [] },
+    { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
+    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'water_works.jpg', address: '', rent: [] },
     { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
     { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
-    { name: 'Luxury Tax', type: 'tax', amount: 50, position: 31, videos: [], image: 'luxury_tax.jpg' },
+    { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: 'luxury_tax.jpg' },
     { name: 'Chance', type: 'chance', position: 32, videos: [] },
-    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 120, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
-    { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 140, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 150, position: 35, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 120, position: 36, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 100, position: 37, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 100, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 110, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [31, 61, 181, 544, 770, 935] }
+    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
+    { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 37, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+    { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
+    { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [31, 61, 181, 544, 770, 935] }
   ];
 
   // Board base - sized to match tile positions
@@ -1551,12 +1551,12 @@ function loadDiceModel() {
       
       // Create two dice from the same model
       diceModel1 = gltf.scene.clone();
-      diceModel1.scale.set(0.3, 0.3, 0.3);
+      diceModel1.scale.set(0.5, 0.5, 0.5);
       diceModel1.visible = false;
       board3DGroup.add(diceModel1);
 
       diceModel2 = gltf.scene.clone();
-      diceModel2.scale.set(0.3, 0.3, 0.3);
+      diceModel2.scale.set(0.5, 0.5, 0.5);
       diceModel2.visible = false;
       board3DGroup.add(diceModel2);
 
@@ -1586,7 +1586,7 @@ function loadDiceModel() {
       // Create invisible walls to keep dice from rolling off the board
       const wallThickness = 0.5;
       const wallHeight = 2;
-      const wallDistance = 2.5; // Distance from center
+      const wallDistance = 1.5; // Distance from center - reduced to keep dice closer
       
       const wallShape = new CANNON.Box(new CANNON.Vec3(wallDistance + wallThickness, wallHeight, wallThickness));
       
@@ -1636,12 +1636,12 @@ function createFallbackDice() {
   
   // Create two dice
   diceModel1 = new THREE.Mesh(geometry, material);
-  diceModel1.scale.set(0.3, 0.3, 0.3);
+  diceModel1.scale.set(0.5, 0.5, 0.5);
   diceModel1.visible = false;
   board3DGroup.add(diceModel1);
 
   diceModel2 = new THREE.Mesh(geometry, material);
-  diceModel2.scale.set(0.3, 0.3, 0.3);
+  diceModel2.scale.set(0.5, 0.5, 0.5);
   diceModel2.visible = false;
   board3DGroup.add(diceModel2);
 
@@ -1671,7 +1671,7 @@ function createFallbackDice() {
   // Create invisible walls to keep dice from rolling off the board
   const wallThickness = 0.5;
   const wallHeight = 2;
-  const wallDistance = 2.5;
+  const wallDistance = 1.5; // Distance from center - reduced to keep dice closer
   
   const wallShape = new CANNON.Box(new CANNON.Vec3(wallDistance + wallThickness, wallHeight, wallThickness));
   
@@ -2225,7 +2225,7 @@ function launchCasinoGame(gameType, tile) {
     'baccarat': 'Baccarat/baccarat-display.html',
     'blackjack': 'Blackjack/blackjack.html',
     'poker': 'PokerFP/poker.html',
-    'roulette': 'Roulette/roulette.html'
+    'roulette': 'Roulette/index.html'
   };
   
   const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
@@ -2245,43 +2245,33 @@ function launchCasinoGame(gameType, tile) {
     try {
       const iframeWindow = iframe.contentWindow;
       
+      // Balance sync callback
+      const balanceCallback = (newBalance) => {
+        currentPlayer.money = newBalance;
+        updatePlayerMoney();
+        updatePlayersList();
+        checkGameEnd();
+      };
+      
       // Initialize the minigame with player's balance
-      if (iframeWindow.initBaccaratMinigame) {
-        iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
-          currentPlayer.money = newBalance;
-          updatePlayerMoney();
-          updatePlayersList();
-          checkGameEnd();
-          console.log(`Balance updated to: $${newBalance}`);
-        });
-      } else if (iframeWindow.initBlackjackMinigame) {
-        iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
-          currentPlayer.money = newBalance;
-          updatePlayerMoney();
-          updatePlayersList();
-          checkGameEnd();
-          console.log(`Balance updated to: $${newBalance}`);
-        });
-      } else if (iframeWindow.initRouletteMinigame) {
-        // Roulette uses a different callback approach (updateMainGameBalance)
-        iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
-          currentPlayer.money = newBalance;
-          updatePlayerMoney();
-          updatePlayersList();
-          checkGameEnd();
-          console.log(`Balance updated to: $${newBalance}`);
-        });
-      } else if (iframeWindow.initPokerMinigame) {
-        iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
-          currentPlayer.money = newBalance;
-          updatePlayerMoney();
-          updatePlayersList();
-          checkGameEnd();
-          console.log(`Balance updated to: $${newBalance}`);
-        });
+      if (gameType === 'baccarat' && iframeWindow.initBaccaratMinigame) {
+        iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'blackjack' && iframeWindow.initBlackjackMinigame) {
+        iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'poker' && iframeWindow.initPokerMinigame) {
+        iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'roulette' && iframeWindow.initRouletteMinigame) {
+        iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       }
+      
+      // Send initial balance via postMessage
+      iframeWindow.postMessage({
+        type: 'SET_BALANCE',
+        balance: currentPlayer.money
+      }, '*');
+      
     } catch (e) {
-      console.log('Error initializing casino game:', e);
+      console.error('Error initializing casino game:', e);
     }
   };
   
@@ -2331,7 +2321,10 @@ function showOwnedPropertyUI(tile) {
   const propertyVideo = document.getElementById('propertyVideo');
   const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
   
-  if (tile.videos && tile.videos.length > 0) {
+  // Disable videos for casino minigames (except Baccarat which has no videos anyway)
+  const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
+  
+  if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
     propertyVideo.load();
@@ -2362,7 +2355,7 @@ function showOwnedPropertyUI(tile) {
       propertyVideo.currentTime = 0;
     };
   } else if (tile.image) {
-    // Show image if no videos
+    // Show image if no videos or if it's a casino minigame
     propertyVideo.style.display = 'none';
     const img = document.createElement('img');
     img.src = `Images/${tile.image}`;
@@ -2421,7 +2414,10 @@ function showPropertyPurchaseUI(tile, player) {
   const propertyVideo = document.getElementById('propertyVideo');
   const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
   
-  if (tile.videos && tile.videos.length > 0) {
+  // Disable videos for casino minigames (except Baccarat which has no videos anyway)
+  const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
+  
+  if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
     propertyVideo.load();
@@ -2452,7 +2448,7 @@ function showPropertyPurchaseUI(tile, player) {
       propertyVideo.currentTime = 0;
     };
   } else if (tile.image) {
-    // Show image if no videos
+    // Show image if no videos or if it's a casino minigame
     propertyVideo.style.display = 'none';
     const img = document.createElement('img');
     img.src = `Images/${tile.image}`;
@@ -2477,7 +2473,7 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   const tile = window.currentPropertyTile;
   const player = window.currentPropertyPlayer;
   
-  // Stop video and clean up before closing overlay
+  // Stop video and audio before closing overlay
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
@@ -2504,7 +2500,7 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
 });
 
 document.getElementById('propertyPassBtn').addEventListener('click', () => {
-  // Stop video and clean up before closing overlay
+  // Stop video and audio before closing overlay
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
