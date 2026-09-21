@@ -512,6 +512,10 @@
 
       // Expose balance for main game to read
       window.__casinoBalance = balance;
+      window.playerBalance = balance;
+
+      // Store callback for balance sync
+      window.balanceCallback = syncCasinoBalance;
 
       // Update UI with new balance
       updateUI();
@@ -728,9 +732,12 @@
 
       // Update exposed balance for main game to read
       window.__casinoBalance = balance;
+      window.playerBalance = balance;
 
       // Sync balance with main game
-      if (typeof updateMainGameBalance === 'function') {
+      if (typeof window.balanceCallback === 'function') {
+        window.balanceCallback(balance);
+      } else if (typeof updateMainGameBalance === 'function') {
         updateMainGameBalance(balance);
       } else if (typeof CustomEvent === 'function') {
         document.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));

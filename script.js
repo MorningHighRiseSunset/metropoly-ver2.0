@@ -1233,7 +1233,7 @@ function create3DBoard() {
     { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'electric_company.jpg', address: '', rent: [] },
     { name: 'Venetian', type: 'property', color: '#FF69B4', price: 150, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 100, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 160, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Cropped/Bellagio2.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
+    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 160, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
     { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 100, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
     { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 120, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
@@ -2250,27 +2250,32 @@ function launchCasinoGame(gameType, tile) {
         iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
           currentPlayer.money = newBalance;
           updatePlayerMoney();
+          updatePlayersList();
           checkGameEnd();
           console.log(`Balance updated to: $${newBalance}`);
         });
-      } else if (iframeWindow.initBlackjack) {
-        iframeWindow.initBlackjack(currentPlayer.money, (newBalance) => {
+      } else if (iframeWindow.initBlackjackMinigame) {
+        iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
           currentPlayer.money = newBalance;
           updatePlayerMoney();
+          updatePlayersList();
           checkGameEnd();
           console.log(`Balance updated to: $${newBalance}`);
         });
-      } else if (iframeWindow.initRoulette) {
-        iframeWindow.initRoulette(currentPlayer.money, (newBalance) => {
+      } else if (iframeWindow.initRouletteMinigame) {
+        // Roulette uses a different callback approach (updateMainGameBalance)
+        iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
           currentPlayer.money = newBalance;
           updatePlayerMoney();
+          updatePlayersList();
           checkGameEnd();
           console.log(`Balance updated to: $${newBalance}`);
         });
-      } else if (iframeWindow.initPoker) {
-        iframeWindow.initPoker(currentPlayer.money, (newBalance) => {
+      } else if (iframeWindow.initPokerMinigame) {
+        iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, (newBalance) => {
           currentPlayer.money = newBalance;
           updatePlayerMoney();
+          updatePlayersList();
           checkGameEnd();
           console.log(`Balance updated to: $${newBalance}`);
         });
@@ -2322,18 +2327,33 @@ function showOwnedPropertyUI(tile) {
   document.getElementById('propertyPrice').textContent = 'OWNED';
   document.getElementById('propertyRentValue').textContent = 'You own this property';
   
-  // Load and play random video
+  // Load and play random video or show image
   const propertyVideo = document.getElementById('propertyVideo');
+  const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
+  
   if (tile.videos && tile.videos.length > 0) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
     propertyVideo.load();
     propertyVideo.play().catch(e => {
       console.log('Video play error:', e);
-      const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
-      propertyVideo.src = tile.videos[nextIndex];
-      propertyVideo.load();
-      propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
+      // If video fails, try to show image instead
+      if (tile.image) {
+        propertyVideo.style.display = 'none';
+        const img = document.createElement('img');
+        img.src = `Images/${tile.image}`;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.id = 'propertyImageFallback';
+        propertyVideoContainer.appendChild(img);
+      } else {
+        // Try the next video if the first one fails
+        const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
+        propertyVideo.src = tile.videos[nextIndex];
+        propertyVideo.load();
+        propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
+      }
     });
     
     // Stop video and audio when it ends
@@ -2341,6 +2361,16 @@ function showOwnedPropertyUI(tile) {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
     };
+  } else if (tile.image) {
+    // Show image if no videos
+    propertyVideo.style.display = 'none';
+    const img = document.createElement('img');
+    img.src = `Images/${tile.image}`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.id = 'propertyImageFallback';
+    propertyVideoContainer.appendChild(img);
   } else {
     propertyVideo.src = '';
   }
@@ -2349,6 +2379,18 @@ function showOwnedPropertyUI(tile) {
   document.getElementById('propertyBuyBtn').style.display = 'none';
   document.getElementById('propertyPassBtn').textContent = 'OK';
   document.getElementById('propertyPassBtn').onclick = () => {
+    // Clean up video and image
+    const propertyVideo = document.getElementById('propertyVideo');
+    propertyVideo.pause();
+    propertyVideo.currentTime = 0;
+    propertyVideo.style.display = 'block';
+    
+    // Remove any image fallback
+    const imageFallback = document.getElementById('propertyImageFallback');
+    if (imageFallback) {
+      imageFallback.remove();
+    }
+    
     document.getElementById('propertyOverlay').style.display = 'none';
     // Reset buttons
     document.getElementById('propertyBuyBtn').style.display = 'inline-block';
@@ -2375,19 +2417,33 @@ function showPropertyPurchaseUI(tile, player) {
   }
   document.getElementById('propertyRentValue').textContent = `$${rent}`;
   
-  // Load and play random video
+  // Load and play random video or show image
   const propertyVideo = document.getElementById('propertyVideo');
+  const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
+  
   if (tile.videos && tile.videos.length > 0) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
     propertyVideo.load();
     propertyVideo.play().catch(e => {
       console.log('Video play error:', e);
-      // Try the next video if the first one fails
-      const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
-      propertyVideo.src = tile.videos[nextIndex];
-      propertyVideo.load();
-      propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
+      // If video fails, try to show image instead
+      if (tile.image) {
+        propertyVideo.style.display = 'none';
+        const img = document.createElement('img');
+        img.src = `Images/${tile.image}`;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.id = 'propertyImageFallback';
+        propertyVideoContainer.appendChild(img);
+      } else {
+        // Try the next video if the first one fails
+        const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
+        propertyVideo.src = tile.videos[nextIndex];
+        propertyVideo.load();
+        propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
+      }
     });
     
     // Stop video and audio when it ends
@@ -2395,6 +2451,16 @@ function showPropertyPurchaseUI(tile, player) {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
     };
+  } else if (tile.image) {
+    // Show image if no videos
+    propertyVideo.style.display = 'none';
+    const img = document.createElement('img');
+    img.src = `Images/${tile.image}`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.id = 'propertyImageFallback';
+    propertyVideoContainer.appendChild(img);
   } else {
     propertyVideo.src = '';
   }
@@ -2411,10 +2477,17 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   const tile = window.currentPropertyTile;
   const player = window.currentPropertyPlayer;
   
-  // Stop video before closing overlay
+  // Stop video and clean up before closing overlay
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
+  propertyVideo.style.display = 'block';
+  
+  // Remove any image fallback
+  const imageFallback = document.getElementById('propertyImageFallback');
+  if (imageFallback) {
+    imageFallback.remove();
+  }
   
   if (tile && player && player.money >= tile.price) {
     player.money -= tile.price;
@@ -2431,10 +2504,17 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
 });
 
 document.getElementById('propertyPassBtn').addEventListener('click', () => {
-  // Stop video before closing overlay
+  // Stop video and clean up before closing overlay
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
+  propertyVideo.style.display = 'block';
+  
+  // Remove any image fallback
+  const imageFallback = document.getElementById('propertyImageFallback');
+  if (imageFallback) {
+    imageFallback.remove();
+  }
   
   document.getElementById('propertyOverlay').style.display = 'none';
   endTurn();
