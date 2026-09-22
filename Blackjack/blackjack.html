@@ -349,7 +349,7 @@ let deck = [];
 let playerHand = [];
 let dealerHand = [];
 let gameOver = true;
-let balance = 0;
+let balance = 0; // Default, will be set by init function
 let currentBet = 100;
 
 let dealerCardsEl, playerCardsEl, dealerScoreEl, playerScoreEl, messageEl, balanceEl, betSlider, betDisplay, btnDeal, btnHit, btnStand;
@@ -384,11 +384,16 @@ function updateBalanceDisplay() {
 }
 
 function updateBetDisplay() {
-  // Calculate maximum allowed bet based on balance (rounded down to nearest 100)
-  const maxAllowed = Math.max(100, Math.floor(balance / 100) * 100);
+  console.log('[BLACKJACK DEBUG] ===== UPDATE BET DISPLAY =====');
+  console.log('[BLACKJACK DEBUG] Current balance:', balance);
+  
+  // Calculate maximum allowed bet based on balance (no rounding down)
+  const maxAllowed = Math.max(100, balance);
+  console.log('[BLACKJACK DEBUG] Max allowed bet:', maxAllowed);
   
   // Update slider max to respect current balance
   betSlider.max = maxAllowed;
+  console.log('[BLACKJACK DEBUG] Set slider max to:', betSlider.max);
   
   // Update slider min to allow betting when balance is low
   betSlider.min = Math.min(100, balance);
@@ -502,10 +507,14 @@ function setMessage(text, type = '') {
 }
 
 function deal() {
+  console.log('[BLACKJACK DEBUG] ===== DEAL FUNCTION =====');
+  console.log('[BLACKJACK DEBUG] Current balance:', balance);
+  console.log('[BLACKJACK DEBUG] btnDeal.dataset.restart:', btnDeal.dataset.restart);
+  
   // Check if this is a restart request
   if (btnDeal.dataset.restart === 'true') {
-    // Reset game
-    balance = 0;
+    // Reset game but KEEP current balance
+    console.log('[BLACKJACK DEBUG] RESTART GAME - keeping balance:', balance);
     playerHand = [];
     dealerHand = [];
     btnDeal.dataset.restart = 'false';
@@ -518,21 +527,27 @@ function deal() {
   }
 
   if (balance < 100) {
+    console.log('[BLACKJACK DEBUG] Insufficient balance:', balance);
     setMessage('Not enough balance', 'lose');
     return;
   }
   
   // Ensure bet is valid based on current balance
   updateBetDisplay();
+  console.log('[BLACKJACK DEBUG] Current bet:', currentBet);
   
   if (currentBet > balance) {
-    setMessage('Invalid bet - exceeds balance', 'lose');
-    return;
+    console.log('[BLACKJACK DEBUG] Bet exceeds balance, adjusting');
+    currentBet = balance;
+    betSlider.value = currentBet;
+    updateBetDisplay();
   }
 
   balance -= currentBet;
+  console.log('[BLACKJACK DEBUG] Deducted bet:', currentBet, 'New balance:', balance);
   updateBalanceDisplay();
   syncBalanceToParent();
+  console.log('[BLACKJACK DEBUG] Balance synced to parent');
   createDeck();
   playerHand = [deck.pop(), deck.pop()];
   dealerHand = [deck.pop(), deck.pop()];
@@ -587,7 +602,7 @@ function endRound(isNatural = false) {
     msg = 'Push — Both Blackjack';
     type = 'push';
   } else if (playerBJ) {
-    payout = currentBet + Math.floor(currentBet * 1.5);
+    payout = Math.floor(currentBet * 1.5); // 3:2 payout for blackjack
     msg = 'Blackjack! You win $' + payout;
     type = 'blackjack';
   } else if (dealerBJ) {
@@ -649,6 +664,10 @@ function syncBalanceToParent() {
 
 // Initialize function for main game integration - defined immediately
 window.initBlackjackMinigame = function(container, initialBalance, balanceCallback) {
+    console.log('[BLACKJACK DEBUG] ===== INITIALIZING BLACKJACK =====');
+    console.log('[BLACKJACK DEBUG] Initial balance received:', initialBalance);
+    console.log('[BLACKJACK DEBUG] Balance callback received:', balanceCallback);
+    
     window.initBlackjackMinigameCalled = true;
 
     // Wait for DOM to be ready
@@ -656,12 +675,15 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
         document.addEventListener('DOMContentLoaded', () => {
             initDOMElements();
             balance = initialBalance || 0;
+            console.log('[BLACKJACK DEBUG] Set balance to:', balance);
             updateBalanceDisplay();
 
             // Listen for balance from parent window
             window.addEventListener('message', function(event) {
                 if (event.data.type === 'SET_BALANCE') {
+                    console.log('[BLACKJACK DEBUG] Received SET_BALANCE:', event.data.balance);
                     balance = event.data.balance;
+                    console.log('[BLACKJACK DEBUG] Updated balance to:', balance);
                     updateBalanceDisplay();
                     updateBetDisplay(); // Re-enable slider if balance is sufficient
                 }
@@ -670,19 +692,24 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
             // Expose balance for parent window
             window.__casinoBalance = balance;
             window.playerBalance = balance;
+            console.log('[BLACKJACK DEBUG] Exposed balance variables');
 
             // Store callback for balance sync
             window.balanceCallback = balanceCallback;
+            console.log('[BLACKJACK DEBUG] Blackjack initialized successfully');
         });
     } else {
         initDOMElements();
         balance = initialBalance || 0;
+        console.log('[BLACKJACK DEBUG] Set balance to:', balance);
         updateBalanceDisplay();
 
         // Listen for balance from parent window
         window.addEventListener('message', function(event) {
             if (event.data.type === 'SET_BALANCE') {
+                console.log('[BLACKJACK DEBUG] Received SET_BALANCE:', event.data.balance);
                 balance = event.data.balance;
+                console.log('[BLACKJACK DEBUG] Updated balance to:', balance);
                 updateBalanceDisplay();
                 updateBetDisplay(); // Re-enable slider if balance is sufficient
             }
@@ -691,9 +718,11 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
         // Expose balance for parent window
         window.__casinoBalance = balance;
         window.playerBalance = balance;
+        console.log('[BLACKJACK DEBUG] Exposed balance variables');
 
         // Store callback for balance sync
         window.balanceCallback = balanceCallback;
+        console.log('[BLACKJACK DEBUG] Blackjack initialized successfully');
     }
 };
 

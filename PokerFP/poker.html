@@ -669,14 +669,22 @@
 <script>
 // Initialize function for main game integration - defined immediately
 window.initPokerMinigame = function(container, initialBalance, balanceCallback) {
+    console.log('[POKER DEBUG] ===== INITIALIZING POKER MINIGAME =====');
+    console.log('[POKER DEBUG] Initial balance received:', initialBalance);
+    console.log('[POKER DEBUG] Balance callback received:', balanceCallback);
+    
     state.chips = initialBalance || 1000;
+    console.log('[POKER DEBUG] Set state.chips to:', state.chips);
+    
     syncBetUI();
     render();
 
     // Listen for balance from parent window
     window.addEventListener('message', function(event) {
         if (event.data.type === 'SET_BALANCE') {
+            console.log('[POKER DEBUG] Received SET_BALANCE message:', event.data.balance);
             state.chips = event.data.balance;
+            console.log('[POKER DEBUG] Updated state.chips to:', state.chips);
             syncBetUI();
             render();
         }
@@ -685,9 +693,11 @@ window.initPokerMinigame = function(container, initialBalance, balanceCallback) 
     // Expose balance for parent window
     window.__casinoBalance = state.chips;
     window.playerBalance = state.chips;
+    console.log('[POKER DEBUG] Exposed balance variables:', window.__casinoBalance, window.playerBalance);
 
     // Store callback for balance sync
     window.balanceCallback = balanceCallback;
+    console.log('[POKER DEBUG] Poker minigame initialized successfully');
 };
 
 // Detect if running in iframe
@@ -715,7 +725,7 @@ let state = {
   playerCards: [],
   aiCards: [],
   community: [],
-  chips: window.parent?.playerMoney || 1000,
+  chips: 1000, // Default, will be set by init function
   pot: 0,
   bet: 0
 };
@@ -725,16 +735,29 @@ let parentBalanceCallback = null;
 
 function syncBalanceToParent() {
   try {
+    console.log('[POKER DEBUG] ===== SYNC BALANCE TO PARENT =====');
+    console.log('[POKER DEBUG] Current state.chips:', state.chips);
+    
     // Update local balance variables first
     window.__casinoBalance = state.chips;
     window.playerBalance = state.chips;
+    console.log('[POKER DEBUG] Updated exposed balance variables');
     
-    // Try to notify parent window
+    // Use the callback if available (preferred method)
+    if (window.balanceCallback && typeof window.balanceCallback === 'function') {
+      console.log('[POKER DEBUG] Calling balanceCallback with:', state.chips);
+      window.balanceCallback(state.chips);
+    } else {
+      console.log('[POKER DEBUG] No balanceCallback available');
+    }
+    
+    // Also try postMessage as fallback
     if (window.parent && window.parent !== window) {
+      console.log('[POKER DEBUG] Sending postMessage BALANCE_UPDATE');
       window.parent.postMessage({ type: 'BALANCE_UPDATE', balance: state.chips }, '*');
     }
   } catch (e) {
-    // Silent fail for balance sync errors
+    console.error('[POKER DEBUG] Poker balance sync error:', e);
   }
 }
 
@@ -753,22 +776,33 @@ const betSlider = $('bet-slider');
 const betValueDisplay = $('bet-value-display');
 
 function syncBetUI() {
+  console.log('[POKER DEBUG] ===== SYNC BET UI =====');
+  console.log('[POKER DEBUG] Current state.chips:', state.chips);
+  
   // Calculate maximum allowed bet based on balance
   const max = Math.max(10, state.chips);
+  console.log('[POKER DEBUG] Calculated max bet:', max);
+  
   betSlider.max = max;
+  console.log('[POKER DEBUG] Set slider max to:', betSlider.max);
   
   // Ensure current value is within valid range
   let currentValue = parseInt(betSlider.value, 10) || 10;
+  console.log('[POKER DEBUG] Current slider value:', currentValue);
+  
   if (currentValue > max) {
     currentValue = max;
     betSlider.value = currentValue;
+    console.log('[POKER DEBUG] Adjusted current value to max:', currentValue);
   }
   if (currentValue < 10) {
     currentValue = 10;
     betSlider.value = currentValue;
+    console.log('[POKER DEBUG] Adjusted current value to min:', currentValue);
   }
   
   betValueDisplay.textContent = '$' + currentValue;
+  console.log('[POKER DEBUG] Display value:', betValueDisplay.textContent);
 }
 
 // Prevent slider from exceeding balance in real-time
@@ -927,35 +961,43 @@ function compareHands(a, b) {
 }
 
 function next() {
+  console.log('[POKER DEBUG] ===== NEXT FUNCTION =====');
+  console.log('[POKER DEBUG] Current stage:', state.stage);
+  console.log('[POKER DEBUG] Current chips:', state.chips);
+  
   const btn = $('btn');
   const result = $('result');
 
   // --- PLACE BET ---
   if (state.stage === 'bet' || state.stage === 'done') {
+    console.log('[POKER DEBUG] PLACING BET');
     if (state.chips < 10) {
-      state.chips = 1000;
-      syncBetUI();
-      result.textContent = 'Balance reset to 1000';
+      console.log('[POKER DEBUG] Chips too low, game over');
+      result.textContent = 'Insufficient balance - Game over';
       result.className = 'result';
       render();
-      syncBalanceToParent();
+      return;
     }
 
     let bet = parseInt(betSlider.value, 10) || 10;
+    console.log('[POKER DEBUG] Selected bet:', bet);
     
     // CRITICAL: Prevent betting more than balance
     if (bet > state.chips) {
+      console.log('[POKER DEBUG] Bet exceeds balance, adjusting');
       result.textContent = 'Insufficient balance for this bet';
       syncBalanceToParent();
       return;
     }
     
     bet = Math.max(10, Math.min(bet, state.chips));
+    console.log('[POKER DEBUG] Final bet amount:', bet);
 
     // player bet + AI matches
     state.bet = bet;
     state.chips -= bet;
     state.pot = bet * 2; // AI matches
+    console.log('[POKER DEBUG] Bet deducted, chips now:', state.chips, 'Pot:', state.pot);
 
     state.deck = shuffle(createDeck());
     state.playerCards = [state.deck.pop(), state.deck.pop()];
@@ -974,6 +1016,7 @@ function next() {
 
   // --- FLOP ---
   if (state.stage === 'dealt') {
+    console.log('[POKER DEBUG] DEALING FLOP');
     state.deck.pop();
     state.community.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
     state.stage = 'flop';
@@ -984,6 +1027,7 @@ function next() {
 
   // --- TURN ---
   if (state.stage === 'flop') {
+    console.log('[POKER DEBUG] DEALING TURN');
     state.deck.pop();
     state.community.push(state.deck.pop());
     state.stage = 'turn';
@@ -994,6 +1038,7 @@ function next() {
 
   // --- RIVER ---
   if (state.stage === 'turn') {
+    console.log('[POKER DEBUG] DEALING RIVER');
     state.deck.pop();
     state.community.push(state.deck.pop());
     state.stage = 'river';
@@ -1004,16 +1049,19 @@ function next() {
 
   // --- SHOWDOWN ---
   if (state.stage === 'river') {
+    console.log('[POKER DEBUG] SHOWDOWN');
     state.stage = 'done';
     render();
 
     const pHand = bestHand(state.playerCards, state.community);
     const aHand = bestHand(state.aiCards, state.community);
     const cmp = compareHands(pHand, aHand);
+    console.log('[POKER DEBUG] Player hand:', pHand.name, 'AI hand:', aHand.name, 'Comparison:', cmp);
 
     result.className = 'result';
     if (cmp > 0) {
       state.chips += state.pot;
+      console.log('[POKER DEBUG] PLAYER WINS, chips now:', state.chips);
       result.classList.add('win');
       // If hand names are the same, it means same hand type but better kickers
       if (pHand.name === aHand.name) {
@@ -1023,6 +1071,7 @@ function next() {
       }
       syncBalanceToParent();
     } else if (cmp < 0) {
+      console.log('[POKER DEBUG] PLAYER LOSES, chips remain:', state.chips);
       result.classList.add('lose');
       if (pHand.name === aHand.name) {
         result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} (better kickers)</span>`;
@@ -1034,6 +1083,7 @@ function next() {
       // True tie - split the pot (player gets their bet back + half of AI's bet)
       const playerWinnings = Math.floor(state.bet + (state.bet / 2)); // Original bet + half of AI's bet
       state.chips += playerWinnings;
+      console.log('[POKER DEBUG] TIE, chips now:', state.chips, 'Winnings:', playerWinnings);
       result.classList.add('tie');
       result.innerHTML = `Tie — pot split (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
       syncBalanceToParent();
@@ -1044,6 +1094,7 @@ function next() {
     betSlider.disabled = false;
     syncBetUI();
     btn.textContent = 'Place Bet';
+    console.log('[POKER DEBUG] Round complete, ready for next bet');
   }
 }
 

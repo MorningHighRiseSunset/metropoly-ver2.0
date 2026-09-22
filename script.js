@@ -372,6 +372,8 @@ function updatePlayersList() {
     
     playersList.appendChild(playerItem);
   });
+  
+  console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money || 2500}`);
 }
 
 // Update AI moves display
@@ -430,6 +432,7 @@ function updatePlayerMoney() {
   if (!playerMoney) return;
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   if (currentPlayer) {
+    console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${currentPlayer.money || 2500}`);
     playerMoney.textContent = `$${currentPlayer.money || 2500}`;
   }
   
@@ -2293,6 +2296,7 @@ function launchCasinoGame(gameType, tile) {
       
       // Balance sync callback
       const balanceCallback = (newBalance) => {
+        console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
         currentPlayer.money = newBalance;
         updatePlayerMoney();
         updatePlayersList();
@@ -2309,7 +2313,9 @@ function launchCasinoGame(gameType, tile) {
         iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'poker' && iframeWindow.initPokerMinigame) {
         console.log(`[CASINO DEBUG] Found initPokerMinigame function`);
+        console.log(`[CASINO DEBUG] Calling initPokerMinigame with balance: ${currentPlayer.money}`);
         iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+        console.log(`[CASINO DEBUG] initPokerMinigame call completed`);
       } else if (gameType === 'roulette' && iframeWindow.initRouletteMinigame) {
         console.log(`[CASINO DEBUG] Found initRouletteMinigame function`);
         iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
@@ -2700,6 +2706,8 @@ window.teleportToVenetian = () => {
   const oldPosition = currentPlayer.position;
   const newPosition = 13; // Venetian position
   
+  console.log('🎰 Teleporting to Venetian (Position 13) - Minigame: Baccarat (DISABLED)');
+  
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
@@ -2713,6 +2721,8 @@ window.teleportToBellagio = () => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
   const newPosition = 15; // Bellagio position
+  
+  console.log('🎰 Teleporting to Bellagio (Position 15) - Minigame: Blackjack');
   
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
@@ -2728,6 +2738,8 @@ window.teleportToSantaFe = () => {
   const oldPosition = currentPlayer.position;
   const newPosition = 18; // Santa Fe Hotel and Casino position
   
+  console.log('🎰 Teleporting to Santa Fe Hotel and Casino (Position 18) - Minigame: Poker');
+  
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
@@ -2741,6 +2753,8 @@ window.teleportToHardRock = () => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
   const newPosition = 21; // Hard Rock Hotel position
+  
+  console.log('🎰 Teleporting to Hard Rock Hotel (Position 21) - Minigame: Roulette');
   
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
@@ -2756,6 +2770,8 @@ window.teleportToCaesars = () => {
   const oldPosition = currentPlayer.position;
   const newPosition = 29; // Caesars Palace position
   
+  console.log('🎰 Teleporting to Caesars Palace (Position 29) - Minigame: Blackjack');
+  
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
@@ -2769,6 +2785,8 @@ window.teleportToWynn = () => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
   const newPosition = 35; // Wynn Las Vegas position
+  
+  console.log('🎰 Teleporting to Wynn Las Vegas (Position 35) - Minigame: Roulette');
   
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
@@ -2784,6 +2802,11 @@ window.teleportTo = (position) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
   const newPosition = position % 40;
+  
+  const tile = boardConfig.find(t => t.position === newPosition);
+  const minigameInfo = tile && tile.isCasino ? `- Minigame: ${tile.casinoGame}${tile.disableCasino ? ' (DISABLED)' : ''}` : '- Regular property';
+  
+  console.log(`🎰 Teleporting to ${tile ? tile.name : 'Position ' + newPosition} (Position ${newPosition}) ${minigameInfo}`);
   
   switchAnimation(gameState.currentPlayerIndex, 'walk');
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {

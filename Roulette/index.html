@@ -460,7 +460,7 @@
         </div>
         <div class="bet-slider-container">
           <label>Bet Amount: <span id="bet-display">$100</span></label>
-          <input type="range" id="bet-slider" min="1" max="1000" value="100" step="1">
+          <input type="range" id="bet-slider" min="1" max="10000" value="100" step="1">
         </div>
         <div class="actions">
           <button class="action-btn" id="clearBtn">Clear Bets</button>
@@ -506,19 +506,27 @@
   <script>
     // ========== ROULETTE MINIGAME INITIALIZATION ==========
     window.initRouletteMinigame = function(container, playerMoney, syncCasinoBalance) {
+      console.log('[ROULETTE DEBUG] ===== INITIALIZING ROULETTE =====');
+      console.log('[ROULETTE DEBUG] Player money received:', playerMoney);
+      console.log('[ROULETTE DEBUG] Balance callback received:', syncCasinoBalance);
+      
       // Update balance with main game's balance
       balance = typeof playerMoney === 'number' ? playerMoney : 1000;
+      console.log('[ROULETTE DEBUG] Set balance to:', balance);
+      
       updateMainGameBalance = typeof syncCasinoBalance === 'function' ? syncCasinoBalance : null;
 
       // Expose balance for main game to read
       window.__casinoBalance = balance;
       window.playerBalance = balance;
+      console.log('[ROULETTE DEBUG] Exposed balance variables');
 
       // Store callback for balance sync
       window.balanceCallback = syncCasinoBalance;
 
       // Update UI with new balance
       updateUI();
+      console.log('[ROULETTE DEBUG] Roulette initialized successfully');
     };
 
     // Detect if running in iframe
@@ -575,12 +583,15 @@
     // Top row is highest numbers.
 
     // ========== STATE ==========
-    let balance = 1000;
+    let balance = 1000; // Default, will be set by init function
     let selectedBetAmount = window.__selectedChip || 100;
     let bets = {};           // key → amount
     let lastBets = {};
     let isSpinning = false;
     let updateMainGameBalance = null;
+    
+    console.log('[ROULETTE DEBUG] ===== INITIALIZATION =====');
+    console.log('[ROULETTE DEBUG] Default balance set to:', balance);
 
     // ========== DOM ==========
     const canvas = document.getElementById('wheel');
@@ -645,7 +656,7 @@
     const betSlider = document.getElementById('bet-slider');
     const betDisplay = document.getElementById('bet-display');
     if (betSlider && betDisplay) {
-      const maxBet = Math.min(1000, Math.max(1, balance));
+      const maxBet = Math.max(1, balance);
       betSlider.max = maxBet;
       
       // Ensure current value doesn't exceed the calculated max
@@ -675,19 +686,26 @@
 
     // ========== BETTING LOGIC ==========
     function placeBet(key) {
+      console.log('[ROULETTE DEBUG] ===== PLACE BET =====');
+      console.log('[ROULETTE DEBUG] Betting on:', key, 'Amount:', selectedBetAmount);
+      console.log('[ROULETTE DEBUG] Current balance:', balance);
+      
       if (isSpinning) return;
       if (balance < selectedBetAmount) {
+        console.log('[ROULETTE DEBUG] Insufficient balance');
         messageEl.textContent = 'Insufficient balance';
         return;
       }
       // Prevent betting if balance would go negative
       if (balance - selectedBetAmount < 0) {
+        console.log('[ROULETTE DEBUG] Balance would go negative');
         messageEl.textContent = 'Insufficient balance';
         return;
       }
       if (!bets[key]) bets[key] = 0;
       bets[key] += selectedBetAmount;
       balance -= selectedBetAmount;
+      console.log('[ROULETTE DEBUG] Bet placed, new balance:', balance);
       updateUI();
       renderChips();
       updateSliderLimits();
@@ -695,10 +713,14 @@
     }
 
     function clearBets() {
+      console.log('[ROULETTE DEBUG] ===== CLEAR BETS =====');
       if (isSpinning) return;
       // Refund
+      const refundAmount = Object.values(bets).reduce((a,b) => a+b, 0);
+      console.log('[ROULETTE DEBUG] Refunding:', refundAmount);
       Object.values(bets).forEach(v => balance += v);
       bets = {};
+      console.log('[ROULETTE DEBUG] Balance after refund:', balance);
       updateUI();
       renderChips();
       updateSliderLimits();
@@ -706,18 +728,22 @@
     }
 
     function rebet() {
+      console.log('[ROULETTE DEBUG] ===== REBET =====');
       if (isSpinning || Object.keys(lastBets).length === 0) return;
       // Clear current first
       Object.values(bets).forEach(v => balance += v);
       bets = {};
       const totalNeeded = Object.values(lastBets).reduce((a,b) => a+b, 0);
+      console.log('[ROULETTE DEBUG] Rebet amount needed:', totalNeeded, 'Current balance:', balance);
       if (balance < totalNeeded) {
+        console.log('[ROULETTE DEBUG] Insufficient balance for rebet');
         messageEl.textContent = 'Not enough balance to rebet';
         updateUI();
         return;
       }
       bets = { ...lastBets };
       balance -= totalNeeded;
+      console.log('[ROULETTE DEBUG] Rebet placed, new balance:', balance);
       updateUI();
       renderChips();
       updateSliderLimits();
@@ -725,6 +751,9 @@
     }
 
     function updateUI() {
+      console.log('[ROULETTE DEBUG] ===== UPDATE UI =====');
+      console.log('[ROULETTE DEBUG] Current balance:', balance);
+      
       balanceEl.textContent = '$' + balance.toLocaleString();
       const total = Object.values(bets).reduce((a,b) => a+b, 0);
       totalBetEl.textContent = '$' + total;
@@ -733,9 +762,11 @@
       // Update exposed balance for main game to read
       window.__casinoBalance = balance;
       window.playerBalance = balance;
+      console.log('[ROULETTE DEBUG] Updated exposed balance variables');
 
       // Sync balance with main game
       if (typeof window.balanceCallback === 'function') {
+        console.log('[ROULETTE DEBUG] Calling balanceCallback with:', balance);
         window.balanceCallback(balance);
       } else if (typeof updateMainGameBalance === 'function') {
         updateMainGameBalance(balance);
@@ -745,10 +776,14 @@
     }
 
     function updateSliderLimits() {
+      console.log('[ROULETTE DEBUG] ===== UPDATE SLIDER LIMITS =====');
+      console.log('[ROULETTE DEBUG] Current balance:', balance);
+      
       const betSlider = document.getElementById('bet-slider');
       if (betSlider) {
-        const maxBet = Math.min(1000, Math.max(1, balance));
+        const maxBet = Math.max(1, balance);
         betSlider.max = maxBet;
+        console.log('[ROULETTE DEBUG] Set slider max to:', maxBet);
         if (selectedBetAmount > maxBet) {
           selectedBetAmount = maxBet;
           betSlider.value = selectedBetAmount;
@@ -967,9 +1002,12 @@
     function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
 
     function spin() {
+      console.log('[ROULETTE DEBUG] ===== SPIN =====');
       if (isSpinning) return;
       const total = Object.values(bets).reduce((a,b) => a+b, 0);
+      console.log('[ROULETTE DEBUG] Total bet:', total);
       if (total === 0) {
+        console.log('[ROULETTE DEBUG] No bets placed');
         messageEl.textContent = 'Place at least one bet first';
         return;
       }
@@ -982,6 +1020,7 @@
       messageEl.textContent = 'No more bets…';
 
       lastBets = { ...bets };
+      console.log('[ROULETTE DEBUG] Saved last bets:', lastBets);
 
       // Play spin sound
       const spinSound = new Audio('Sounds/spinopel-spinning-roulette-wheel-429832.mp3');
@@ -1025,7 +1064,9 @@
 
           const winner = getWinningNumber(wheelAngle, ballAngle);
           const payout = resolveBets(winner);
+          console.log('[ROULETTE DEBUG] Winner:', winner, 'Payout:', payout);
           balance += payout;
+          console.log('[ROULETTE DEBUG] Balance after payout:', balance);
 
           // Show result
           let colorClass = 'green';
