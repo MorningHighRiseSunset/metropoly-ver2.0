@@ -838,6 +838,11 @@ rollDiceBtn.addEventListener('click', () => {
     return;
   }
   
+  // Don't allow rolling if it's not the human player's turn
+  if (!currentPlayer.isHuman) {
+    return;
+  }
+  
   // Don't allow rolling if in jail (must pay first)
   if (currentPlayer.isInJail) {
     return;
@@ -982,8 +987,10 @@ function loadCarouselTexture(imagePath, callback) {
   textureLoader.load(
     fullUrl,
     (texture) => {
-      texture.minFilter = THREE.LinearFilter;
+      // Use higher quality filtering for carousel images
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
       texture.magFilter = THREE.LinearFilter;
+      texture.anisotropy = 16;
       callback(null, texture);
     },
     undefined,
@@ -1033,7 +1040,7 @@ function preloadNextCarouselImage() {
     
     loadCarouselTexture(afterNextImagePath, (error, texture) => {
       if (!error && texture) {
-        texture.anisotropy = 8;
+        texture.anisotropy = 16;
         nextTexture = texture;
       }
     });
@@ -1050,7 +1057,7 @@ function preloadNextCarouselImage() {
     
     loadCarouselTexture(afterNextImagePath, (error, texture) => {
       if (!error && texture) {
-        texture.anisotropy = 8;
+        texture.anisotropy = 16;
         nextTexture = texture;
       }
     });
@@ -1222,7 +1229,7 @@ function create3DBoard() {
     { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 140, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
     { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
     { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
-    { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: 'free_parking.jpg' },
+    { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: '' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['Las Vegas Monorail1.mp4', 'Las Vegas Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
     { name: 'Chance', type: 'chance', position: 7, videos: [] },
@@ -1231,7 +1238,7 @@ function create3DBoard() {
     { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
     { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'electric_company.jpg', address: '', rent: [] },
-    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155], disableCasino: true },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
     { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
@@ -1249,7 +1256,7 @@ function create3DBoard() {
     { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'water_works.jpg', address: '', rent: [] },
     { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
     { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
-    { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: 'luxury_tax.jpg' },
+    { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
     { name: 'Chance', type: 'chance', position: 32, videos: [] },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
@@ -1540,113 +1547,125 @@ function tileSubLabel(spaceData) {
 }
 
 function loadDiceModel() {
-  console.log('Attempting to load dice model from: Models/Dice/dice.glb');
-
-  const loader = new THREE.GLTFLoader();
-
-  loader.load(
-    'Models/Dice/dice.glb',
-    (gltf) => {
-      console.log('Dice model loaded successfully!', gltf);
-      
-      // Create two dice from the same model
-      diceModel1 = gltf.scene.clone();
-      diceModel1.scale.set(0.5, 0.5, 0.5);
-      diceModel1.visible = false;
-      board3DGroup.add(diceModel1);
-
-      diceModel2 = gltf.scene.clone();
-      diceModel2.scale.set(0.5, 0.5, 0.5);
-      diceModel2.visible = false;
-      board3DGroup.add(diceModel2);
-
-      // Create physics bodies for both dice
-      const diceShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
-      
-      diceBody1 = new CANNON.Body({
-        mass: 1,
-        shape: diceShape,
-        material: new CANNON.Material({ friction: 0.5, restitution: 0.3 }),
-        linearDamping: 0.5,
-        angularDamping: 0.5
-      });
-      diceBody1.position.set(-0.5, 3, 0);
-      physicsWorld.addBody(diceBody1);
-
-      diceBody2 = new CANNON.Body({
-        mass: 1,
-        shape: diceShape,
-        material: new CANNON.Material({ friction: 0.5, restitution: 0.3 }),
-        linearDamping: 0.5,
-        angularDamping: 0.5
-      });
-      diceBody2.position.set(0.5, 3, 0);
-      physicsWorld.addBody(diceBody2);
-
-      // Create invisible walls to keep dice from rolling off the board
-      const wallThickness = 0.5;
-      const wallHeight = 2;
-      const wallDistance = 1.5; // Distance from center - reduced to keep dice closer
-      
-      const wallShape = new CANNON.Box(new CANNON.Vec3(wallDistance + wallThickness, wallHeight, wallThickness));
-      
-      // North wall
-      const northWall = new CANNON.Body({ mass: 0, shape: wallShape });
-      northWall.position.set(0, 0, -wallDistance);
-      physicsWorld.addBody(northWall);
-      
-      // South wall
-      const southWall = new CANNON.Body({ mass: 0, shape: wallShape });
-      southWall.position.set(0, 0, wallDistance);
-      physicsWorld.addBody(southWall);
-      
-      // East wall
-      const eastWall = new CANNON.Body({ mass: 0, shape: wallShape });
-      eastWall.position.set(wallDistance, 0, 0);
-      eastWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
-      physicsWorld.addBody(eastWall);
-      
-      // West wall
-      const westWall = new CANNON.Body({ mass: 0, shape: wallShape });
-      westWall.position.set(-wallDistance, 0, 0);
-      westWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
-      physicsWorld.addBody(westWall);
-
-      diceLoaded = true;
-      console.log('Dice physics bodies created and models loaded');
-    },
-    (progress) => {
-      if (progress.total > 0) {
-        console.log('Loading dice model:', Math.round(progress.loaded / progress.total * 100) + '%');
-      }
-    },
-    (error) => {
-      console.error('Error loading dice model:', error);
-      console.error('Error details:', error.message);
-      // Try fallback with simple geometry
-      createFallbackDice();
-    }
-  );
+  console.log('Creating procedural dice with canvas textures (same as dice-viewer.html) but with physics');
+  
+  // Create procedural dice with physics
+  createProceduralDiceWithPhysics();
+  diceLoaded = true;
+  console.log('Procedural dice with physics created successfully');
 }
 
-function createFallbackDice() {
-  console.log('Creating fallback dice with simple geometry');
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+function createDiceTexture(value) {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // White background with subtle gradient for depth
+  const gradient = ctx.createLinearGradient(0, 0, size, size);
+  gradient.addColorStop(0, '#ffffff');
+  gradient.addColorStop(1, '#f0f0f0');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+
+  // Black border with rounded corners effect
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, size - 8, size - 8);
+
+  // Inner border for depth
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(12, 12, size - 24, size - 24);
+
+  // Draw pips for the value with shading
+  const pipRadius = size / 14;
+  const pipPositions = {
+    1: [[0.5, 0.5]],
+    2: [[0.25, 0.25], [0.75, 0.75]],
+    3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+    4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+    5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+    6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
+  };
+
+  const positions = pipPositions[value] || pipPositions[1];
+  positions.forEach(([x, y]) => {
+    const px = x * size;
+    const py = y * size;
+    
+    // Shadow for depth
+    ctx.beginPath();
+    ctx.arc(px + 3, py + 3, pipRadius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fill();
+    
+    // Main pip with gradient
+    const pipGradient = ctx.createRadialGradient(px - pipRadius * 0.3, py - pipRadius * 0.3, 0, px, py, pipRadius);
+    pipGradient.addColorStop(0, '#444444');
+    pipGradient.addColorStop(1, '#000000');
+    ctx.beginPath();
+    ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
+    ctx.fillStyle = pipGradient;
+    ctx.fill();
+    
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(px - pipRadius * 0.3, py - pipRadius * 0.3, pipRadius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.fill();
+  });
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function createProceduralDiceWithPhysics() {
+  const size = 0.5; // Scale to match physics body size
+  const sep = 1.0; // Separation distance
   
-  // Create two dice
-  diceModel1 = new THREE.Mesh(geometry, material);
-  diceModel1.scale.set(0.5, 0.5, 0.5);
+  // Create dice 1
+  const geometry1 = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
+  const materials1 = [
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })
+  ];
+  
+  diceModel1 = new THREE.Mesh(geometry1, materials1);
+  diceModel1.castShadow = true;
+  diceModel1.receiveShadow = true;
+  diceModel1.position.set(-sep, 0.25, 0);
   diceModel1.visible = false;
   board3DGroup.add(diceModel1);
-
-  diceModel2 = new THREE.Mesh(geometry, material);
-  diceModel2.scale.set(0.5, 0.5, 0.5);
+  
+  // Create dice 2
+  const geometry2 = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
+  const materials2 = [
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }),
+    new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })
+  ];
+  
+  diceModel2 = new THREE.Mesh(geometry2, materials2);
+  diceModel2.castShadow = true;
+  diceModel2.receiveShadow = true;
+  diceModel2.position.set(sep, 0.25, 0);
   diceModel2.visible = false;
   board3DGroup.add(diceModel2);
-
+  
   // Create physics bodies for both dice
-  const diceShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+  const diceShape = new CANNON.Box(new CANNON.Vec3(0.25, 0.25, 0.25)); // Half of 0.5 scale
   
   diceBody1 = new CANNON.Body({
     mass: 1,
@@ -1655,7 +1674,7 @@ function createFallbackDice() {
     linearDamping: 0.5,
     angularDamping: 0.5
   });
-  diceBody1.position.set(-0.5, 3, 0);
+  diceBody1.position.set(-sep, 3, 0);
   physicsWorld.addBody(diceBody1);
 
   diceBody2 = new CANNON.Body({
@@ -1665,13 +1684,13 @@ function createFallbackDice() {
     linearDamping: 0.5,
     angularDamping: 0.5
   });
-  diceBody2.position.set(0.5, 3, 0);
+  diceBody2.position.set(sep, 3, 0);
   physicsWorld.addBody(diceBody2);
 
   // Create invisible walls to keep dice from rolling off the board
   const wallThickness = 0.5;
   const wallHeight = 2;
-  const wallDistance = 1.5; // Distance from center - reduced to keep dice closer
+  const wallDistance = 1.5;
   
   const wallShape = new CANNON.Box(new CANNON.Vec3(wallDistance + wallThickness, wallHeight, wallThickness));
   
@@ -1692,9 +1711,6 @@ function createFallbackDice() {
   westWall.position.set(-wallDistance, 0, 0);
   westWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
   physicsWorld.addBody(westWall);
-
-  diceLoaded = true;
-  console.log('Fallback dice created');
 }
 
 function animateThreeJS() {
@@ -1822,8 +1838,8 @@ function roll3DDice() {
         // Calculate what position we would land on with current roll
         const potentialPosition = (currentPlayer.position + totalDice) % 40;
         
-        // 30% chance to reroll for casino if not already on one
-        if (!casinoPositions.includes(potentialPosition) && Math.random() < 0.3) {
+        // Reduced bias: 10% chance to adjust for casino if not already on one
+        if (!casinoPositions.includes(potentialPosition) && Math.random() < 0.1) {
           // Find nearest casino position
           let nearestCasino = casinoPositions[0];
           let minDistance = 40;
@@ -1842,6 +1858,7 @@ function roll3DDice() {
           
           // If needed roll is between 2-12, use it
           if (neededRoll >= 2 && neededRoll <= 12) {
+            console.log(`Adjusting roll from ${totalDice} to ${neededRoll} to land on casino at position ${nearestCasino}`);
             totalDice = neededRoll;
           }
         }
@@ -1966,12 +1983,19 @@ function handleLanding(player, position) {
   if (tile.type === 'property' || tile.type === 'railroad') {
     const owner = gameState.players.find(p => p.properties && p.properties.includes(position));
     
+    console.log(`[CASINO DEBUG] Player ${player.name} landed on ${tile.name} (position ${position})`);
+    console.log(`[CASINO DEBUG] Tile isCasino: ${tile.isCasino}, casinoGame: ${tile.casinoGame}, disableCasino: ${tile.disableCasino}`);
+    console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
+    console.log(`[CASINO DEBUG] Player isAI: ${player.isAI}, isHuman: ${player.isHuman}`);
+    
     if (!owner) {
       if (!player.isAI) {
-        // If it's a casino property, launch game first, then show purchase UI
-        if (tile.isCasino && tile.casinoGame) {
+        // If it's a casino property and not disabled, launch game first, then show purchase UI
+        if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
+          console.log(`[CASINO DEBUG] Launching casino game: ${tile.casinoGame} for ${tile.name}`);
           launchCasinoGame(tile.casinoGame, tile);
         } else {
+          console.log(`[CASINO DEBUG] Skipping casino game (disabled or not casino), showing purchase UI`);
           showPropertyPurchaseUI(tile, player);
         }
       } else {
@@ -1982,7 +2006,7 @@ function handleLanding(player, position) {
           console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
           
           // If it's a casino property, AI plays the game
-          if (tile.isCasino && tile.casinoGame) {
+          if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
             const winAmount = Math.floor(Math.random() * 100) + 50; // Random win between 50-150
             player.money += winAmount;
             addAIMove(player.name, `bought ${tile.name} for $${tile.price}, won $${winAmount} at ${tile.casinoGame}`);
@@ -2004,11 +2028,13 @@ function handleLanding(player, position) {
         rent = Math.floor(tile.price * 0.1);
       }
       
-      // If it's a casino property, launch game first, then pay rent
-      if (tile.isCasino && tile.casinoGame && !player.isAI) {
+      // If it's a casino property and not disabled, launch game first, then pay rent
+      if (tile.isCasino && tile.casinoGame && !tile.disableCasino && !player.isAI) {
+        console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
         launchCasinoGame(tile.casinoGame, tile);
         // After game closes, pay rent (handled in closeCasinoBtn)
       } else {
+        console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
         player.money -= rent;
         owner.money += rent;
         console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
@@ -2024,8 +2050,9 @@ function handleLanding(player, position) {
       }
     } else {
       // Player owns the property - show UI
-      if (tile.isCasino && tile.casinoGame) {
+      if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
         if (!player.isAI) {
+          console.log(`[CASINO DEBUG] Player owns ${tile.name}, launching casino game: ${tile.casinoGame}`);
           launchCasinoGame(tile.casinoGame, tile);
         } else {
           // AI plays casino game
@@ -2037,6 +2064,7 @@ function handleLanding(player, position) {
           endTurn();
         }
       } else {
+        console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
         if (!player.isAI) {
           showOwnedPropertyUI(tile);
         } else {
@@ -2158,14 +2186,15 @@ function showTaxUI(tile, player) {
   document.getElementById('taxMessage').textContent = `Pay $${amount}`;
   
   // Show image if available
-  const taxImageContainer = document.getElementById('taxImageContainer');
-  const taxImage = document.getElementById('taxImage');
-  if (tile.image) {
-    taxImage.src = `Images/${tile.image}`;
-    taxImageContainer.classList.add('has-image');
-  } else {
-    taxImageContainer.classList.remove('has-image');
-  }
+  // Commented out for now until proper tax images are available
+  // const taxImageContainer = document.getElementById('taxImageContainer');
+  // const taxImage = document.getElementById('taxImage');
+  // if (tile.image) {
+  //   taxImage.src = `Images/${tile.image}`;
+  //   taxImageContainer.classList.add('has-image');
+  // } else {
+  //   taxImageContainer.classList.remove('has-image');
+  // }
   
   document.getElementById('taxOverlay').style.display = 'flex';
   
@@ -2199,10 +2228,19 @@ document.getElementById('taxOkBtn').addEventListener('click', () => {
 
 // Launch casino game
 function launchCasinoGame(gameType, tile) {
-  console.log(`Launching ${gameType} game for ${tile.name}`);
+  console.log(`[CASINO DEBUG] ===== LAUNCHING CASINO GAME =====`);
+  console.log(`[CASINO DEBUG] Game type: ${gameType}`);
+  console.log(`[CASINO DEBUG] Tile name: ${tile.name}`);
+  console.log(`[CASINO DEBUG] Tile position: ${tile.position}`);
+  console.log(`[CASINO DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
+  console.log(`[CASINO DEBUG] Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}`);
+  console.log(`[CASINO DEBUG] Game started: ${gameState.gameStarted}`);
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const owner = gameState.players.find(p => p.properties && p.properties.includes(tile.position));
+  
+  console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
+  console.log(`[CASINO DEBUG] Player balance: ${currentPlayer?.money}`);
   
   // Create casino game overlay
   const casinoOverlay = document.createElement('div');
@@ -2229,6 +2267,7 @@ function launchCasinoGame(gameType, tile) {
   };
   
   const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
+  console.log(`[CASINO DEBUG] Game path: ${gamePath}`);
   
   casinoOverlay.innerHTML = `
     <div class="casino-container" style="width: 90%; height: 90%; max-width: 1200px; position: relative;">
@@ -2238,12 +2277,19 @@ function launchCasinoGame(gameType, tile) {
   `;
   
   document.body.appendChild(casinoOverlay);
+  console.log(`[CASINO DEBUG] Casino overlay added to DOM`);
   
   // Wait for iframe to load, then initialize the game
   const iframe = document.getElementById('casinoFrame');
   iframe.onload = () => {
-    try {
-      const iframeWindow = iframe.contentWindow;
+    console.log(`[CASINO DEBUG] Iframe loaded successfully for ${gameType}`);
+    
+    // Add a small delay to ensure scripts are fully loaded
+    setTimeout(() => {
+      try {
+        const iframeWindow = iframe.contentWindow;
+        console.log(`[CASINO DEBUG] Got iframe window for ${gameType}`);
+        console.log(`[CASINO DEBUG] Available functions in iframe:`, Object.keys(iframeWindow).filter(key => key.includes('init')));
       
       // Balance sync callback
       const balanceCallback = (newBalance) => {
@@ -2254,34 +2300,45 @@ function launchCasinoGame(gameType, tile) {
       };
       
       // Initialize the minigame with player's balance
+      console.log(`[CASINO DEBUG] Attempting to initialize ${gameType} minigame with balance: ${currentPlayer.money}`);
       if (gameType === 'baccarat' && iframeWindow.initBaccaratMinigame) {
+        console.log(`[CASINO DEBUG] Found initBaccaratMinigame function`);
         iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'blackjack' && iframeWindow.initBlackjackMinigame) {
+        console.log(`[CASINO DEBUG] Found initBlackjackMinigame function`);
         iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'poker' && iframeWindow.initPokerMinigame) {
+        console.log(`[CASINO DEBUG] Found initPokerMinigame function`);
         iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'roulette' && iframeWindow.initRouletteMinigame) {
+        console.log(`[CASINO DEBUG] Found initRouletteMinigame function`);
         iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else {
+        console.log(`[CASINO DEBUG] No init function found for ${gameType}, using postMessage fallback`);
       }
       
       // Send initial balance via postMessage
+      console.log(`[CASINO DEBUG] Sending postMessage with balance: ${currentPlayer.money}`);
       iframeWindow.postMessage({
         type: 'SET_BALANCE',
         balance: currentPlayer.money
       }, '*');
       
     } catch (e) {
-      console.error('Error initializing casino game:', e);
+      console.error(`[CASINO DEBUG] Error initializing casino game:`, e);
     }
+    }, 100); // Small delay to ensure scripts are loaded
   };
   
   // Close button handler
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
+    console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
     document.body.removeChild(casinoOverlay);
     
     // After casino game, handle the rest of the flow
     if (!owner) {
       // Property is unowned - show purchase UI
+      console.log(`[CASINO DEBUG] Property unowned, showing purchase UI`);
       showPropertyPurchaseUI(tile, currentPlayer);
     } else if (owner !== currentPlayer) {
       // Property is owned by someone else - pay rent
@@ -2299,6 +2356,7 @@ function launchCasinoGame(gameType, tile) {
       endTurn();
     } else {
       // Player owns the property
+      console.log(`[CASINO DEBUG] Player owns property, showing owned property UI`);
       showOwnedPropertyUI(tile);
     }
   });
