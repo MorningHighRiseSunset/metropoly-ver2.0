@@ -916,14 +916,14 @@ body {
 
 .jail-video-container {
   width: 100%;
-  height: 250px;
+  height: 350px;
   background: rgba(0, 0, 0, 0.3);
 }
 
 .jail-video {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: #000;
 }
 
@@ -1002,14 +1002,14 @@ body {
 
 .property-video-container {
   width: 100%;
-  height: 250px;
+  height: 350px;
   background: rgba(0, 0, 0, 0.3);
 }
 
 .property-video {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: #000;
 }
 
@@ -1214,7 +1214,7 @@ body {
 
 .tax-image-container {
   width: 100%;
-  height: 250px;
+  height: 350px;
   background: rgba(0, 0, 0, 0.3);
   display: none;
 }

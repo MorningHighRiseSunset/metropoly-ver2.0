@@ -1240,7 +1240,7 @@ function create3DBoard() {
     { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
     { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
     { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: '' },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['Las Vegas Monorail1.mp4', 'Las Vegas Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
     { name: 'Chance', type: 'chance', position: 7, videos: [] },
     { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 165, position: 8, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Golden%20Knights.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] },
@@ -1636,7 +1636,7 @@ function createDiceTexture(value) {
 
 function createProceduralDiceWithPhysics() {
   const size = 0.3; // Smaller dice size
-  const sep = 0.6; // Separation distance
+  const sep = 0.8; // Increased separation distance for better spread
   
   // Create dice 1
   const geometry1 = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
@@ -1697,30 +1697,7 @@ function createProceduralDiceWithPhysics() {
   diceBody2.position.set(sep, 5, 0);
   physicsWorld.addBody(diceBody2);
 
-  // Create invisible walls to keep dice from rolling off the board
-  const wallThickness = 0.5;
-  const wallHeight = 2;
-  const wallDistance = 1.5;
-  
-  const wallShape = new CANNON.Box(new CANNON.Vec3(wallDistance + wallThickness, wallHeight, wallThickness));
-  
-  const northWall = new CANNON.Body({ mass: 0, shape: wallShape });
-  northWall.position.set(0, 0, -wallDistance);
-  physicsWorld.addBody(northWall);
-  
-  const southWall = new CANNON.Body({ mass: 0, shape: wallShape });
-  southWall.position.set(0, 0, wallDistance);
-  physicsWorld.addBody(southWall);
-  
-  const eastWall = new CANNON.Body({ mass: 0, shape: wallShape });
-  eastWall.position.set(wallDistance, 0, 0);
-  eastWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
-  physicsWorld.addBody(eastWall);
-  
-  const westWall = new CANNON.Body({ mass: 0, shape: wallShape });
-  westWall.position.set(-wallDistance, 0, 0);
-  westWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
-  physicsWorld.addBody(westWall);
+  // Removed invisible walls to allow dice to spread out more naturally
 }
 
 function animateThreeJS() {
@@ -1910,7 +1887,14 @@ function roll3DDice() {
           currentPlayer.jailTurns = 0;
           currentPlayer.money -= 50;
           
-          const newPosition = (currentPlayer.position + totalDice) % 40;
+          let newPosition = (currentPlayer.position + totalDice) % 40;
+          
+          // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+          // Skip Baccarat property (position 13) - move to position 14 instead
+          if (newPosition === 13) {
+            console.log('Skipping Baccarat property (position 13), moving to position 14');
+            newPosition = 14;
+          }
           
           switchAnimation(gameState.currentPlayerIndex, 'walk');
           animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
@@ -1919,7 +1903,14 @@ function roll3DDice() {
             handleLanding(currentPlayer, newPosition);
           });
         } else {
-          const newPosition = (currentPlayer.position + totalDice) % 40;
+          let newPosition = (currentPlayer.position + totalDice) % 40;
+          
+          // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+          // Skip Baccarat property (position 13) - move to position 14 instead
+          if (newPosition === 13) {
+            console.log('Skipping Baccarat property (position 13), moving to position 14');
+            newPosition = 14;
+          }
           
           // Check for Go To Jail (position 30)
           if (newPosition === 30) {
@@ -1972,7 +1963,14 @@ function roll3DDice() {
       console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
       // Move current player token
-      const newPosition = (currentPlayer.position + totalDice) % 40;
+      let newPosition = (currentPlayer.position + totalDice) % 40;
+      
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      // Skip Baccarat property (position 13) - move to position 14 instead
+      if (newPosition === 13) {
+        console.log('Fallback: Skipping Baccarat property (position 13), moving to position 14');
+        newPosition = 14;
+      }
 
       // Check for Go To Jail (position 30)
       if (newPosition === 30) {
@@ -2840,20 +2838,11 @@ if (endTurnBtn) {
 
 // ===== DEBUG/TELEPORT COMMANDS =====
 // Console commands to instantly teleport to casino squares
+// TODO: REMOVE BEFORE PUSH - Temporarily disabled Baccarat teleport
 window.teleportToVenetian = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  const oldPosition = currentPlayer.position;
-  const newPosition = 13; // Venetian position
-  
-  console.log('🎰 Teleporting to Venetian (Position 13) - Minigame: Baccarat (DISABLED)');
-  
-  switchAnimation(gameState.currentPlayerIndex, 'walk');
-  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
-    currentPlayer.position = newPosition;
-    handleLanding(currentPlayer, newPosition);
-  });
-  console.log(`Teleported ${currentPlayer.name} to Venetian`);
+  console.log('Teleport to Venetian (Baccarat) is disabled - property cannot be landed on');
+  return;
 };
 
 window.teleportToBellagio = () => {
@@ -2937,8 +2926,16 @@ window.teleportToWynn = () => {
 };
 
 // General teleport function to any position
+// TODO: REMOVE BEFORE PUSH - Temporarily blocking Baccarat property
 window.teleportTo = (position) => {
   if (!gameState.gameStarted) return console.log('Game not started');
+  
+  // Prevent teleporting to Baccarat property (position 13)
+  if (position % 40 === 13) {
+    console.log('Teleport to position 13 (Venetian - Baccarat) is disabled - property cannot be landed on');
+    return;
+  }
+  
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
   const newPosition = position % 40;
