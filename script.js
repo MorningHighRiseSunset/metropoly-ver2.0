@@ -835,27 +835,34 @@ rollDiceBtn.addEventListener('click', () => {
   if (!gameState.gameStarted) return;
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  
+
   // Don't allow rolling if AI's turn
   if (currentPlayer.isAI) {
+    console.log('Cannot roll - it is AI\'s turn');
     return;
   }
-  
+
   // Don't allow rolling if it's not the human player's turn
   if (!currentPlayer.isHuman) {
+    console.log('Cannot roll - it is not your turn');
     return;
   }
-  
+
   // Don't allow rolling if in jail (must pay first)
   if (currentPlayer.isInJail) {
+    console.log('Cannot roll - you are in jail');
     return;
   }
+
+  // Disable button while rolling
+  rollDiceBtn.disabled = true;
 
   // Only use 3D dice
   if (diceLoaded) {
     roll3DDice();
   } else {
     console.log('Dice model not loaded yet');
+    rollDiceBtn.disabled = false;
   }
 });
 
@@ -1628,8 +1635,8 @@ function createDiceTexture(value) {
 }
 
 function createProceduralDiceWithPhysics() {
-  const size = 0.5; // Scale to match physics body size
-  const sep = 1.0; // Separation distance
+  const size = 0.3; // Smaller dice size
+  const sep = 0.6; // Separation distance
   
   // Create dice 1
   const geometry1 = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
@@ -1668,26 +1675,26 @@ function createProceduralDiceWithPhysics() {
   board3DGroup.add(diceModel2);
   
   // Create physics bodies for both dice
-  const diceShape = new CANNON.Box(new CANNON.Vec3(0.25, 0.25, 0.25)); // Half of 0.5 scale
+  const diceShape = new CANNON.Box(new CANNON.Vec3(0.15, 0.15, 0.15)); // Half of 0.3 scale
   
   diceBody1 = new CANNON.Body({
-    mass: 1,
+    mass: 2, // Heavy dice for realistic physics
     shape: diceShape,
-    material: new CANNON.Material({ friction: 0.5, restitution: 0.3 }),
-    linearDamping: 0.5,
-    angularDamping: 0.5
+    material: new CANNON.Material({ friction: 0.4, restitution: 0.1 }),
+    linearDamping: 0.8, // High damping for fast settling
+    angularDamping: 0.8
   });
-  diceBody1.position.set(-sep, 3, 0);
+  diceBody1.position.set(-sep, 5, 0);
   physicsWorld.addBody(diceBody1);
 
   diceBody2 = new CANNON.Body({
-    mass: 1,
+    mass: 2, // Heavy dice for realistic physics
     shape: diceShape,
-    material: new CANNON.Material({ friction: 0.5, restitution: 0.3 }),
-    linearDamping: 0.5,
-    angularDamping: 0.5
+    material: new CANNON.Material({ friction: 0.4, restitution: 0.1 }),
+    linearDamping: 0.8, // High damping for fast settling
+    angularDamping: 0.8
   });
-  diceBody2.position.set(sep, 3, 0);
+  diceBody2.position.set(sep, 5, 0);
   physicsWorld.addBody(diceBody2);
 
   // Create invisible walls to keep dice from rolling off the board
@@ -1760,15 +1767,31 @@ function onWindowResize() {
 }
 
 function roll3DDice() {
-  if (!diceLoaded || isRolling) return;
+  if (!diceLoaded || isRolling) {
+    console.log('roll3DDice blocked - diceLoaded:', diceLoaded, 'isRolling:', isRolling);
+    return;
+  }
+
+  // Ensure physics bodies exist
+  if (!diceBody1 || !diceBody2 || !physicsWorld) {
+    console.error('Physics bodies not ready for dice roll');
+    return;
+  }
 
   isRolling = true;
   diceModel1.visible = true;
   diceModel2.visible = true;
 
-  // Reset dice positions above the board (closer to center and each other)
-  diceBody1.position.set(-0.1, 3, 0);
-  diceBody2.position.set(0.1, 3, 0);
+  // Play dice rolling sound
+  if (typeof playDiceRollSound === 'function') {
+    playDiceRollSound();
+  }
+
+  console.log('Starting dice roll for player:', gameState.players[gameState.currentPlayerIndex]?.name);
+
+  // Reset dice positions above the board (drop from much higher)
+  diceBody1.position.set(-0.1, 5, 0);
+  diceBody2.position.set(0.1, 5, 0);
 
   // Reset dice rotations with random starting orientations
   diceBody1.quaternion.setFromAxisAngle(new CANNON.Vec3(Math.random(), Math.random(), Math.random()), Math.random() * Math.PI * 2);
@@ -1786,21 +1809,26 @@ function roll3DDice() {
 
   // Apply strong random rotation and velocity for dramatic effect
   setTimeout(() => {
+    diceBody1.angularVelocity.set(
+      (Math.random() - 0.5) * 80, // Extremely fast rotation
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80
+    );
     diceBody1.velocity.set(
-      (Math.random() - 0.5) * 0.08,
-      -5,
-      (Math.random() - 0.5) * 0.08
+      (Math.random() - 0.5) * 0.3,
+      -15, // Very fast downward velocity for heavy dice
+      (Math.random() - 0.5) * 0.3
     );
 
     diceBody2.angularVelocity.set(
-      (Math.random() - 0.5) * 30,
-      (Math.random() - 0.5) * 30,
-      (Math.random() - 0.5) * 30
+      (Math.random() - 0.5) * 80, // Extremely fast rotation
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80
     );
     diceBody2.velocity.set(
-      (Math.random() - 0.5) * 0.08,
-      -5,
-      (Math.random() - 0.5) * 0.08
+      (Math.random() - 0.5) * 0.3,
+      -15, // Very fast downward velocity for heavy dice
+      (Math.random() - 0.5) * 0.3
     );
   }, 100);
 
@@ -1811,17 +1839,23 @@ function roll3DDice() {
     const angularSpeed1 = diceBody1.angularVelocity.length();
     const angularSpeed2 = diceBody2.angularVelocity.length();
 
-    // Check if both dice have settled (low velocity and angular velocity)
-    if (speed1 < 0.1 && speed2 < 0.1 && angularSpeed1 < 0.5 && angularSpeed2 < 0.5) {
+    // Check if both dice have settled (stricter criteria to ensure completely flat)
+    if (speed1 < 0.05 && speed2 < 0.05 && angularSpeed1 < 0.1 && angularSpeed2 < 0.1) {
       clearInterval(checkSettled);
-      
+
       console.log('Dice settled, processing results');
-      
-      // Wait 0.5 seconds after settling, then hide dice
+
+      // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
       setTimeout(() => {
         isRolling = false;
         diceModel1.visible = false;
         diceModel2.visible = false;
+
+        // Re-enable roll dice button for human players
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (rollDiceBtn && currentPlayer && currentPlayer.isHuman && !currentPlayer.isInJail) {
+          rollDiceBtn.disabled = false;
+        }
 
         // Get dice results based on final rotation
         const diceResult1 = getDiceResult(diceBody1);
@@ -1829,8 +1863,6 @@ function roll3DDice() {
         let totalDice = diceResult1 + diceResult2;
 
         // Bias dice toward casino squares (positions 13, 15, 18, 21, 29, 35)
-        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-        
         if (!currentPlayer) {
           console.error('Current player is undefined! gameState:', gameState);
           return;
@@ -1903,26 +1935,71 @@ function roll3DDice() {
             });
           } else {
             // Normal movement
+            console.log(`Starting normal movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
             switchAnimation(gameState.currentPlayerIndex, 'walk');
             animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
               currentPlayer.position = newPosition;
+              console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
               handleLanding(currentPlayer, newPosition);
             });
           }
         }
-      }, 1000);
+      }, 500);
     }
-  }, 100);
+  }, 50);
 
-  // Fallback: hide after 8 seconds max
+  // Fallback: hide after 10 seconds max to prevent hanging
   setTimeout(() => {
     clearInterval(checkSettled);
     if (isRolling) {
+      console.log('Fallback timeout reached, forcing dice to settle and processing results');
       isRolling = false;
       diceModel1.visible = false;
       diceModel2.visible = false;
+
+      // Process dice results even if they didn't settle properly
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (!currentPlayer) {
+        console.error('Current player is undefined in fallback!');
+        return;
+      }
+
+      // Get dice results based on final rotation
+      const diceResult1 = getDiceResult(diceBody1);
+      const diceResult2 = getDiceResult(diceBody2);
+      let totalDice = diceResult1 + diceResult2;
+
+      console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
+
+      // Move current player token
+      const newPosition = (currentPlayer.position + totalDice) % 40;
+
+      // Check for Go To Jail (position 30)
+      if (newPosition === 30) {
+        switchAnimation(gameState.currentPlayerIndex, 'walk');
+        animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, 10, () => {
+          currentPlayer.position = 10;
+          currentPlayer.isInJail = true;
+          currentPlayer.jailTurns = 0;
+          showJailUI('You landed in jail!');
+        });
+      } else {
+        // Normal movement
+        console.log(`Fallback: Starting movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
+        switchAnimation(gameState.currentPlayerIndex, 'walk');
+        animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
+          currentPlayer.position = newPosition;
+          console.log(`Fallback: ${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+          handleLanding(currentPlayer, newPosition);
+        });
+      }
+
+      // Re-enable roll dice button for human players
+      if (rollDiceBtn && currentPlayer && currentPlayer.isHuman && !currentPlayer.isInJail) {
+        rollDiceBtn.disabled = false;
+      }
     }
-  }, 8000);
+  }, 10000);
 }
 
 function getDiceResult(diceBody) {
@@ -2148,12 +2225,17 @@ function showCardUI(tile) {
   document.getElementById('cardTitle').textContent = tile.type === 'chance' ? 'Chance' : 'Community Chest';
   document.getElementById('cardMessage').textContent = 'You drew a card!';
   document.getElementById('cardOverlay').style.display = 'flex';
+
+  // Disable roll dice button while card UI is open
+  if (rollDiceBtn) {
+    rollDiceBtn.disabled = true;
+  }
 }
 
 // Show jail UI with video
 function showJailUI(message) {
   document.getElementById('jailMessage').textContent = message;
-  
+
   // Load and play random jail video
   const jailVideo = document.getElementById('jailVideo');
   const jailTile = boardConfig.find(t => t.position === 10);
@@ -2162,7 +2244,7 @@ function showJailUI(message) {
     jailVideo.src = randomVideo;
     jailVideo.load();
     jailVideo.play().catch(e => console.log('Video play error:', e));
-    
+
     // Stop video and audio when it ends
     jailVideo.onended = function() {
       jailVideo.pause();
@@ -2171,8 +2253,13 @@ function showJailUI(message) {
   } else {
     jailVideo.src = '';
   }
-  
+
   document.getElementById('jailOverlay').style.display = 'flex';
+
+  // Disable roll dice button while in jail UI
+  if (rollDiceBtn) {
+    rollDiceBtn.disabled = true;
+  }
 }
 
 // Show tax/utility UI
@@ -2200,7 +2287,12 @@ function showTaxUI(tile, player) {
   // }
   
   document.getElementById('taxOverlay').style.display = 'flex';
-  
+
+  // Disable roll dice button while tax UI is open
+  if (rollDiceBtn) {
+    rollDiceBtn.disabled = true;
+  }
+
   // Store for button handler
   window.currentTaxTile = tile;
   window.currentTaxPlayer = player;
@@ -2440,6 +2532,8 @@ function showOwnedPropertyUI(tile) {
     const propertyVideo = document.getElementById('propertyVideo');
     propertyVideo.pause();
     propertyVideo.currentTime = 0;
+    propertyVideo.src = ''; // Clear the video source to prevent playback
+    propertyVideo.load(); // Reload to clear any buffered data
     propertyVideo.style.display = 'block';
     
     // Remove any image fallback
@@ -2526,7 +2620,12 @@ function showPropertyPurchaseUI(tile, player) {
   }
   
   document.getElementById('propertyOverlay').style.display = 'flex';
-  
+
+  // Disable roll dice button while property UI is open
+  if (rollDiceBtn) {
+    rollDiceBtn.disabled = true;
+  }
+
   // Store current tile and player for button handlers
   window.currentPropertyTile = tile;
   window.currentPropertyPlayer = player;
@@ -2541,6 +2640,8 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
+  propertyVideo.src = ''; // Clear the video source to prevent playback
+  propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
   
   // Remove any image fallback
@@ -2568,6 +2669,8 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   const propertyVideo = document.getElementById('propertyVideo');
   propertyVideo.pause();
   propertyVideo.currentTime = 0;
+  propertyVideo.src = ''; // Clear the video source to prevent playback
+  propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
   
   // Remove any image fallback
@@ -2584,26 +2687,44 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
 function endTurn() {
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-  
+
   // Update UI for new player
   updatePlayersList();
   updatePlayerMoney();
-  
-  // If next player is AI, auto-roll
+
+  // Enable/disable roll dice button based on whose turn it is
   const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+  if (rollDiceBtn) {
+    if (nextPlayer && nextPlayer.isHuman && !nextPlayer.isInJail) {
+      rollDiceBtn.disabled = false;
+    } else {
+      rollDiceBtn.disabled = true;
+    }
+  }
+
+  // If next player is AI, auto-roll
   if (nextPlayer && nextPlayer.isAI) {
     console.log(`Next player is AI: ${nextPlayer.name}, will roll in 2 seconds`);
+
+    // Disable roll dice button during AI turn
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = true;
+    }
+
     setTimeout(() => {
-      console.log(`AI ${nextPlayer.name} attempting to roll - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}`);
-      if (diceLoaded && !isRolling) {
+      console.log(`AI ${nextPlayer.name} attempting to roll - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}, physicsWorld: ${!!physicsWorld}, diceBody1: ${!!diceBody1}, diceBody2: ${!!diceBody2}`);
+      if (diceLoaded && !isRolling && physicsWorld && diceBody1 && diceBody2) {
         roll3DDice();
       } else {
         console.log('Dice not ready yet, retrying in 1 second...');
         setTimeout(() => {
-          if (diceLoaded && !isRolling) {
+          console.log(`AI ${nextPlayer.name} retry - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}`);
+          if (diceLoaded && !isRolling && physicsWorld && diceBody1 && diceBody2) {
             roll3DDice();
           } else {
             console.log('Dice still not ready, forcing roll anyway');
+            // Force roll anyway to prevent softlock
+            isRolling = false;
             roll3DDice();
           }
         }, 1000);
@@ -2612,6 +2733,11 @@ function endTurn() {
   } else if (nextPlayer && nextPlayer.isInJail) {
     // Show jail pay UI for human player in jail
     document.getElementById('jailPayOverlay').style.display = 'flex';
+
+    // Disable roll dice button while in jail
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = true;
+    }
   }
 }
 
@@ -2622,6 +2748,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Jail UI handlers
   document.getElementById('jailProceedBtn').addEventListener('click', () => {
     document.getElementById('jailOverlay').style.display = 'none';
+
+    // Stop jail video
+    const jailVideo = document.getElementById('jailVideo');
+    if (jailVideo) {
+      jailVideo.pause();
+      jailVideo.currentTime = 0;
+    }
+
     endTurn();
   });
 
@@ -2633,6 +2767,12 @@ document.addEventListener('DOMContentLoaded', () => {
       currentPlayer.money -= 50;
       updatePlayerMoney();
       checkGameEnd();
+
+      // Disable button while rolling
+      if (rollDiceBtn) {
+        rollDiceBtn.disabled = true;
+      }
+
       roll3DDice();
     }
   });
