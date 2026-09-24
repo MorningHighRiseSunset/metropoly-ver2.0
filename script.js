@@ -2520,7 +2520,6 @@ function launchCasinoGame(gameType, tile) {
   `;
   
   const gamePaths = {
-    'baccarat': 'Baccarat/baccarat-display.html',
     'blackjack': 'Blackjack/blackjack.html',
     'poker': 'PokerFP/poker.html',
     'roulette': 'Roulette/index.html'
@@ -2562,10 +2561,7 @@ function launchCasinoGame(gameType, tile) {
       
       // Initialize the minigame with player's balance
       console.log(`[CASINO DEBUG] Attempting to initialize ${gameType} minigame with balance: ${currentPlayer.money}`);
-      if (gameType === 'baccarat' && iframeWindow.initBaccaratMinigame) {
-        console.log(`[CASINO DEBUG] Found initBaccaratMinigame function`);
-        iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
-      } else if (gameType === 'blackjack' && iframeWindow.initBlackjackMinigame) {
+      if (gameType === 'blackjack' && iframeWindow.initBlackjackMinigame) {
         console.log(`[CASINO DEBUG] Found initBlackjackMinigame function`);
         iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'poker' && iframeWindow.initPokerMinigame) {
