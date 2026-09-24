@@ -1,0 +1,22 @@
+{
+  "name": "metropoly-ver2.0",
+  "version": "1.0.0",
+  "description": "Vegas Metropoly - 3D Board Game",
+  "main": "script.js",
+  "scripts": {
+    "dev": "npx serve .",
+    "lint": "echo 'No linter configured yet'",
+    "test": "echo 'No tests configured yet'"
+  },
+  "keywords": [
+    "monopoly",
+    "game",
+    "3d",
+    "threejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
