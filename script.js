@@ -816,9 +816,9 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      // Return camera to original position
-      threeCamera.position.copy(originalCameraPos);
-      threeCamera.lookAt(originalCameraLook);
+      // Return camera to top-down view
+      threeCamera.position.set(0, 7, 0);
+      threeCamera.lookAt(0, 0, 0);
       orbitControls.enabled = true;
       
       // Done - switch to idle
@@ -2252,7 +2252,7 @@ const communityChestCards = [
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
   { message: "Holiday fund matures - Collect $100", action: "gain_money", amount: 100 },
-  { message: "Income tax refund - Collect $20", action: "gain_money", amount: 20 },
+  { message: "Income tax refund - Collect $480", action: "gain_money", amount: 480 },
   { message: "It is your birthday - Collect $10 from each player", action: "collect_from_players", amount: 10 },
   { message: "Life insurance matures - Collect $100", action: "gain_money", amount: 100 },
   { message: "Pay hospital fees of $100", action: "pay_fine", amount: 100 },
