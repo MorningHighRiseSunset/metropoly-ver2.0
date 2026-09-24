@@ -3060,20 +3060,42 @@ function endTurn() {
       rollDiceBtn.disabled = true;
     }
 
+    // Set flag to prevent multiple AI rolls
+    window.aiRollScheduled = true;
+
     setTimeout(() => {
+      // Double-check it's still the AI's turn before rolling
+      const currentPlayerCheck = gameState.players[gameState.currentPlayerIndex];
+      if (!currentPlayerCheck || !currentPlayerCheck.isAI) {
+        console.log('AI turn cancelled - no longer AI\'s turn');
+        window.aiRollScheduled = false;
+        return;
+      }
+
       console.log(`AI ${nextPlayer.name} attempting to roll - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}, physicsWorld: ${!!physicsWorld}, diceBody1: ${!!diceBody1}, diceBody2: ${!!diceBody2}`);
       if (diceLoaded && !isRolling && physicsWorld && diceBody1 && diceBody2) {
+        window.aiRollScheduled = false;
         roll3DDice();
       } else {
         console.log('Dice not ready yet, retrying in 1 second...');
         setTimeout(() => {
+          // Triple-check it's still the AI's turn
+          const currentPlayerCheck2 = gameState.players[gameState.currentPlayerIndex];
+          if (!currentPlayerCheck2 || !currentPlayerCheck2.isAI) {
+            console.log('AI retry cancelled - no longer AI\'s turn');
+            window.aiRollScheduled = false;
+            return;
+          }
+
           console.log(`AI ${nextPlayer.name} retry - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}`);
           if (diceLoaded && !isRolling && physicsWorld && diceBody1 && diceBody2) {
+            window.aiRollScheduled = false;
             roll3DDice();
           } else {
             console.log('Dice still not ready, forcing roll anyway');
             // Force roll anyway to prevent softlock
             isRolling = false;
+            window.aiRollScheduled = false;
             roll3DDice();
           }
         }, 1000);
