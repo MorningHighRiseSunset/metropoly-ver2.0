@@ -407,10 +407,11 @@ function updatePropertiesList() {
   if (!myProperties) return;
   myProperties.innerHTML = '';
   
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  if (!currentPlayer || !currentPlayer.properties) return;
+  // Find the human player (not the current player, which could be AI)
+  const humanPlayer = gameState.players.find(p => p.isHuman);
+  if (!humanPlayer || !humanPlayer.properties) return;
   
-  currentPlayer.properties.forEach(propertyPosition => {
+  humanPlayer.properties.forEach(propertyPosition => {
     const tile = boardConfig.find(t => t.position === propertyPosition);
     if (!tile) return;
     
@@ -809,6 +810,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
       orbitControls.enabled = false;
       threeCamera.position.set(tokenData.model.position.x, tokenData.model.position.y + 0.3, tokenData.model.position.z + 0.1);
       threeCamera.lookAt(tokenData.model.position);
+      threeCamera.updateProjectionMatrix();
     }
     
     if (progress < 1) {
@@ -1247,7 +1249,7 @@ function create3DBoard() {
     { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 192, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
     { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
-    { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'electric_company.jpg', address: '', rent: [] },
+    { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg', address: '', rent: [] },
     { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155], disableCasino: true },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
@@ -1263,7 +1265,7 @@ function create3DBoard() {
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'water_works.jpg', address: '', rent: [] },
+    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png', address: '', rent: [] },
     { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
     { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
@@ -2189,7 +2191,7 @@ function handleLanding(player, position) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
         endTurn();
       } else {
-        endTurn();
+        showOwnedPropertyUI(tile);
       }
     }
   } else if (tile.type === 'tax') {
@@ -2770,6 +2772,14 @@ function showOwnedPropertyUI(tile) {
   // Disable videos for casino minigames (except Baccarat which has no videos anyway)
   const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
   
+  // Play horse sound for Horseback Riding property
+  let horseSound = null;
+  if (tile.name === 'Horseback Riding') {
+    horseSound = new Audio('Videos/pwlpl-horses-galloping-sound-effect-359257.mp3');
+    horseSound.play().catch(e => console.log('Horse sound play error:', e));
+    window.currentHorseSound = horseSound;
+  }
+  
   if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
@@ -2780,7 +2790,7 @@ function showOwnedPropertyUI(tile) {
       if (tile.image) {
         propertyVideo.style.display = 'none';
         const img = document.createElement('img');
-        img.src = `Images/${tile.image}`;
+        img.src = tile.image;
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.objectFit = 'cover';
@@ -2804,11 +2814,21 @@ function showOwnedPropertyUI(tile) {
     // Show image if no videos or if it's a casino minigame
     propertyVideo.style.display = 'none';
     const img = document.createElement('img');
-    img.src = `Images/${tile.image}`;
+    img.src = tile.image;
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
     img.id = 'propertyImageFallback';
+    img.onerror = function() {
+      console.log(`Failed to load image: ${tile.image}, using fallback`);
+      this.style.display = 'none';
+      // Use generic image fallback from repository
+      const fallback = document.createElement('img');
+      fallback.src = 'Images/images_generic.jpg';
+      fallback.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      fallback.id = 'propertyImageFallback';
+      propertyVideoContainer.appendChild(fallback);
+    };
     propertyVideoContainer.appendChild(img);
   } else {
     propertyVideo.src = '';
@@ -2825,6 +2845,13 @@ function showOwnedPropertyUI(tile) {
     propertyVideo.src = ''; // Clear the video source to prevent playback
     propertyVideo.load(); // Reload to clear any buffered data
     propertyVideo.style.display = 'block';
+    
+    // Stop horse sound if playing
+    if (window.currentHorseSound) {
+      window.currentHorseSound.pause();
+      window.currentHorseSound.currentTime = 0;
+      window.currentHorseSound = null;
+    }
     
     // Remove any image fallback
     const imageFallback = document.getElementById('propertyImageFallback');
@@ -2865,6 +2892,14 @@ function showPropertyPurchaseUI(tile, player) {
   // Disable videos for casino minigames (except Baccarat which has no videos anyway)
   const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
   
+  // Play horse sound for Horseback Riding property
+  let horseSound = null;
+  if (tile.name === 'Horseback Riding') {
+    horseSound = new Audio('Videos/pwlpl-horses-galloping-sound-effect-359257.mp3');
+    horseSound.play().catch(e => console.log('Horse sound play error:', e));
+    window.currentHorseSound = horseSound;
+  }
+  
   if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
     const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
     propertyVideo.src = randomVideo;
@@ -2875,7 +2910,7 @@ function showPropertyPurchaseUI(tile, player) {
       if (tile.image) {
         propertyVideo.style.display = 'none';
         const img = document.createElement('img');
-        img.src = `Images/${tile.image}`;
+        img.src = tile.image;
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.objectFit = 'cover';
@@ -2899,11 +2934,21 @@ function showPropertyPurchaseUI(tile, player) {
     // Show image if no videos or if it's a casino minigame
     propertyVideo.style.display = 'none';
     const img = document.createElement('img');
-    img.src = `Images/${tile.image}`;
+    img.src = tile.image;
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
     img.id = 'propertyImageFallback';
+    img.onerror = function() {
+      console.log(`Failed to load image: ${tile.image}, using fallback`);
+      this.style.display = 'none';
+      // Use generic image fallback from repository
+      const fallback = document.createElement('img');
+      fallback.src = 'Images/images_generic.jpg';
+      fallback.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      fallback.id = 'propertyImageFallback';
+      propertyVideoContainer.appendChild(fallback);
+    };
     propertyVideoContainer.appendChild(img);
   } else {
     propertyVideo.src = '';
@@ -2934,6 +2979,13 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
   
+  // Stop horse sound if playing
+  if (window.currentHorseSound) {
+    window.currentHorseSound.pause();
+    window.currentHorseSound.currentTime = 0;
+    window.currentHorseSound = null;
+  }
+  
   // Remove any image fallback
   const imageFallback = document.getElementById('propertyImageFallback');
   if (imageFallback) {
@@ -2962,6 +3014,13 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   propertyVideo.src = ''; // Clear the video source to prevent playback
   propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
+  
+  // Stop horse sound if playing
+  if (window.currentHorseSound) {
+    window.currentHorseSound.pause();
+    window.currentHorseSound.currentTime = 0;
+    window.currentHorseSound = null;
+  }
   
   // Remove any image fallback
   const imageFallback = document.getElementById('propertyImageFallback');

@@ -225,7 +225,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      gap: 4px;
     }
 
     .bet-slider-container label {
@@ -415,10 +416,9 @@
     <div class="controls">
       <div class="bet-controls">
         <div class="bet-slider-container">
-          <label>BET AMOUNT</label>
+          <label>BET AMOUNT: <span id="bet-display">5</span></label>
           <input type="range" id="bet-slider" class="bet-slider" min="5" max="1000" value="5" step="5">
         </div>
-        <div>BET <span id="bet-display">5</span></div>
       </div>
 
       <button class="spin-btn" id="spin-btn">SPIN</button>

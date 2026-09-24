@@ -249,7 +249,10 @@ function load(){
     if(Array.isArray(parsed.road)) state.road=parsed.road.slice(-48);
   }catch{}
 }
-function persist(){ localStorage.setItem(SAVE_KEY, JSON.stringify({bankroll:state.bankroll, road:state.road})); }
+function persist(){ 
+  localStorage.setItem(SAVE_KEY, JSON.stringify({bankroll:state.bankroll, road:state.road})); 
+  syncBalanceToParent();
+}
 
 function totalByKind(kind){
   let sum=0;
@@ -274,8 +277,9 @@ function clearBets(){
   if(state.phase!=="betting") return;
   const returned=Object.values(state.bets).reduce((s,n)=>s+(n??0),0);
   state.bets={}; state.bankroll+=returned; state.message="Bets cleared."; render();
+  syncBalanceToParent();
 }
-function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.message="New eight-deck shoe."; render(); }
+function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.message="New eight-deck shoe."; render(); syncBalanceToParent(); }
 function addFunds(){ state.bankroll+=STARTING; persist(); state.message=`Marker for $${STARTING} accepted.`; render(); }
 
 async function deal(){
@@ -312,6 +316,7 @@ async function deal(){
     : outcome==="banker" ? `Banker ${b} — Player ${p}. Banker wins (5% commission).`
     : `Tie ${p}. Player and Banker stakes returned. Tie pays 9 for 1.`;
   render();
+  syncBalanceToParent();
   await sleep(900);
   state.phase="betting"; state.bets={}; render();
 }
@@ -369,20 +374,6 @@ function drawFelt(){
   PLAYER_SECTORS.forEach(s=>addSector(svg,s,locked));
   BANKER_SECTORS.forEach(s=>addSector(svg,s,locked));
   addSector(svg, TIE_SECTOR, locked);
-  for(const box of [CENTER.player, CENTER.banker]){
-    const kind=box.id.startsWith("player")?"player":"banker";
-    const rect=svgNS("rect");
-    rect.setAttribute("x", box.x); rect.setAttribute("y", box.y);
-    rect.setAttribute("width", box.w); rect.setAttribute("height", box.h);
-    rect.setAttribute("rx","6"); rect.setAttribute("class","bet-spot");
-    const amt=state.bets[box.id];
-    const won=state.outcome===kind;
-    rect.setAttribute("fill", won?"rgba(201,162,39,0.28)": amt ? (kind==="player"?"rgba(196,30,58,0.28)":"rgba(212,175,55,0.24)") : "transparent");
-    rect.style.cursor=locked?"default":"pointer";
-    rect.addEventListener("click",()=>{ if(!locked) place(box.id); });
-    svg.appendChild(rect);
-    if(amt) chipForeign(svg, box.x+box.w/2, box.y+box.h/2, amt);
-  }
 }
 
 function renderCards(el, cards){
@@ -411,6 +402,9 @@ function render(){
   const pt=document.getElementById("playerTotal"), bt=document.getElementById("bankerTotal");
   if(state.playerHand.length){ pt.hidden=false; pt.textContent="Player "+handTotal(state.playerHand); } else pt.hidden=true;
   if(state.bankerHand.length){ bt.hidden=false; bt.textContent="Banker "+handTotal(state.bankerHand); } else bt.hidden=true;
+  
+  // Sync balance to parent window
+  syncBalanceToParent();
   const road=document.getElementById("road");
   road.replaceChildren();
   for(let i=0;i<48;i++){
@@ -441,6 +435,67 @@ document.getElementById("deal").addEventListener("click",()=>void deal());
 document.getElementById("clear").addEventListener("click", clearBets);
 document.getElementById("shoe").addEventListener("click", newShoe);
 document.getElementById("marker").addEventListener("click", addFunds);
+
+// Initialize function for main game integration
+window.initBaccaratMinigame = function(container, initialBalance, balanceCallback) {
+    console.log('[BACCARAT DEBUG] ===== INITIALIZING BACCARAT MINIGAME =====');
+    console.log('[BACCARAT DEBUG] Initial balance received:', initialBalance);
+    console.log('[BACCARAT DEBUG] Balance callback received:', balanceCallback);
+    
+    state.bankroll = initialBalance || 0;
+    console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
+    
+    render();
+
+    // Listen for balance from parent window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'SET_BALANCE') {
+            console.log('[BACCARAT DEBUG] Received SET_BALANCE message:', event.data.balance);
+            state.bankroll = event.data.balance;
+            console.log('[BACCARAT DEBUG] Updated state.bankroll to:', state.bankroll);
+            render();
+        }
+    });
+
+    // Expose balance for parent window
+    window.__casinoBalance = state.bankroll;
+    window.playerBalance = state.bankroll;
+    console.log('[BACCARAT DEBUG] Exposed balance variables:', window.__casinoBalance, window.playerBalance);
+
+    // Store callback for balance sync
+    window.balanceCallback = balanceCallback;
+    console.log('[BACCARAT DEBUG] Baccarat minigame initialized successfully');
+};
+
+// Balance sync with parent window
+function syncBalanceToParent() {
+    try {
+        console.log('[BACCARAT DEBUG] ===== SYNC BALANCE TO PARENT =====');
+        console.log('[BACCARAT DEBUG] Current state.bankroll:', state.bankroll);
+        
+        // Update local balance variables first
+        window.__casinoBalance = state.bankroll;
+        window.playerBalance = state.bankroll;
+        console.log('[BACCARAT DEBUG] Updated exposed balance variables');
+        
+        // Use the callback if available (preferred method)
+        if (window.balanceCallback && typeof window.balanceCallback === 'function') {
+            console.log('[BACCARAT DEBUG] Calling balanceCallback with:', state.bankroll);
+            window.balanceCallback(state.bankroll);
+        } else {
+            console.log('[BACCARAT DEBUG] No balanceCallback available');
+        }
+        
+        // Also try postMessage as fallback
+        if (window.parent && window.parent !== window) {
+            console.log('[BACCARAT DEBUG] Sending postMessage BALANCE_UPDATE');
+            window.parent.postMessage({ type: 'BALANCE_UPDATE', balance: state.bankroll }, '*');
+        }
+    } catch (e) {
+        console.error('[BACCARAT DEBUG] Baccarat balance sync error:', e);
+    }
+}
+
 load();
 render();
 
