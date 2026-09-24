@@ -2207,10 +2207,15 @@ function handleLanding(player, position) {
     if (!player.isAI) {
       showCardUI(tile);
     } else {
-      // AI automatically accepts
-      console.log(`AI ${player.name} drew a ${tile.type} card`);
-      addAIMove(player.name, `landed on ${tile.type === 'chance' ? 'Chance' : 'Community Chest'}`);
-      endTurn();
+      // AI draws and executes a random card
+      const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
+      const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
+      
+      console.log(`AI ${player.name} drew a ${tile.type} card: ${randomCard.message}`);
+      addAIMove(player.name, `drew ${tile.type === 'chance' ? 'Chance' : 'Community Chest'} card`);
+      
+      // Execute card action for AI
+      executeCardAction(randomCard, player);
     }
   } else {
     // Other tile types (corners)
@@ -2218,11 +2223,173 @@ function handleLanding(player, position) {
   }
 }
 
+// Chance and Community Chest card decks
+const chanceCards = [
+  { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
+  { message: "Advance to Las Vegas Grand Prix", action: "advance_to", position: 3 },
+  { message: "Advance to Bellagio - If you pass Go, collect $200", action: "advance_to", position: 15 },
+  { message: "Advance to The Cosmopolitan - If you pass Go, collect $200", action: "advance_to", position: 36 },
+  { message: "Bank pays you dividend of $50", action: "gain_money", amount: 50 },
+  { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
+  { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
+  { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
+  { message: "Make general repairs on all your property - $25 per house", action: "pay_repairs", amount: 25 },
+  { message: "Speeding fine $15", action: "pay_fine", amount: 15 },
+  { message: "Take a trip to Reading Railroad - If you pass Go, collect $200", action: "advance_to", position: 5 },
+  { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 14 },
+  { message: "You have been elected Chairman of the Board - Pay each player $50", action: "pay_players", amount: 50 },
+  { message: "Your building loan matures - Collect $150", action: "gain_money", amount: 150 },
+  { message: "You have won a crossword competition - Collect $100", action: "gain_money", amount: 100 }
+];
+
+const communityChestCards = [
+  { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
+  { message: "Bank error in your favor - Collect $200", action: "gain_money", amount: 200 },
+  { message: "Doctor's fee - Pay $50", action: "pay_fine", amount: 50 },
+  { message: "From sale of stock you get $50", action: "gain_money", amount: 50 },
+  { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
+  { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
+  { message: "Holiday fund matures - Collect $100", action: "gain_money", amount: 100 },
+  { message: "Income tax refund - Collect $20", action: "gain_money", amount: 20 },
+  { message: "It is your birthday - Collect $10 from each player", action: "collect_from_players", amount: 10 },
+  { message: "Life insurance matures - Collect $100", action: "gain_money", amount: 100 },
+  { message: "Pay hospital fees of $100", action: "pay_fine", amount: 100 },
+  { message: "Pay school fees of $50", action: "pay_fine", amount: 50 },
+  { message: "Receive $25 consultancy fee", action: "gain_money", amount: 25 },
+  { message: "You are assessed for street repairs - $40 per house, $115 per hotel", action: "pay_repairs", amount: 40 },
+  { message: "You have won second prize in a beauty contest - Collect $10", action: "gain_money", amount: 10 },
+  { message: "You inherit $100", action: "gain_money", amount: 100 }
+];
+
+// Execute card action (for AI players)
+function executeCardAction(card, player) {
+  const action = card.action;
+  const amount = card.amount || 0;
+  const position = card.position || 0;
+  const spaces = card.spaces || 0;
+  
+  switch (action) {
+    case 'advance_to_go':
+      if (player.position !== 0) {
+        player.money += 200;
+        updatePlayerMoney();
+        addAIMove(player.name, 'advanced to GO and collected $200');
+      }
+      endTurn();
+      break;
+      
+    case 'advance_to':
+      const oldPosition = player.position;
+      let newPosition = position;
+      
+      // Skip Baccarat property (position 13) - move to position 14 instead
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      if (newPosition === 13) {
+        console.log('AI Card: Skipping Baccarat property (position 13), moving to position 14');
+        newPosition = 14;
+      }
+      
+      if (newPosition < oldPosition) {
+        player.money += 200;
+        updatePlayerMoney();
+        addAIMove(player.name, 'passed GO and collected $200');
+      }
+      
+      player.position = newPosition;
+      addAIMove(player.name, `advanced to position ${newPosition}`);
+      handleLanding(player, newPosition);
+      break;
+      
+    case 'gain_money':
+      player.money += amount;
+      updatePlayerMoney();
+      addAIMove(player.name, `gained $${amount} from card`);
+      endTurn();
+      break;
+      
+    case 'pay_fine':
+      player.money -= amount;
+      updatePlayerMoney();
+      checkGameEnd();
+      addAIMove(player.name, `paid $${amount} fine from card`);
+      endTurn();
+      break;
+      
+    case 'go_to_jail':
+      player.position = 10;
+      player.isInJail = true;
+      player.jailTurns = 0;
+      addAIMove(player.name, 'sent to Jail');
+      endTurn();
+      break;
+      
+    case 'go_back':
+      let backPosition = (player.position - spaces + 40) % 40;
+      player.position = backPosition;
+      addAIMove(player.name, `went back ${spaces} spaces to position ${backPosition}`);
+      handleLanding(player, backPosition);
+      break;
+      
+    case 'get_out_of_jail':
+      addAIMove(player.name, 'got a Get Out of Jail Free card');
+      endTurn();
+      break;
+      
+    case 'pay_players':
+      gameState.players.forEach(otherPlayer => {
+        if (otherPlayer !== player) {
+          otherPlayer.money += amount;
+          player.money -= amount;
+        }
+      });
+      updatePlayerMoney();
+      updatePlayersList();
+      checkGameEnd();
+      addAIMove(player.name, `paid $${amount} to each player`);
+      endTurn();
+      break;
+      
+    case 'collect_from_players':
+      gameState.players.forEach(otherPlayer => {
+        if (otherPlayer !== player) {
+          otherPlayer.money -= amount;
+          player.money += amount;
+        }
+      });
+      updatePlayerMoney();
+      updatePlayersList();
+      checkGameEnd();
+      addAIMove(player.name, `collected $${amount} from each player`);
+      endTurn();
+      break;
+      
+    case 'pay_repairs':
+      player.money -= amount;
+      updatePlayerMoney();
+      checkGameEnd();
+      addAIMove(player.name, `paid $${amount} for repairs`);
+      endTurn();
+      break;
+      
+    default:
+      endTurn();
+  }
+}
+
 // Show chance/community card UI
 function showCardUI(tile) {
+  const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
+  const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
+  
   document.getElementById('cardTitle').textContent = tile.type === 'chance' ? 'Chance' : 'Community Chest';
-  document.getElementById('cardMessage').textContent = 'You drew a card!';
+  document.getElementById('cardMessage').textContent = randomCard.message;
   document.getElementById('cardOverlay').style.display = 'flex';
+  
+  // Store the card action for when OK is clicked
+  document.getElementById('cardOverlay').dataset.cardAction = randomCard.action;
+  document.getElementById('cardOverlay').dataset.cardAmount = randomCard.amount || 0;
+  document.getElementById('cardOverlay').dataset.cardPosition = randomCard.position || 0;
+  document.getElementById('cardOverlay').dataset.cardSpaces = randomCard.spaces || 0;
 
   // Disable roll dice button while card UI is open
   if (rollDiceBtn) {
@@ -2460,8 +2627,137 @@ function launchCasinoGame(gameType, tile) {
 
 // Card OK button handler
 document.getElementById('cardOkBtn').addEventListener('click', () => {
-  document.getElementById('cardOverlay').style.display = 'none';
-  endTurn();
+  const cardOverlay = document.getElementById('cardOverlay');
+  const action = cardOverlay.dataset.cardAction;
+  const amount = parseInt(cardOverlay.dataset.cardAmount) || 0;
+  const position = parseInt(cardOverlay.dataset.cardPosition) || 0;
+  const spaces = parseInt(cardOverlay.dataset.cardSpaces) || 0;
+  
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  
+  cardOverlay.style.display = 'none';
+  
+  // Execute card action
+  switch (action) {
+    case 'advance_to_go':
+      // Move to position 0 (GO) and collect $200
+      if (currentPlayer.position !== 0) {
+        currentPlayer.money += 200;
+        updatePlayerMoney();
+        console.log(`${currentPlayer.name} advanced to GO and collected $200`);
+      }
+      endTurn();
+      break;
+      
+    case 'advance_to':
+      // Move to specific position
+      const oldPosition = currentPlayer.position;
+      let newPosition = position;
+      
+      // Skip Baccarat property (position 13) - move to position 14 instead
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      if (newPosition === 13) {
+        console.log('Card: Skipping Baccarat property (position 13), moving to position 14');
+        newPosition = 14;
+      }
+      
+      // Check if passed GO
+      if (newPosition < oldPosition) {
+        currentPlayer.money += 200;
+        updatePlayerMoney();
+        console.log(`${currentPlayer.name} passed GO and collected $200`);
+      }
+      
+      switchAnimation(gameState.currentPlayerIndex, 'walk');
+      animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+        currentPlayer.position = newPosition;
+        handleLanding(currentPlayer, newPosition);
+      });
+      break;
+      
+    case 'gain_money':
+      currentPlayer.money += amount;
+      updatePlayerMoney();
+      console.log(`${currentPlayer.name} gained $${amount} from card`);
+      endTurn();
+      break;
+      
+    case 'pay_fine':
+      currentPlayer.money -= amount;
+      updatePlayerMoney();
+      checkGameEnd();
+      console.log(`${currentPlayer.name} paid $${amount} fine from card`);
+      endTurn();
+      break;
+      
+    case 'go_to_jail':
+      // Send to jail
+      switchAnimation(gameState.currentPlayerIndex, 'walk');
+      animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, 10, () => {
+        currentPlayer.position = 10;
+        currentPlayer.isInJail = true;
+        currentPlayer.jailTurns = 0;
+        showJailUI('Go directly to Jail!');
+      });
+      break;
+      
+    case 'go_back':
+      let backPosition = (currentPlayer.position - spaces + 40) % 40;
+      switchAnimation(gameState.currentPlayerIndex, 'walk');
+      animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, backPosition, () => {
+        currentPlayer.position = backPosition;
+        handleLanding(currentPlayer, backPosition);
+      });
+      break;
+      
+    case 'get_out_of_jail':
+      // For now, just add a message (could implement jail-free card system later)
+      console.log(`${currentPlayer.name} got a Get Out of Jail Free card`);
+      endTurn();
+      break;
+      
+    case 'pay_players':
+      // Pay each other player
+      gameState.players.forEach(player => {
+        if (player !== currentPlayer) {
+          player.money += amount;
+          currentPlayer.money -= amount;
+        }
+      });
+      updatePlayerMoney();
+      updatePlayersList();
+      checkGameEnd();
+      console.log(`${currentPlayer.name} paid $${amount} to each player`);
+      endTurn();
+      break;
+      
+    case 'collect_from_players':
+      // Collect from each other player
+      gameState.players.forEach(player => {
+        if (player !== currentPlayer) {
+          player.money -= amount;
+          currentPlayer.money += amount;
+        }
+      });
+      updatePlayerMoney();
+      updatePlayersList();
+      checkGameEnd();
+      console.log(`${currentPlayer.name} collected $${amount} from each player`);
+      endTurn();
+      break;
+      
+    case 'pay_repairs':
+      // Simplified - just pay a fixed amount
+      currentPlayer.money -= amount;
+      updatePlayerMoney();
+      checkGameEnd();
+      console.log(`${currentPlayer.name} paid $${amount} for repairs`);
+      endTurn();
+      break;
+      
+    default:
+      endTurn();
+  }
 });
 
 // Show owned property UI

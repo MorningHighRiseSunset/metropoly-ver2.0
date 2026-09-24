@@ -917,12 +917,18 @@ function evaluateHand(cards) {
     const kickers = groups.filter(g => g.c === 1).map(g => g.v).sort((a, b) => b - a).slice(0, 2);
     return { rank: 3, values: [groups[0].v, ...kickers], name: 'Three of a Kind' };
   }
-  if (groups[0].c === 2 && groups[1]?.c === 2) {
-    const hi = Math.max(groups[0].v, groups[1].v);
-    const lo = Math.min(groups[0].v, groups[1].v);
-    const kicker = groups.find(g => g.c === 1)?.v || 0;
+  
+  // Handle two pair - including case with 3 pairs (choose best 2)
+  const pairs = groups.filter(g => g.c === 2).sort((a, b) => b.v - a.v);
+  if (pairs.length >= 2) {
+    const hi = pairs[0].v;
+    const lo = pairs[1].v;
+    // Get the best kicker from remaining cards (single cards or lower pairs)
+    const remaining = groups.filter(g => g.c === 1 || (g.c === 2 && g.v !== hi && g.v !== lo));
+    const kicker = remaining.length > 0 ? remaining[0].v : 0;
     return { rank: 2, values: [hi, lo, kicker], name: 'Two Pair' };
   }
+  
   if (groups[0].c === 2) {
     const kickers = groups.filter(g => g.c === 1).map(g => g.v).sort((a, b) => b - a).slice(0, 3);
     return { rank: 1, values: [groups[0].v, ...kickers], name: 'One Pair' };
