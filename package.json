@@ -1,0 +1,29 @@
+{
+  "name": "metropoly-game",
+  "version": "1.0.0",
+  "description": "Metropoly - 3D Board Game",
+  "main": "index.html",
+  "scripts": {
+    "build:analytics": "esbuild analytics.js --bundle --outfile=dist/analytics.bundle.js --format=iife",
+    "build": "npm run build:analytics",
+    "dev": "npm run build && npx serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MorningHighRiseSunset/metropoly-ver2.0.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MorningHighRiseSunset/metropoly-ver2.0/issues"
+  },
+  "homepage": "https://github.com/MorningHighRiseSunset/metropoly-ver2.0#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
