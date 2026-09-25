@@ -1868,7 +1868,6 @@ function roll3DDice() {
 
       // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
       setTimeout(() => {
-        isRolling = false;
         diceModel1.visible = false;
         diceModel2.visible = false;
 
@@ -1964,9 +1963,12 @@ function roll3DDice() {
               currentPlayer.position = 10;
               currentPlayer.isInJail = true;
               currentPlayer.jailTurns = 0;
+              switchAnimation(gameState.currentPlayerIndex, 'idle');
               
-              // Show jail UI
-              showJailUI('You landed in jail!');
+              // Show jail UI, then end turn after video
+              showJailUI('You landed in jail!', () => {
+                endTurn();
+              });
             });
           } else {
             // Normal movement
@@ -2023,7 +2025,10 @@ function roll3DDice() {
           currentPlayer.position = 10;
           currentPlayer.isInJail = true;
           currentPlayer.jailTurns = 0;
-          showJailUI('You landed in jail!');
+          switchAnimation(gameState.currentPlayerIndex, 'idle');
+          showJailUI('You landed in jail!', () => {
+            endTurn();
+          });
         });
       } else {
         // Normal movement
@@ -2036,10 +2041,7 @@ function roll3DDice() {
         });
       }
 
-      // Re-enable roll dice button for human players
-      if (rollDiceBtn && currentPlayer && currentPlayer.isHuman && !currentPlayer.isInJail) {
-        rollDiceBtn.disabled = false;
-      }
+      // Roll button will be enabled by endTurn() when turn completes
     }
   }, 10000);
 }
@@ -2360,11 +2362,16 @@ function executeCardAction(card, player) {
       break;
       
     case 'go_to_jail':
-      player.position = 10;
-      player.isInJail = true;
-      player.jailTurns = 0;
-      addAIMove(player.name, 'sent to Jail');
-      endTurn();
+      // Animate movement to jail position
+      switchAnimation(playerIndex, 'walk');
+      animatePlayerMovement(playerIndex, player.position, 10, () => {
+        player.position = 10;
+        player.isInJail = true;
+        player.jailTurns = 0;
+        switchAnimation(playerIndex, 'idle');
+        addAIMove(player.name, 'sent to Jail');
+        endTurn();
+      });
       break;
       
     case 'go_back':
@@ -2442,7 +2449,21 @@ function showCardUI(tile) {
 }
 
 // Show jail UI with video
-function showJailUI(message) {
+function showJailUI(message, callback) {
+  // Don't show jail UI if another overlay is already open
+  const propertyOverlay = document.getElementById('propertyOverlay');
+  const jailPayOverlay = document.getElementById('jailPayOverlay');
+  if (propertyOverlay && propertyOverlay.style.display === 'flex') {
+    console.log('Skipping jail UI - property overlay is open');
+    if (callback) callback();
+    return;
+  }
+  if (jailPayOverlay && jailPayOverlay.style.display === 'flex') {
+    console.log('Skipping jail UI - jail pay overlay is open');
+    if (callback) callback();
+    return;
+  }
+
   document.getElementById('jailMessage').textContent = message;
 
   // Load and play random jail video
@@ -2454,13 +2475,16 @@ function showJailUI(message) {
     jailVideo.load();
     jailVideo.play().catch(e => console.log('Video play error:', e));
 
-    // Stop video and audio when it ends
+    // Stop video and audio when it ends, then call callback
     jailVideo.onended = function() {
       jailVideo.pause();
       jailVideo.currentTime = 0;
+      if (callback) callback();
     };
   } else {
     jailVideo.src = '';
+    // No video, call callback immediately
+    if (callback) callback();
   }
 
   document.getElementById('jailOverlay').style.display = 'flex';
@@ -2737,7 +2761,10 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         currentPlayer.position = 10;
         currentPlayer.isInJail = true;
         currentPlayer.jailTurns = 0;
-        showJailUI('Go directly to Jail!');
+        switchAnimation(gameState.currentPlayerIndex, 'idle');
+        showJailUI('Go directly to Jail!', () => {
+          endTurn();
+        });
       });
       break;
       
@@ -3076,6 +3103,9 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
 
 // End current turn and move to next player
 function endTurn() {
+  // Clear rolling state
+  isRolling = false;
+  
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 
