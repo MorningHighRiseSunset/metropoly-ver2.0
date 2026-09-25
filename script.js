@@ -2246,21 +2246,21 @@ const chanceCards = [
 
 const communityChestCards = [
   { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
-  { message: "Bank error in your favor - Collect $200", action: "gain_money", amount: 200 },
-  { message: "Doctor's fee - Pay $50", action: "pay_fine", amount: 50 },
-  { message: "From sale of stock you get $50", action: "gain_money", amount: 50 },
+  { message: "Bank error in your favor - Collect $400", action: "gain_money", amount: 400 },
+  { message: "Doctor's fee - Pay $200", action: "pay_fine", amount: 200 },
+  { message: "From sale of stock you get $300", action: "gain_money", amount: 300 },
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Holiday fund matures - Collect $100", action: "gain_money", amount: 100 },
+  { message: "Holiday fund matures - Collect $400", action: "gain_money", amount: 400 },
   { message: "Income tax refund - Collect $480", action: "gain_money", amount: 480 },
-  { message: "It is your birthday - Collect $10 from each player", action: "collect_from_players", amount: 10 },
-  { message: "Life insurance matures - Collect $100", action: "gain_money", amount: 100 },
-  { message: "Pay hospital fees of $100", action: "pay_fine", amount: 100 },
-  { message: "Pay school fees of $50", action: "pay_fine", amount: 50 },
-  { message: "Receive $25 consultancy fee", action: "gain_money", amount: 25 },
-  { message: "You are assessed for street repairs - $40 per house, $115 per hotel", action: "pay_repairs", amount: 40 },
-  { message: "You have won second prize in a beauty contest - Collect $10", action: "gain_money", amount: 10 },
-  { message: "You inherit $100", action: "gain_money", amount: 100 }
+  { message: "It is your birthday - Collect $50 from each player", action: "collect_from_players", amount: 50 },
+  { message: "Life insurance matures - Collect $400", action: "gain_money", amount: 400 },
+  { message: "Pay hospital fees of $300", action: "pay_fine", amount: 300 },
+  { message: "Pay school fees of $200", action: "pay_fine", amount: 200 },
+  { message: "Receive $200 consultancy fee", action: "gain_money", amount: 200 },
+  { message: "You are assessed for street repairs - $150 per house, $350 per hotel", action: "pay_repairs", amount: 150 },
+  { message: "You have won second prize in a beauty contest - Collect $100", action: "gain_money", amount: 100 },
+  { message: "You inherit $400", action: "gain_money", amount: 400 }
 ];
 
 // Execute card action (for AI players)
