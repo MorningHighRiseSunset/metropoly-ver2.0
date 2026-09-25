@@ -431,10 +431,10 @@ function updatePropertiesList() {
 // Update player money display
 function updatePlayerMoney() {
   if (!playerMoney) return;
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  if (currentPlayer) {
-    console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${currentPlayer.money || 2500}`);
-    playerMoney.textContent = `$${currentPlayer.money || 2500}`;
+  const humanPlayer = gameState.players.find(p => p.isHuman);
+  if (humanPlayer) {
+    console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money || 2500}`);
+    playerMoney.textContent = `$${humanPlayer.money || 2500}`;
   }
   
   // Check win/lose conditions
@@ -662,7 +662,7 @@ function loadWalkModel(player, index, baseModel) {
           const walkClip = clip.clone();
           walkClip.name = 'Walk';
           const walkAction = playerAnimations[index].mixer.clipAction(walkClip, baseModel);
-          walkAction.timeScale = 2.5; // Much faster walk animation
+          walkAction.timeScale = 3.0; // Faster walk animation
           playerAnimations[index].animations['Walk'] = walkAction;
         });
       }
@@ -696,15 +696,16 @@ function switchAnimation(playerIndex, animationType) {
   console.log(`Switching player ${playerIndex} to ${animationType}, action:`, newAction ? 'found' : 'NOT FOUND');
 
   if (newAction) {
-    // Stop all other actions to prevent conflicts
-    Object.keys(animData.animations).forEach(key => {
-      if (key !== targetAction && animData.animations[key]) {
-        animData.animations[key].stop();
-      }
-    });
+    // Cross-fade from current animation to new one to prevent T-pose
+    const currentAction = animData.animations[animData.currentAction];
     
-    // Play the new action
+    if (currentAction && animData.currentAction !== targetAction) {
+      currentAction.fadeOut(0.1); // Fade out over 100ms
+    }
+    
+    // Start new action with fade in
     newAction.reset();
+    newAction.fadeIn(0.1); // Fade in over 100ms
     newAction.play();
     animData.currentAction = targetAction;
   } else {
@@ -769,7 +770,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
     }
   }
   
-  const totalDuration = steps * 300; // 300ms per step for faster movement
+  const totalDuration = steps * 700; // 700ms per step for slower movement
   const startTime = Date.now();
   
   // Calculate initial direction
@@ -852,7 +853,8 @@ rollDiceBtn.addEventListener('click', () => {
 
   // Don't allow rolling if in jail (must pay first)
   if (currentPlayer.isInJail) {
-    console.log('Cannot roll - you are in jail');
+    console.log('Cannot roll - you are in jail, showing pay UI');
+    document.getElementById('jailPayOverlay').style.display = 'flex';
     return;
   }
 
@@ -1144,15 +1146,16 @@ function initThreeJS() {
   // Scene (no background)
   threeScene = new THREE.Scene();
 
-  // Camera - top-down view (zoomed in)
+  // Camera - top-down view (zoomed out)
   threeCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  threeCamera.position.set(0, 7, 0);
+  threeCamera.position.set(0, 9, 0);
   threeCamera.lookAt(0, 0, 0);
 
-  // Renderer
-  threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  // Renderer - optimized for performance
+  threeRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
   threeRenderer.setSize(window.innerWidth, window.innerHeight);
-  threeRenderer.shadowMap.enabled = true;
+  threeRenderer.shadowMap.enabled = false;
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
 
   const container = document.getElementById('three-container');
   if (container) {
@@ -1162,12 +1165,12 @@ function initThreeJS() {
     console.error('Three.js container not found');
   }
 
-  // Orbit controls - no rotation
+  // Orbit controls - allow rotation
   orbitControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
   orbitControls.enableDamping = true;
   orbitControls.dampingFactor = 0.05;
   orbitControls.enablePan = false;
-  orbitControls.enableRotate = false;
+  orbitControls.enableRotate = true;
   orbitControls.minDistance = 8;
   orbitControls.maxDistance = 20;
   orbitControls.target.set(0, 0, 0);
@@ -1261,7 +1264,7 @@ function create3DBoard() {
     { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
     { name: 'Chance', type: 'chance', position: 22, videos: [] },
     { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 192, position: 23, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%204.mp4'], address: '1700 Village Center Circle Las Vegas NV 89134', rent: [35, 71, 214, 638, 880, 1045] },
-    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], address: '', rent: [33, 66, 198, 594, 825, 990] },
+    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], model: 'Models/Ferris Wheel/countyfairferrisWheel.glb', address: '', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
@@ -1390,6 +1393,45 @@ function createTile(spaceData, row, col) {
     new THREE.LineBasicMaterial({ color: 0x5aa8ff, transparent: true, opacity: 0.28 })
   );
   group.add(edgeLines);
+
+  // Load 3D model if specified (for County Fair)
+  if (spaceData.model) {
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      spaceData.model,
+      (object) => {
+        const model = object.scene;
+        model.scale.set(0.02, 0.02, 0.02); // Make it very small
+        model.position.y = tileHeight / 2 + 0.2;
+        model.rotation.y = 0; // No rotation
+        group.add(model);
+        
+        // Add animation for spinning
+        if (object.animations && object.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(model);
+          const action = mixer.clipAction(object.animations[0]);
+          action.play();
+          action.setLoop(THREE.LoopRepeat);
+          
+          // Animate the mixer
+          const clock = new THREE.Clock();
+          function animateFerrisWheel() {
+            requestAnimationFrame(animateFerrisWheel);
+            mixer.update(clock.getDelta());
+          }
+          animateFerrisWheel();
+          
+          console.log(`Added spinning animation for ${spaceData.name}`);
+        }
+        
+        console.log(`Loaded 3D model for ${spaceData.name}`);
+      },
+      undefined,
+      (error) => {
+        console.error(`Error loading 3D model for ${spaceData.name}:`, error);
+      }
+    );
+  }
 
   return group;
 }
@@ -1725,10 +1767,10 @@ function animateThreeJS() {
     diceModel2.quaternion.copy(diceBody2.quaternion);
   }
 
-  // Update animation mixers
+  // Update animation mixers (only if needed)
   Object.values(playerAnimations).forEach(animData => {
-    if (animData.mixer) {
-      animData.mixer.update(0.016); // ~60fps
+    if (animData.mixer && animData.currentAction === 'Walk') {
+      animData.mixer.update(0.016); // Only update walk animations
     }
   });
 
@@ -1830,13 +1872,13 @@ function roll3DDice() {
         diceModel1.visible = false;
         diceModel2.visible = false;
 
-        // Re-enable roll dice button for human players
+        // Get dice results based on final rotation
         const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-        if (rollDiceBtn && currentPlayer && currentPlayer.isHuman && !currentPlayer.isInJail) {
-          rollDiceBtn.disabled = false;
+        if (!currentPlayer) {
+          console.error('Current player is undefined! gameState:', gameState);
+          return;
         }
 
-        // Get dice results based on final rotation
         const diceResult1 = getDiceResult(diceBody1);
         const diceResult2 = getDiceResult(diceBody2);
         let totalDice = diceResult1 + diceResult2;
@@ -2236,7 +2278,7 @@ const chanceCards = [
   { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
   { message: "Make general repairs on all your property - $25 per house", action: "pay_repairs", amount: 25 },
-  { message: "Speeding fine $15", action: "pay_fine", amount: 15 },
+  { message: "Speeding fine $150", action: "pay_fine", amount: 150 },
   { message: "Take a trip to Reading Railroad - If you pass Go, collect $200", action: "advance_to", position: 5 },
   { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 14 },
   { message: "You have been elected Chairman of the Board - Pay each player $50", action: "pay_players", amount: 50 },
@@ -2531,9 +2573,9 @@ function launchCasinoGame(gameType, tile) {
   console.log(`[CASINO DEBUG] Game path: ${gamePath}`);
   
   casinoOverlay.innerHTML = `
-    <div class="casino-container" style="width: 90%; height: 90%; max-width: 1200px; position: relative;">
-      <button id="closeCasinoBtn" style="position: absolute; top: 10px; right: 10px; z-index: 10; padding: 10px 20px; background: #4a9eff; border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 14px;">Close</button>
-      <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 12px;"></iframe>
+    <div class="casino-container" style="width: 95%; height: 95%; max-width: 1400px; position: relative;">
+      <button id="closeCasinoBtn" style="position: absolute; top: 10px; right: 10px; z-index: 10; padding: 10px 20px; background: #4a9eff; border: none; border-radius: 0; color: white; cursor: pointer; font-size: 14px;">Close</button>
+      <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 0;"></iframe>
     </div>
   `;
   
@@ -3041,24 +3083,17 @@ function endTurn() {
   updatePlayersList();
   updatePlayerMoney();
 
-  // Enable/disable roll dice button based on whose turn it is
-  const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+  // Always disable roll dice button initially (will be enabled when ready)
   if (rollDiceBtn) {
-    if (nextPlayer && nextPlayer.isHuman && !nextPlayer.isInJail) {
-      rollDiceBtn.disabled = false;
-    } else {
-      rollDiceBtn.disabled = true;
-    }
+    rollDiceBtn.disabled = true;
   }
+
+  // Get next player
+  const nextPlayer = gameState.players[gameState.currentPlayerIndex];
 
   // If next player is AI, auto-roll
   if (nextPlayer && nextPlayer.isAI) {
     console.log(`Next player is AI: ${nextPlayer.name}, will roll in 2 seconds`);
-
-    // Disable roll dice button during AI turn
-    if (rollDiceBtn) {
-      rollDiceBtn.disabled = true;
-    }
 
     // Set flag to prevent multiple AI rolls
     window.aiRollScheduled = true;
@@ -3102,12 +3137,15 @@ function endTurn() {
       }
     }, 2000);
   } else if (nextPlayer && nextPlayer.isInJail) {
-    // Show jail pay UI for human player in jail
-    document.getElementById('jailPayOverlay').style.display = 'flex';
-
-    // Disable roll dice button while in jail
+    // Don't show jail pay UI immediately - wait until player tries to roll
+    // Keep roll dice button disabled until they click it
     if (rollDiceBtn) {
       rollDiceBtn.disabled = true;
+    }
+  } else if (nextPlayer && nextPlayer.isHuman) {
+    // Enable roll dice button for human player
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = false;
     }
   }
 }

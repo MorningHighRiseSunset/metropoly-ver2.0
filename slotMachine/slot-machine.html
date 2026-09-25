@@ -507,8 +507,8 @@
       balanceEl.textContent = balance;
       betDisplay.textContent = bet;
 
-      // Update slider max based on balance (max 1k)
-      const maxBet = Math.min(1000, Math.max(5, balance));
+      // Update slider max based on balance (no cap)
+      const maxBet = Math.max(5, balance);
       betSlider.max = maxBet;
 
       // Ensure bet doesn't exceed max or balance

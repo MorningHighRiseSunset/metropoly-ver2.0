@@ -461,7 +461,7 @@
         </div>
         <div class="bet-slider-container">
           <label>Bet Amount: <span id="bet-display">$100</span></label>
-          <input type="range" id="bet-slider" min="1" max="10000" value="100" step="1">
+          <input type="range" id="bet-slider" min="1" max="1000" value="100" step="1">
         </div>
         <div class="actions">
           <button class="action-btn" id="clearBtn">Clear Bets</button>
@@ -527,6 +527,7 @@
 
       // Update UI with new balance
       updateUI();
+      updateSliderLimits();
       console.log('[ROULETTE DEBUG] Roulette initialized successfully');
     };
 

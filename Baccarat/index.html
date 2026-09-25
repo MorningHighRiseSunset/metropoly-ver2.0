@@ -152,7 +152,7 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
         <button class="ghost" id="shoe">New shoe</button>
         <button class="marker" id="marker" hidden>Take $1,000 marker</button>
       </div>
-      <p class="help">Tap a Player box, Banker box, or the 9-for-1 Tie. Player even money. Banker pays 0.95 after 5% commission.</p>
+      <p class="help">Place bets on Player (position 4) or Banker (position 4). Player pays even money. Banker pays 0.95 after 5% commission. Tie pays 9 for 1.</p>
     </aside>
   </main>
 </div>
@@ -192,11 +192,11 @@ const BANKER_SLICES = splitRange(32,148,7,1.15);
 const PLAYER_SECTORS = PLAYER_SLICES.map((slice,i)=>{
   const seat=i+1, p=polar((PLAYER_R0+PLAYER_R1)/2, slice.mid);
   return {id:`player-${seat}`, kind:"player", seat, d:annularSector(PLAYER_R0,PLAYER_R1,slice.start,slice.end), x:p.x, y:p.y};
-});
+}).filter(s => s.id === "player-4"); // Only keep player-4
 const BANKER_SECTORS = BANKER_SLICES.map((slice,i)=>{
   const seat=i+1, p=polar((BANKER_R0+BANKER_R1)/2, slice.mid);
   return {id:`banker-${seat}`, kind:"banker", seat, d:annularSector(BANKER_R0,BANKER_R1,slice.start,slice.end), x:p.x, y:p.y};
-});
+}).filter(s => s.id === "banker-4"); // Only keep banker-4
 const TIE_SECTOR = (()=>{ const p=polar((TIE_R0+TIE_R1)/2,90); return {id:"tie",kind:"tie",d:annularSector(TIE_R0,TIE_R1,48,132),x:p.x,y:p.y}; })();
 
 function isRed(suit){ return suit==="hearts"||suit==="diamonds"; }
@@ -232,7 +232,7 @@ function sleep(ms){
   if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return Promise.resolve();
   return new Promise(r=>setTimeout(r,ms));
 }
-function money(n){ return "$"+Number(n).toLocaleString(); }
+function money(n){ return "$"+Math.round(n).toLocaleString(); }
 function chipForAmount(amount){ return [...CHIP_VALUES].reverse().find(v=>amount>=v)??5; }
 
 const state = {
@@ -259,14 +259,20 @@ function totalByKind(kind){
   for(const [id,amt] of Object.entries(state.bets)){
     if(!amt) continue;
     if(kind==="tie" && id==="tie") sum+=amt;
-    else if(kind==="player" && id.startsWith("player")) sum+=amt;
-    else if(kind==="banker" && id.startsWith("banker")) sum+=amt;
+    else if(kind==="player" && id==="player-4") sum+=amt;
+    else if(kind==="banker" && id==="banker-4") sum+=amt;
   }
   return sum;
 }
 
 function place(spot){
   if(state.phase!=="betting") return;
+  // Only allow player-4, banker-4, and tie
+  if(spot!=="player-4" && spot!=="banker-4" && spot!=="tie"){
+    state.message="Only Player and Banker at position 4 are available.";
+    render();
+    return;
+  }
   if(state.bankroll<state.chip){ state.message="Not enough bankroll for that chip."; render(); return; }
   state.bets={...state.bets, [spot]:(state.bets[spot]??0)+state.chip};
   state.bankroll-=state.chip; state.message=""; state.outcome=null;
@@ -286,39 +292,53 @@ async function deal(){
   if(state.phase!=="betting") return;
   const playerBet=totalByKind("player"), bankerBet=totalByKind("banker"), tieBet=totalByKind("tie");
   if(playerBet+bankerBet+tieBet===0){ state.message="Put a wager on the felt first."; render(); return; }
-  state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; state.message="Cards out.";
+  state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; state.message="Dealing Player's first card...";
   render();
   let deck=state.shoe.slice();
   const draw=()=>{ if(deck.length<16) deck=makeShoe(); return deck.pop(); };
   const player=[], banker=[];
   player.push(draw()); state.playerHand=[...player]; state.shoe=deck; render(); await sleep(280);
+  state.message="Dealing Banker's first card..."; render(); await sleep(280);
   banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; render(); await sleep(280);
+  state.message="Dealing Player's second card..."; render(); await sleep(280);
   player.push(draw()); state.playerHand=[...player]; state.shoe=deck; render(); await sleep(280);
+  state.message="Dealing Banker's second card..."; render(); await sleep(280);
   banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; render(); await sleep(360);
   let p=handTotal(player), b=handTotal(banker);
+  state.message=`Player has ${p}, Banker has ${b}. Checking for draw...`; render(); await sleep(280);
   if(p<8 && b<8){
     let playerThird=null;
     if(shouldPlayerDraw(p)){
+      state.message="Player draws a third card..."; render(); await sleep(280);
       const card=draw(); player.push(card); playerThird=card.value;
       state.playerHand=[...player]; state.shoe=deck; p=handTotal(player); render(); await sleep(360);
     }
     if(shouldBankerDraw(b, playerThird)){
+      state.message="Banker draws a third card..."; render(); await sleep(280);
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; b=handTotal(banker); render(); await sleep(360);
     }
   }
   const outcome=decideWinner(p,b);
   const payout=settle(outcome, playerBet, bankerBet, tieBet);
+  const originalBet = playerBet + bankerBet + tieBet;
+  const netWinnings = payout - originalBet;
   state.bankroll+=payout;
   state.road=[...state.road, outcome].slice(-48);
   persist();
   state.phase="result"; state.outcome=outcome; state.shoe=deck;
-  state.message = outcome==="player" ? `Player ${p} — Banker ${b}. Player wins.`
-    : outcome==="banker" ? `Banker ${b} — Player ${p}. Banker wins (5% commission).`
-    : `Tie ${p}. Player and Banker stakes returned. Tie pays 9 for 1.`;
+  
+  if(outcome==="player"){
+    state.message = `🎉 PLAYER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
+  } else if(outcome==="banker"){
+    state.message = `🎉 BANKER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()} (5% commission applied)`;
+  } else {
+    state.message = `🎉 TIE! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
+  }
+  
   render();
   syncBalanceToParent();
-  await sleep(900);
-  state.phase="betting"; state.bets={}; render();
+  await sleep(2000);
+  state.phase="betting"; state.bets={}; state.message="Place your bets!"; render();
 }
 
 function svgNS(name){ return document.createElementNS("http://www.w3.org/2000/svg","svg"===name?"svg":name); }
@@ -443,6 +463,9 @@ window.initBaccaratMinigame = function(container, initialBalance, balanceCallbac
     console.log('[BACCARAT DEBUG] Balance callback received:', balanceCallback);
     
     state.bankroll = initialBalance || 0;
+    state.bets = {};
+    state.phase = "betting";
+    state.message = "Place your bets on Player or Banker!";
     console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
     
     render();
