@@ -2124,6 +2124,11 @@ function handleLanding(player, position) {
     player.isInJail = true;
     player.jailTurns = 0;
     switchAnimation(gameState.currentPlayerIndex, 'idle');
+    
+    if (player.isAI) {
+      addAIMove(player.name, 'sent to Jail');
+    }
+    
     showJailUI('You landed in jail!', () => {
       endTurn();
     });
@@ -2398,7 +2403,9 @@ function executeCardAction(card, player, playerIndex) {
         player.jailTurns = 0;
         switchAnimation(playerIndex, 'idle');
         addAIMove(player.name, 'sent to Jail');
-        endTurn();
+        showJailUI('Go directly to Jail!', () => {
+          endTurn();
+        });
       });
       break;
       
@@ -2483,6 +2490,8 @@ function showCardUI(tile) {
 
 // Show jail UI with video
 function showJailUI(message, callback) {
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  
   // Don't show jail UI if another overlay is already open
   const propertyOverlay = document.getElementById('propertyOverlay');
   const jailPayOverlay = document.getElementById('jailPayOverlay');
@@ -2498,6 +2507,14 @@ function showJailUI(message, callback) {
   }
 
   document.getElementById('jailMessage').textContent = message;
+
+  // Hide proceed button for AI players (spectate mode)
+  const jailProceedBtn = document.getElementById('jailProceedBtn');
+  if (currentPlayer && currentPlayer.isAI) {
+    jailProceedBtn.style.display = 'none';
+  } else {
+    jailProceedBtn.style.display = 'block';
+  }
 
   // Load and play random jail video
   const jailVideo = document.getElementById('jailVideo');
@@ -3229,6 +3246,14 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Jail UI handlers
   document.getElementById('jailProceedBtn').addEventListener('click', () => {
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    
+    // Only allow human to click proceed during their turn
+    if (currentPlayer && currentPlayer.isAI) {
+      console.log('Jail proceed blocked - it is AI\'s turn');
+      return;
+    }
+    
     document.getElementById('jailOverlay').style.display = 'none';
 
     // Stop jail video
