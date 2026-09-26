@@ -495,24 +495,13 @@ function showGameOver(winner, playerWon) {
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
         ${playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
       </p>
-      <button id="restartBtn" style="padding: 16px 48px; background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
+      <button id="restartBtn" onclick="location.reload()" style="padding: 16px 48px; background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
         Play Again
       </button>
     </div>
   `;
   
   document.body.appendChild(gameOverOverlay);
-  
-  // Add event listener to restart button
-  const restartBtn = document.getElementById('restartBtn');
-  if (restartBtn) {
-    restartBtn.addEventListener('click', () => {
-      console.log('Play Again button clicked, reloading page...');
-      location.reload();
-    });
-  } else {
-    console.error('Restart button not found!');
-  }
 }
 
 // Load 3D player tokens onto the board
@@ -2536,36 +2525,79 @@ function showJailUI(message, callback) {
 
   document.getElementById('jailMessage').textContent = message;
 
-  // Hide proceed button for AI players (spectate mode)
+  // Hide proceed button for AI players - make completely invisible and unclickable
   const jailProceedBtn = document.getElementById('jailProceedBtn');
   if (currentPlayer && currentPlayer.isAI) {
     jailProceedBtn.style.display = 'none';
+    jailProceedBtn.disabled = true;
+    jailProceedBtn.style.visibility = 'hidden';
+    jailProceedBtn.style.pointerEvents = 'none';
   } else {
     jailProceedBtn.style.display = 'block';
+    jailProceedBtn.disabled = false;
+    jailProceedBtn.style.visibility = 'visible';
+    jailProceedBtn.style.pointerEvents = 'auto';
   }
 
   // Load and play random jail video
   const jailVideo = document.getElementById('jailVideo');
   const jailTile = boardConfig.find(t => t.position === 10);
+  
   if (jailTile && jailTile.videos && jailTile.videos.length > 0) {
     const randomVideo = jailTile.videos[Math.floor(Math.random() * jailTile.videos.length)];
     jailVideo.src = randomVideo;
     jailVideo.load();
-    jailVideo.play().catch(e => console.log('Video play error:', e));
+    
+    let videoEnded = false;
 
-    // Stop video and audio when it ends, then call callback
-    jailVideo.onended = function() {
-      jailVideo.pause();
-      jailVideo.currentTime = 0;
-      if (callback) callback();
-    };
+    // For AI: auto-close when video ends
+    // For human: show overlay with proceed button, video plays in background
+    if (currentPlayer && currentPlayer.isAI) {
+      // AI: show overlay, play video, auto-close when done
+      document.getElementById('jailOverlay').style.display = 'flex';
+      jailVideo.play().catch(e => console.log('Video play error:', e));
+
+      jailVideo.onended = function() {
+        if (videoEnded) return;
+        videoEnded = true;
+        console.log('Jail video ended naturally');
+        jailVideo.pause();
+        jailVideo.currentTime = 0;
+        document.getElementById('jailOverlay').style.display = 'none';
+        if (callback) callback();
+      };
+
+      setTimeout(() => {
+        if (!videoEnded) {
+          console.log('Jail video fallback timeout (10s), closing overlay');
+          videoEnded = true;
+          jailVideo.pause();
+          jailVideo.currentTime = 0;
+          document.getElementById('jailOverlay').style.display = 'none';
+          if (callback) callback();
+        }
+      }, 10000); // Increased to 10 seconds
+    } else {
+      // Human: show overlay with proceed button, play video
+      document.getElementById('jailOverlay').style.display = 'flex';
+      jailVideo.play().catch(e => console.log('Video play error:', e));
+      
+      // For human, video ending doesn't auto-close - they must click proceed
+      jailVideo.onended = function() {
+        jailVideo.pause();
+        jailVideo.currentTime = 0;
+      };
+    }
   } else {
-    jailVideo.src = '';
-    // No video, call callback immediately
-    if (callback) callback();
+    // No video available
+    if (currentPlayer && currentPlayer.isAI) {
+      // AI: no video, just call callback immediately
+      if (callback) callback();
+    } else {
+      // Human: show overlay with proceed button (no video)
+      document.getElementById('jailOverlay').style.display = 'flex';
+    }
   }
-
-  document.getElementById('jailOverlay').style.display = 'flex';
 
   // Disable roll dice button while in jail UI
   if (rollDiceBtn) {
@@ -2696,13 +2728,13 @@ function launchCasinoGame(gameType, tile) {
         // console.log(`[CASINO DEBUG] Got iframe window for ${gameType}`);
         // console.log(`[CASINO DEBUG] Available functions in iframe:`, Object.keys(iframeWindow).filter(key => key.includes('init')));
       
-      // Balance sync callback
+      // Balance sync callback - don't check game end here, wait until casino closes
       const balanceCallback = (newBalance) => {
         // console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
         currentPlayer.money = newBalance;
         updatePlayerMoney();
         updatePlayersList();
-        checkGameEnd();
+        // checkGameEnd() removed - will check when casino closes
       };
       
       // Initialize the minigame with player's balance
@@ -2739,6 +2771,9 @@ function launchCasinoGame(gameType, tile) {
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
     // console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
     document.body.removeChild(casinoOverlay);
+    
+    // Check for game end after casino closes
+    checkGameEnd();
     
     // After casino game, handle the rest of the flow
     if (!owner) {
@@ -3404,6 +3439,42 @@ window.teleportToBellagio = () => {
     handleLanding(currentPlayer, newPosition);
   }, false);
   console.log(`Teleported ${currentPlayer.name} to Bellagio`);
+};
+
+window.sendAItoJail = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  
+  // Find the first AI player
+  const aiPlayer = gameState.players.find(p => p.isAI);
+  if (!aiPlayer) return console.log('No AI player found');
+  
+  const aiIndex = gameState.players.indexOf(aiPlayer);
+  const oldPosition = aiPlayer.position;
+  
+  console.log(`🚔 Sending ${aiPlayer.name} to Jail (Go To Jail square at position 30)`);
+  
+  // Set current player to the AI
+  gameState.currentPlayerIndex = aiIndex;
+  
+  // Animate to Go To Jail (position 30)
+  switchAnimation(aiIndex, 'walk');
+  animatePlayerMovement(aiIndex, oldPosition, 30, () => {
+    aiPlayer.position = 30;
+    console.log(`${aiPlayer.name} landed on Go To Jail`);
+    
+    // Then move to jail (position 10)
+    switchAnimation(aiIndex, 'walk');
+    animatePlayerMovement(aiIndex, 30, 10, () => {
+      aiPlayer.position = 10;
+      aiPlayer.isInJail = true;
+      aiPlayer.jailTurns = 0;
+      switchAnimation(aiIndex, 'idle');
+      console.log(`${aiPlayer.name} is now in Jail`);
+      showJailUI('Go directly to Jail!', () => {
+        endTurn();
+      });
+    }, false);
+  }, false);
 };
 
 window.teleportToSantaFe = () => {
