@@ -617,44 +617,41 @@ function endRound(isNatural = false) {
     msg = 'Push — Both Blackjack — Bet returned';
     type = 'push';
   } else if (playerBJ) {
-    payout = Math.floor(currentBet * 1.5); // 3:2 payout for blackjack
-    const winnings = payout - currentBet;
-    msg = 'Blackjack! You keep your bet $' + currentBet + ' and win $' + winnings;
+    payout = Math.floor(currentBet * 2.5); // 3:2 payout: bet + 1.5x winnings = 2.5x total
+    msg = 'Bet $' + currentBet + ' - Won $' + payout;
     type = 'blackjack';
   } else if (dealerBJ) {
     payout = 0;
-    msg = 'Dealer Blackjack — You lose $' + currentBet;
+    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
     type = 'lose';
   } else if (p > 21) {
     payout = 0;
-    msg = 'Bust — You lose $' + currentBet;
+    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
     type = 'lose';
     btnDeal.textContent = 'Restart';
     // Set flag for restart behavior
     btnDeal.dataset.restart = 'true';
   } else if (d > 21) {
     payout = currentBet * 2;
-    const winnings = payout - currentBet;
-    msg = 'Dealer Bust — You keep your bet $' + currentBet + ' and win $' + winnings;
+    msg = 'Bet $' + currentBet + ' - Won $' + payout;
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else if (p > d) {
     payout = currentBet * 2;
-    const winnings = payout - currentBet;
-    msg = 'You keep your bet $' + currentBet + ' and win $' + winnings;
+    msg = 'Bet $' + currentBet + ' - Won $' + payout;
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else if (d > p) {
     payout = 0;
-    msg = 'Dealer wins — You lose $' + currentBet;
+    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
     type = 'lose';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else {
     payout = currentBet;
-    msg = 'Push — Bet returned';
+    msg = 'Bet $' + currentBet + ' - Push (Returned)';
     type = 'push';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
