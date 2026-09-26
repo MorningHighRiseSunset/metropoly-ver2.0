@@ -11,6 +11,10 @@ const gameState = {
   playerTokens: [] // 3D token models on the board
 };
 
+// Turn completion flag to prevent multiple rolls
+window.turnCompleting = false;
+window.aiRollScheduled = false;
+
 // Store animation mixers for each player
 const playerAnimations = {};
 
@@ -1279,7 +1283,7 @@ function create3DBoard() {
     { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 37, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [31, 61, 181, 544, 770, 935] }
+    { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
   ];
 
   // Board base - sized to match tile positions
@@ -1788,10 +1792,13 @@ function onWindowResize() {
 }
 
 function roll3DDice() {
-  if (!diceLoaded || isRolling) {
-    console.log('roll3DDice blocked - diceLoaded:', diceLoaded, 'isRolling:', isRolling);
+  if (!diceLoaded || isRolling || window.turnCompleting) {
+    console.log('roll3DDice blocked - diceLoaded:', diceLoaded, 'isRolling:', isRolling, 'turnCompleting:', window.turnCompleting);
     return;
   }
+
+  // Mark turn as completing
+  window.turnCompleting = true;
 
   // Ensure physics bodies exist
   if (!diceBody1 || !diceBody2 || !physicsWorld) {
@@ -3103,8 +3110,9 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
 
 // End current turn and move to next player
 function endTurn() {
-  // Clear rolling state
+  // Clear rolling and turn completion states
   isRolling = false;
+  window.turnCompleting = false;
   
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
@@ -3129,10 +3137,10 @@ function endTurn() {
     window.aiRollScheduled = true;
 
     setTimeout(() => {
-      // Double-check it's still the AI's turn before rolling
+      // Double-check it's still the AI's turn and turn is not completing
       const currentPlayerCheck = gameState.players[gameState.currentPlayerIndex];
-      if (!currentPlayerCheck || !currentPlayerCheck.isAI) {
-        console.log('AI turn cancelled - no longer AI\'s turn');
+      if (!currentPlayerCheck || !currentPlayerCheck.isAI || window.turnCompleting) {
+        console.log('AI turn cancelled - no longer AI\'s turn or turn still completing');
         window.aiRollScheduled = false;
         return;
       }
@@ -3144,10 +3152,10 @@ function endTurn() {
       } else {
         console.log('Dice not ready yet, retrying in 1 second...');
         setTimeout(() => {
-          // Triple-check it's still the AI's turn
+          // Triple-check it's still the AI's turn and turn is not completing
           const currentPlayerCheck2 = gameState.players[gameState.currentPlayerIndex];
-          if (!currentPlayerCheck2 || !currentPlayerCheck2.isAI) {
-            console.log('AI retry cancelled - no longer AI\'s turn');
+          if (!currentPlayerCheck2 || !currentPlayerCheck2.isAI || window.turnCompleting) {
+            console.log('AI retry cancelled - no longer AI\'s turn or turn still completing');
             window.aiRollScheduled = false;
             return;
           }
