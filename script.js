@@ -378,7 +378,7 @@ function updatePlayersList() {
     playersList.appendChild(playerItem);
   });
   
-  console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money || 2500}`);
+  // console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money || 2500}`);
 }
 
 // Update AI moves display
@@ -438,7 +438,7 @@ function updatePlayerMoney() {
   if (!playerMoney) return;
   const humanPlayer = gameState.players.find(p => p.isHuman);
   if (humanPlayer) {
-    console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money || 2500}`);
+    // console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money || 2500}`);
     playerMoney.textContent = `$${humanPlayer.money || 2500}`;
   }
   
@@ -601,17 +601,17 @@ function loadPlayerToken(player, index) {
       if (object.animations && object.animations.length > 0) {
         mixer = new THREE.AnimationMixer(tokenModel);
         
-        console.log(`[ANIMATION DEBUG] Found ${object.animations.length} animations for ${player.token}`);
+        // console.log(`[ANIMATION DEBUG] Found ${object.animations.length} animations for ${player.token}`);
         
         object.animations.forEach((clip) => {
-          console.log(`[ANIMATION DEBUG] Animation clip: ${clip.name}, duration: ${clip.duration}, tracks: ${clip.tracks.length}`);
+          // console.log(`[ANIMATION DEBUG] Animation clip: ${clip.name}, duration: ${clip.duration}, tracks: ${clip.tracks.length}`);
           
           // For female character, rename to Idle
           if (player.token === 'WhiteGirlIdle') {
             const idleClip = clip.clone();
             idleClip.name = 'Idle';
             animations['Idle'] = mixer.clipAction(idleClip);
-            console.log(`[ANIMATION DEBUG] Created Idle action for ${player.name}, tracks: ${idleClip.tracks.length}`);
+            // console.log(`[ANIMATION DEBUG] Created Idle action for ${player.name}, tracks: ${idleClip.tracks.length}`);
           } else {
             // For other models, play all built-in animations (rotors, wheels, etc.)
             const action = mixer.clipAction(clip);
@@ -628,7 +628,7 @@ function loadPlayerToken(player, index) {
           animations['Idle'].play();
         }
       } else {
-        console.log(`[ANIMATION DEBUG] No animations found for ${player.token}`);
+        // console.log(`[ANIMATION DEBUG] No animations found for ${player.token}`);
         // Create empty mixer for models without animations
         mixer = new THREE.AnimationMixer(tokenModel);
       }
@@ -713,7 +713,7 @@ function switchAnimation(playerIndex, animationType) {
   // Find the action
   const newAction = animData.animations[targetAction];
 
-  console.log(`Switching player ${playerIndex} to ${animationType}, action:`, newAction ? 'found' : 'NOT FOUND');
+  // console.log(`Switching player ${playerIndex} to ${animationType}, action:`, newAction ? 'found' : 'NOT FOUND');
 
   if (newAction) {
     // Cross-fade from current animation to new one to prevent T-pose
@@ -762,7 +762,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
     return;
   }
 
-  console.log(`Moving player ${playerIndex} from ${oldPosition} to ${newPosition}`);
+  // console.log(`Moving player ${playerIndex} from ${oldPosition} to ${newPosition}`);
 
   // Store original camera position
   const originalCameraPos = threeCamera.position.clone();
@@ -772,7 +772,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
   let steps = newPosition - oldPosition;
   if (steps < 0) steps += 40;
   
-  console.log(`Steps to move: ${steps}`);
+  // console.log(`Steps to move: ${steps}`);
   
   // Build path following board perimeter
   const path = [];
@@ -844,7 +844,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
       
       // Done - switch to idle
       const finalCell = boardCells.find(c => c.index === newPosition % 40);
-      console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
+      // console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
       switchAnimation(playerIndex, 'idle');
       if (callback) callback();
     }
@@ -1812,9 +1812,20 @@ function roll3DDice() {
     return;
   }
 
+  // Reset turn-ended flag for new turn
+  window.turnEnded = false;
+
   // Mark turn as completing
   window.turnCompleting = true;
   window.diceProcessed = false;
+  
+  // Increment roll ID to prevent stale callbacks from processing
+  window.currentRollId = (window.currentRollId || 0) + 1;
+  const thisRollId = window.currentRollId;
+  
+  // Capture the rolling player index to prevent stale player references
+  const rollingPlayerIndex = gameState.currentPlayerIndex;
+  const rollingPlayer = gameState.players[rollingPlayerIndex];
 
   // Ensure physics bodies exist
   if (!diceBody1 || !diceBody2 || !physicsWorld) {
@@ -1887,6 +1898,18 @@ function roll3DDice() {
     if (speed1 < 0.05 && speed2 < 0.05 && angularSpeed1 < 0.1 && angularSpeed2 < 0.1) {
       clearInterval(checkSettled);
 
+      // Check if this is a stale callback from a previous roll
+      if (window.currentRollId !== thisRollId) {
+        console.log('Stale dice settled callback detected, ignoring');
+        return;
+      }
+
+      // Check if dice were already processed by fallback
+      if (window.diceProcessed) {
+        console.log('Dice already processed by fallback, skipping normal processing');
+        return;
+      }
+
       console.log('Dice settled, processing results');
 
       // Mark dice as processed to prevent fallback from re-processing
@@ -1898,9 +1921,9 @@ function roll3DDice() {
         diceModel2.visible = false;
 
         // Get dice results based on final rotation
-        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        const currentPlayer = rollingPlayer;
         if (!currentPlayer) {
-          console.error('Current player is undefined! gameState:', gameState);
+          console.error('Current player is undefined!');
           return;
         }
 
@@ -1965,10 +1988,10 @@ function roll3DDice() {
             newPosition = 14;
           }
           
-          switchAnimation(gameState.currentPlayerIndex, 'walk');
-          animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
+          switchAnimation(rollingPlayerIndex, 'walk');
+          animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
             currentPlayer.position = newPosition;
-            console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+            // console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
             handleLanding(currentPlayer, newPosition);
           });
         } else {
@@ -1984,23 +2007,23 @@ function roll3DDice() {
           // Check for Go To Jail (position 30)
           if (newPosition === 30) {
             // Send to jail (position 10)
-            switchAnimation(gameState.currentPlayerIndex, 'walk');
-            animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, 10, () => {
+            switchAnimation(rollingPlayerIndex, 'walk');
+            animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, 10, () => {
               currentPlayer.position = 10;
               currentPlayer.isInJail = true;
               currentPlayer.jailTurns = 0;
-              switchAnimation(gameState.currentPlayerIndex, 'idle');
+              switchAnimation(rollingPlayerIndex, 'idle');
               showJailUI('Go directly to Jail!', () => {
                 endTurn();
               });
             });
           } else {
             // Normal movement
-            console.log(`Starting normal movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
-            switchAnimation(gameState.currentPlayerIndex, 'walk');
-            animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
+            // console.log(`Starting normal movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
+            switchAnimation(rollingPlayerIndex, 'walk');
+            animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
               currentPlayer.position = newPosition;
-              console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+              // console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
               handleLanding(currentPlayer, newPosition);
             });
           }
@@ -2011,6 +2034,12 @@ function roll3DDice() {
 
   // Fallback: hide after 10 seconds max to prevent hanging
   setTimeout(() => {
+    // Check if this is a stale callback from a previous roll
+    if (window.currentRollId !== thisRollId) {
+      console.log('Stale fallback timeout detected, ignoring');
+      return;
+    }
+    
     clearInterval(checkSettled);
     if (isRolling && !window.diceProcessed) {
       console.log('Fallback timeout reached, forcing dice to settle and processing results');
@@ -2020,7 +2049,7 @@ function roll3DDice() {
       diceModel2.visible = false;
 
       // Process dice results even if they didn't settle properly
-      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      const currentPlayer = rollingPlayer;
       if (!currentPlayer) {
         console.error('Current player is undefined in fallback!');
         return;
@@ -2031,7 +2060,7 @@ function roll3DDice() {
       const diceResult2 = getDiceResult(diceBody2);
       let totalDice = diceResult1 + diceResult2;
 
-      console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
+      // console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
@@ -2039,18 +2068,18 @@ function roll3DDice() {
       // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
       // Skip Baccarat property (position 13) - move to position 14 instead
       if (newPosition === 13) {
-        console.log('Fallback: Skipping Baccarat property (position 13), moving to position 14');
+        // console.log('Fallback: Skipping Baccarat property (position 13), moving to position 14');
         newPosition = 14;
       }
 
       // Check for Go To Jail (position 30)
       if (newPosition === 30) {
-        switchAnimation(gameState.currentPlayerIndex, 'walk');
-        animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, 10, () => {
+        switchAnimation(rollingPlayerIndex, 'walk');
+        animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, 10, () => {
           currentPlayer.position = 10;
           currentPlayer.isInJail = true;
           currentPlayer.jailTurns = 0;
-          switchAnimation(gameState.currentPlayerIndex, 'idle');
+          switchAnimation(rollingPlayerIndex, 'idle');
           showJailUI('Go directly to Jail!', () => {
             endTurn();
           });
@@ -2058,10 +2087,10 @@ function roll3DDice() {
       } else {
         // Normal movement
         console.log(`Fallback: Starting movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
-        switchAnimation(gameState.currentPlayerIndex, 'walk');
-        animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, newPosition, () => {
+        switchAnimation(rollingPlayerIndex, 'walk');
+        animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
           currentPlayer.position = newPosition;
-          console.log(`Fallback: ${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+          // console.log(`Fallback: ${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
           handleLanding(currentPlayer, newPosition);
         });
       }
@@ -2139,19 +2168,19 @@ function handleLanding(player, position) {
   if (tile.type === 'property' || tile.type === 'railroad') {
     const owner = gameState.players.find(p => p.properties && p.properties.includes(position));
     
-    console.log(`[CASINO DEBUG] Player ${player.name} landed on ${tile.name} (position ${position})`);
-    console.log(`[CASINO DEBUG] Tile isCasino: ${tile.isCasino}, casinoGame: ${tile.casinoGame}, disableCasino: ${tile.disableCasino}`);
-    console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
-    console.log(`[CASINO DEBUG] Player isAI: ${player.isAI}, isHuman: ${player.isHuman}`);
+    // console.log(`[CASINO DEBUG] Player ${player.name} landed on ${tile.name} (position ${position})`);
+    // console.log(`[CASINO DEBUG] Tile isCasino: ${tile.isCasino}, casinoGame: ${tile.casinoGame}, disableCasino: ${tile.disableCasino}`);
+    // console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
+    // console.log(`[CASINO DEBUG] Player isAI: ${player.isAI}, isHuman: ${player.isHuman}`);
     
     if (!owner) {
       if (!player.isAI) {
         // If it's a casino property and not disabled, launch game first, then show purchase UI
         if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
-          console.log(`[CASINO DEBUG] Launching casino game: ${tile.casinoGame} for ${tile.name}`);
+          // console.log(`[CASINO DEBUG] Launching casino game: ${tile.casinoGame} for ${tile.name}`);
           launchCasinoGame(tile.casinoGame, tile);
         } else {
-          console.log(`[CASINO DEBUG] Skipping casino game (disabled or not casino), showing purchase UI`);
+          // console.log(`[CASINO DEBUG] Skipping casino game (disabled or not casino), showing purchase UI`);
           showPropertyPurchaseUI(tile, player);
         }
       } else {
@@ -2186,11 +2215,11 @@ function handleLanding(player, position) {
       
       // If it's a casino property and not disabled, launch game first, then pay rent
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino && !player.isAI) {
-        console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
+        // console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
         launchCasinoGame(tile.casinoGame, tile);
         // After game closes, pay rent (handled in closeCasinoBtn)
       } else {
-        console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
+        // console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
         player.money -= rent;
         owner.money += rent;
         console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
@@ -2208,7 +2237,7 @@ function handleLanding(player, position) {
       // Player owns the property - show UI
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
         if (!player.isAI) {
-          console.log(`[CASINO DEBUG] Player owns ${tile.name}, launching casino game: ${tile.casinoGame}`);
+          // console.log(`[CASINO DEBUG] Player owns ${tile.name}, launching casino game: ${tile.casinoGame}`);
           launchCasinoGame(tile.casinoGame, tile);
         } else {
           // AI plays casino game
@@ -2220,7 +2249,7 @@ function handleLanding(player, position) {
           endTurn();
         }
       } else {
-        console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
+        // console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
         if (!player.isAI) {
           showOwnedPropertyUI(tile);
         } else {
@@ -2606,19 +2635,19 @@ document.getElementById('taxOkBtn').addEventListener('click', () => {
 
 // Launch casino game
 function launchCasinoGame(gameType, tile) {
-  console.log(`[CASINO DEBUG] ===== LAUNCHING CASINO GAME =====`);
-  console.log(`[CASINO DEBUG] Game type: ${gameType}`);
-  console.log(`[CASINO DEBUG] Tile name: ${tile.name}`);
-  console.log(`[CASINO DEBUG] Tile position: ${tile.position}`);
-  console.log(`[CASINO DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
-  console.log(`[CASINO DEBUG] Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}`);
-  console.log(`[CASINO DEBUG] Game started: ${gameState.gameStarted}`);
+  // console.log(`[CASINO DEBUG] ===== LAUNCHING CASINO GAME =====`);
+  // console.log(`[CASINO DEBUG] Game type: ${gameType}`);
+  // console.log(`[CASINO DEBUG] Tile name: ${tile.name}`);
+  // console.log(`[CASINO DEBUG] Tile position: ${tile.position}`);
+  // console.log(`[CASINO DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
+  // console.log(`[CASINO DEBUG] Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}`);
+  // console.log(`[CASINO DEBUG] Game started: ${gameState.gameStarted}`);
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const owner = gameState.players.find(p => p.properties && p.properties.includes(tile.position));
   
-  console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
-  console.log(`[CASINO DEBUG] Player balance: ${currentPlayer?.money}`);
+  // console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
+  // console.log(`[CASINO DEBUG] Player balance: ${currentPlayer?.money}`);
   
   // Create casino game overlay
   const casinoOverlay = document.createElement('div');
@@ -2644,7 +2673,7 @@ function launchCasinoGame(gameType, tile) {
   };
   
   const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
-  console.log(`[CASINO DEBUG] Game path: ${gamePath}`);
+  // console.log(`[CASINO DEBUG] Game path: ${gamePath}`);
   
   casinoOverlay.innerHTML = `
     <div class="casino-container" style="width: 95%; height: 95%; max-width: 1400px; position: relative;">
@@ -2654,23 +2683,23 @@ function launchCasinoGame(gameType, tile) {
   `;
   
   document.body.appendChild(casinoOverlay);
-  console.log(`[CASINO DEBUG] Casino overlay added to DOM`);
+  // console.log(`[CASINO DEBUG] Casino overlay added to DOM`);
   
   // Wait for iframe to load, then initialize the game
   const iframe = document.getElementById('casinoFrame');
   iframe.onload = () => {
-    console.log(`[CASINO DEBUG] Iframe loaded successfully for ${gameType}`);
+    // console.log(`[CASINO DEBUG] Iframe loaded successfully for ${gameType}`);
     
     // Add a small delay to ensure scripts are fully loaded
     setTimeout(() => {
       try {
         const iframeWindow = iframe.contentWindow;
-        console.log(`[CASINO DEBUG] Got iframe window for ${gameType}`);
-        console.log(`[CASINO DEBUG] Available functions in iframe:`, Object.keys(iframeWindow).filter(key => key.includes('init')));
+        // console.log(`[CASINO DEBUG] Got iframe window for ${gameType}`);
+        // console.log(`[CASINO DEBUG] Available functions in iframe:`, Object.keys(iframeWindow).filter(key => key.includes('init')));
       
       // Balance sync callback
       const balanceCallback = (newBalance) => {
-        console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
+        // console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
         currentPlayer.money = newBalance;
         updatePlayerMoney();
         updatePlayersList();
@@ -2678,24 +2707,24 @@ function launchCasinoGame(gameType, tile) {
       };
       
       // Initialize the minigame with player's balance
-      console.log(`[CASINO DEBUG] Attempting to initialize ${gameType} minigame with balance: ${currentPlayer.money}`);
+      // console.log(`[CASINO DEBUG] Attempting to initialize ${gameType} minigame with balance: ${currentPlayer.money}`);
       if (gameType === 'blackjack' && iframeWindow.initBlackjackMinigame) {
-        console.log(`[CASINO DEBUG] Found initBlackjackMinigame function`);
+        // console.log(`[CASINO DEBUG] Found initBlackjackMinigame function`);
         iframeWindow.initBlackjackMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'poker' && iframeWindow.initPokerMinigame) {
-        console.log(`[CASINO DEBUG] Found initPokerMinigame function`);
-        console.log(`[CASINO DEBUG] Calling initPokerMinigame with balance: ${currentPlayer.money}`);
+        // console.log(`[CASINO DEBUG] Found initPokerMinigame function`);
+        // console.log(`[CASINO DEBUG] Calling initPokerMinigame with balance: ${currentPlayer.money}`);
         iframeWindow.initPokerMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
-        console.log(`[CASINO DEBUG] initPokerMinigame call completed`);
+        // console.log(`[CASINO DEBUG] initPokerMinigame call completed`);
       } else if (gameType === 'roulette' && iframeWindow.initRouletteMinigame) {
-        console.log(`[CASINO DEBUG] Found initRouletteMinigame function`);
+        // console.log(`[CASINO DEBUG] Found initRouletteMinigame function`);
         iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else {
-        console.log(`[CASINO DEBUG] No init function found for ${gameType}, using postMessage fallback`);
+        // console.log(`[CASINO DEBUG] No init function found for ${gameType}, using postMessage fallback`);
       }
       
       // Send initial balance via postMessage
-      console.log(`[CASINO DEBUG] Sending postMessage with balance: ${currentPlayer.money}`);
+      // console.log(`[CASINO DEBUG] Sending postMessage with balance: ${currentPlayer.money}`);
       iframeWindow.postMessage({
         type: 'SET_BALANCE',
         balance: currentPlayer.money
@@ -2709,13 +2738,13 @@ function launchCasinoGame(gameType, tile) {
   
   // Close button handler
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
-    console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
+    // console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
     document.body.removeChild(casinoOverlay);
     
     // After casino game, handle the rest of the flow
     if (!owner) {
       // Property is unowned - show purchase UI
-      console.log(`[CASINO DEBUG] Property unowned, showing purchase UI`);
+      // console.log(`[CASINO DEBUG] Property unowned, showing purchase UI`);
       showPropertyPurchaseUI(tile, currentPlayer);
     } else if (owner !== currentPlayer) {
       // Property is owned by someone else - pay rent
@@ -2733,7 +2762,7 @@ function launchCasinoGame(gameType, tile) {
       endTurn();
     } else {
       // Player owns the property
-      console.log(`[CASINO DEBUG] Player owns property, showing owned property UI`);
+      // console.log(`[CASINO DEBUG] Player owns property, showing owned property UI`);
       showOwnedPropertyUI(tile);
     }
   });
@@ -3157,6 +3186,13 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
 
 // End current turn and move to next player
 function endTurn() {
+  // Prevent multiple endTurn calls per turn
+  if (window.turnEnded) {
+    console.log('endTurn already called for this turn, ignoring');
+    return;
+  }
+  window.turnEnded = true;
+  
   // Clear rolling and turn completion states
   isRolling = false;
   window.turnCompleting = false;
