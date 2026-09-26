@@ -14,6 +14,7 @@ const gameState = {
 // Turn completion flag to prevent multiple rolls
 window.turnCompleting = false;
 window.aiRollScheduled = false;
+window.diceProcessed = false;
 
 // Store animation mixers for each player
 const playerAnimations = {};
@@ -502,9 +503,16 @@ function showGameOver(winner, playerWon) {
   
   document.body.appendChild(gameOverOverlay);
   
-  document.getElementById('restartBtn').addEventListener('click', () => {
-    location.reload();
-  });
+  // Add event listener to restart button
+  const restartBtn = document.getElementById('restartBtn');
+  if (restartBtn) {
+    restartBtn.addEventListener('click', () => {
+      console.log('Play Again button clicked, reloading page...');
+      location.reload();
+    });
+  } else {
+    console.error('Restart button not found!');
+  }
 }
 
 // Load 3D player tokens onto the board
@@ -593,12 +601,17 @@ function loadPlayerToken(player, index) {
       if (object.animations && object.animations.length > 0) {
         mixer = new THREE.AnimationMixer(tokenModel);
         
+        console.log(`[ANIMATION DEBUG] Found ${object.animations.length} animations for ${player.token}`);
+        
         object.animations.forEach((clip) => {
+          console.log(`[ANIMATION DEBUG] Animation clip: ${clip.name}, duration: ${clip.duration}, tracks: ${clip.tracks.length}`);
+          
           // For female character, rename to Idle
           if (player.token === 'WhiteGirlIdle') {
             const idleClip = clip.clone();
             idleClip.name = 'Idle';
             animations['Idle'] = mixer.clipAction(idleClip);
+            console.log(`[ANIMATION DEBUG] Created Idle action for ${player.name}, tracks: ${idleClip.tracks.length}`);
           } else {
             // For other models, play all built-in animations (rotors, wheels, etc.)
             const action = mixer.clipAction(clip);
@@ -609,10 +622,13 @@ function loadPlayerToken(player, index) {
 
         // For female character, play idle by default
         if (player.token === 'WhiteGirlIdle' && animations['Idle']) {
+          animations['Idle'].setLoop(THREE.LoopRepeat);
+          animations['Idle'].clampWhenFinished = false;
+          animations['Idle'].reset();
           animations['Idle'].play();
-          animations['Idle'].timeScale = 1.0; // Normal speed for idle
         }
       } else {
+        console.log(`[ANIMATION DEBUG] No animations found for ${player.token}`);
         // Create empty mixer for models without animations
         mixer = new THREE.AnimationMixer(tokenModel);
       }
@@ -1771,10 +1787,10 @@ function animateThreeJS() {
     diceModel2.quaternion.copy(diceBody2.quaternion);
   }
 
-  // Update animation mixers (only if needed)
+  // Update animation mixers (update all, not just walk)
   Object.values(playerAnimations).forEach(animData => {
-    if (animData.mixer && animData.currentAction === 'Walk') {
-      animData.mixer.update(0.016); // Only update walk animations
+    if (animData.mixer) {
+      animData.mixer.update(0.016); // Update all animations
     }
   });
 
@@ -1793,12 +1809,12 @@ function onWindowResize() {
 
 function roll3DDice() {
   if (!diceLoaded || isRolling || window.turnCompleting) {
-    console.log('roll3DDice blocked - diceLoaded:', diceLoaded, 'isRolling:', isRolling, 'turnCompleting:', window.turnCompleting);
     return;
   }
 
   // Mark turn as completing
   window.turnCompleting = true;
+  window.diceProcessed = false;
 
   // Ensure physics bodies exist
   if (!diceBody1 || !diceBody2 || !physicsWorld) {
@@ -1872,6 +1888,9 @@ function roll3DDice() {
       clearInterval(checkSettled);
 
       console.log('Dice settled, processing results');
+
+      // Mark dice as processed to prevent fallback from re-processing
+      window.diceProcessed = true;
 
       // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
       setTimeout(() => {
@@ -1971,9 +1990,7 @@ function roll3DDice() {
               currentPlayer.isInJail = true;
               currentPlayer.jailTurns = 0;
               switchAnimation(gameState.currentPlayerIndex, 'idle');
-              
-              // Show jail UI, then end turn after video
-              showJailUI('You landed in jail!', () => {
+              showJailUI('Go directly to Jail!', () => {
                 endTurn();
               });
             });
@@ -1995,8 +2012,9 @@ function roll3DDice() {
   // Fallback: hide after 10 seconds max to prevent hanging
   setTimeout(() => {
     clearInterval(checkSettled);
-    if (isRolling) {
+    if (isRolling && !window.diceProcessed) {
       console.log('Fallback timeout reached, forcing dice to settle and processing results');
+      window.diceProcessed = true;
       isRolling = false;
       diceModel1.visible = false;
       diceModel2.visible = false;
@@ -2033,7 +2051,7 @@ function roll3DDice() {
           currentPlayer.isInJail = true;
           currentPlayer.jailTurns = 0;
           switchAnimation(gameState.currentPlayerIndex, 'idle');
-          showJailUI('You landed in jail!', () => {
+          showJailUI('Go directly to Jail!', () => {
             endTurn();
           });
         });
@@ -2100,13 +2118,15 @@ function handleLanding(player, position) {
     return;
   }
   
-  // Position 10 is Jail - just visiting, end turn
+  // Position 10 is Jail - if landed via dice roll, send to jail
   if (position === 10 && !player.isInJail) {
-    console.log('Just visiting jail');
-    if (player.isAI) {
-      addAIMove(player.name, 'visited jail');
-    }
-    endTurn();
+    console.log('Landed on Jail square via dice roll - sending to jail');
+    player.isInJail = true;
+    player.jailTurns = 0;
+    switchAnimation(gameState.currentPlayerIndex, 'idle');
+    showJailUI('You landed in jail!', () => {
+      endTurn();
+    });
     return;
   }
   
@@ -2268,7 +2288,8 @@ function handleLanding(player, position) {
       addAIMove(player.name, `drew ${tile.type === 'chance' ? 'Chance' : 'Community Chest'} card`);
       
       // Execute card action for AI
-      executeCardAction(randomCard, player);
+      const playerIndex = gameState.players.findIndex(p => p === player);
+      executeCardAction(randomCard, player, playerIndex);
     }
   } else {
     // Other tile types (corners)
@@ -2286,7 +2307,7 @@ const chanceCards = [
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Make general repairs on all your property - $25 per house", action: "pay_repairs", amount: 25 },
+  { message: "Make general repairs on all your property - $25 per property", action: "pay_repairs", amount: 25 },
   { message: "Speeding fine $150", action: "pay_fine", amount: 150 },
   { message: "Take a trip to Reading Railroad - If you pass Go, collect $200", action: "advance_to", position: 5 },
   { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 14 },
@@ -2309,13 +2330,13 @@ const communityChestCards = [
   { message: "Pay hospital fees of $300", action: "pay_fine", amount: 300 },
   { message: "Pay school fees of $200", action: "pay_fine", amount: 200 },
   { message: "Receive $200 consultancy fee", action: "gain_money", amount: 200 },
-  { message: "You are assessed for street repairs - $150 per house, $350 per hotel", action: "pay_repairs", amount: 150 },
+  { message: "You are assessed for street repairs - $150 per property, $350 per hotel", action: "pay_repairs", amount: 150 },
   { message: "You have won second prize in a beauty contest - Collect $100", action: "gain_money", amount: 100 },
   { message: "You inherit $400", action: "gain_money", amount: 400 }
 ];
 
 // Execute card action (for AI players)
-function executeCardAction(card, player) {
+function executeCardAction(card, player, playerIndex) {
   const action = card.action;
   const amount = card.amount || 0;
   const position = card.position || 0;
@@ -2422,10 +2443,15 @@ function executeCardAction(card, player) {
       break;
       
     case 'pay_repairs':
-      player.money -= amount;
-      updatePlayerMoney();
-      checkGameEnd();
-      addAIMove(player.name, `paid $${amount} for repairs`);
+      // Only charge if player has properties
+      if (player.properties && player.properties.length > 0) {
+        player.money -= amount;
+        updatePlayerMoney();
+        checkGameEnd();
+        addAIMove(player.name, `paid $${amount} for property repairs`);
+      } else {
+        addAIMove(player.name, `no properties to repair, no charge`);
+      }
       endTurn();
       break;
       
@@ -2761,6 +2787,19 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       endTurn();
       break;
       
+    case 'pay_repairs':
+      // Only charge if player has properties
+      if (currentPlayer.properties && currentPlayer.properties.length > 0) {
+        currentPlayer.money -= amount;
+        updatePlayerMoney();
+        checkGameEnd();
+        console.log(`${currentPlayer.name} paid $${amount} for property repairs`);
+      } else {
+        console.log(`${currentPlayer.name} has no properties to repair, no charge`);
+      }
+      endTurn();
+      break;
+      
     case 'go_to_jail':
       // Send to jail
       switchAnimation(gameState.currentPlayerIndex, 'walk');
@@ -2817,15 +2856,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       updatePlayersList();
       checkGameEnd();
       console.log(`${currentPlayer.name} collected $${amount} from each player`);
-      endTurn();
-      break;
-      
-    case 'pay_repairs':
-      // Simplified - just pay a fixed amount
-      currentPlayer.money -= amount;
-      updatePlayerMoney();
-      checkGameEnd();
-      console.log(`${currentPlayer.name} paid $${amount} for repairs`);
       endTurn();
       break;
       
@@ -3113,6 +3143,7 @@ function endTurn() {
   // Clear rolling and turn completion states
   isRolling = false;
   window.turnCompleting = false;
+  window.diceProcessed = false;
   
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
@@ -3132,6 +3163,7 @@ function endTurn() {
   // If next player is AI, auto-roll
   if (nextPlayer && nextPlayer.isAI) {
     console.log(`Next player is AI: ${nextPlayer.name}, will roll in 2 seconds`);
+    console.log(`[AI ROLL DEBUG] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, aiRollScheduled: ${window.aiRollScheduled}`);
 
     // Set flag to prevent multiple AI rolls
     window.aiRollScheduled = true;
@@ -3139,13 +3171,16 @@ function endTurn() {
     setTimeout(() => {
       // Double-check it's still the AI's turn and turn is not completing
       const currentPlayerCheck = gameState.players[gameState.currentPlayerIndex];
-      if (!currentPlayerCheck || !currentPlayerCheck.isAI || window.turnCompleting) {
+      console.log(`[AI ROLL DEBUG] Timeout check - is AI: ${currentPlayerCheck?.isAI}, turnCompleting: ${window.turnCompleting}, isRolling: ${isRolling}`);
+      
+      if (!currentPlayerCheck || !currentPlayerCheck.isAI || window.turnCompleting || isRolling) {
         console.log('AI turn cancelled - no longer AI\'s turn or turn still completing');
         window.aiRollScheduled = false;
         return;
       }
 
       console.log(`AI ${nextPlayer.name} attempting to roll - diceLoaded: ${diceLoaded}, isRolling: ${isRolling}, physicsWorld: ${!!physicsWorld}, diceBody1: ${!!diceBody1}, diceBody2: ${!!diceBody2}`);
+      console.log(`[AI ROLL DEBUG] About to call roll3DDice for AI`);
       if (diceLoaded && !isRolling && physicsWorld && diceBody1 && diceBody2) {
         window.aiRollScheduled = false;
         roll3DDice();
