@@ -1291,17 +1291,17 @@ function create3DBoard() {
     { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
     { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png', address: '', rent: [] },
-    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
+    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
     { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
     { name: 'Chance', type: 'chance', position: 32, videos: [] },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
+    { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'craps', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 37, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
+    { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
   ];
 
   // Board base - sized to match tile positions
@@ -2698,9 +2698,12 @@ function launchCasinoGame(gameType, tile) {
   `;
   
   const gamePaths = {
+    'baccarat': 'Baccarat/baccarat-display.html',
     'blackjack': 'Blackjack/blackjack.html',
     'poker': 'PokerFP/poker.html',
-    'roulette': 'Roulette/index.html'
+    'roulette': 'Roulette/index.html',
+    'craps': 'Craps/craps-game.html',
+    'slots': 'slotMachine/slot-machine.html'
   };
   
   const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
@@ -2750,6 +2753,10 @@ function launchCasinoGame(gameType, tile) {
       } else if (gameType === 'roulette' && iframeWindow.initRouletteMinigame) {
         // console.log(`[CASINO DEBUG] Found initRouletteMinigame function`);
         iframeWindow.initRouletteMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'craps' && iframeWindow.initCrapsMinigame) {
+        iframeWindow.initCrapsMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'slots' && iframeWindow.initSlotsMinigame) {
+        iframeWindow.initSlotsMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else {
         // console.log(`[CASINO DEBUG] No init function found for ${gameType}, using postMessage fallback`);
       }
