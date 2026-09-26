@@ -754,7 +754,7 @@ function movePlayerToken(playerIndex, newPosition) {
 }
 
 // Animate player movement between cells (continuous smooth movement following board perimeter)
-function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) {
+function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, reverse = false) {
   const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
   if (!tokenData) {
     console.log(`No token data for player ${playerIndex}`);
@@ -769,20 +769,33 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback) 
   const originalCameraLook = new THREE.Vector3(0, 0, 0);
 
   // Calculate number of steps (wrap around board)
-  let steps = newPosition - oldPosition;
-  if (steps < 0) steps += 40;
+  let steps;
+  if (reverse) {
+    // Calculate steps going backwards
+    steps = oldPosition - newPosition;
+    if (steps < 0) steps += 40;
+  } else {
+    // Calculate steps going forward
+    steps = newPosition - oldPosition;
+    if (steps < 0) steps += 40;
+  }
   
   // console.log(`Steps to move: ${steps}`);
   
   // Build path following board perimeter
   const path = [];
   for (let i = 0; i <= steps; i++) {
-    const cellIndex = (oldPosition + i) % 40;
+    let cellIndex;
+    if (reverse) {
+      cellIndex = (oldPosition - i + 40) % 40;
+    } else {
+      cellIndex = (oldPosition + i) % 40;
+    }
     const pos = getCellPosition(cellIndex);
     path.push(pos);
     
     // Check if passed GO (when going from 39 to 0)
-    if (cellIndex === 0 && i > 0) {
+    if (cellIndex === 0 && i > 0 && !reverse) {
       const currentPlayer = gameState.players[playerIndex];
       currentPlayer.money += 200;
       console.log(`${currentPlayer.name} passed GO and collected $200`);
@@ -1275,7 +1288,7 @@ function create3DBoard() {
     { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg', address: '', rent: [] },
     { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155], disableCasino: true },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.jpg'], image: 'bellagio.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
+    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
     { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
     { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
     { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
@@ -1931,102 +1944,78 @@ function roll3DDice() {
         const diceResult2 = getDiceResult(diceBody2);
         let totalDice = diceResult1 + diceResult2;
 
-        // Bias dice toward casino squares (positions 13, 15, 18, 21, 29, 35)
-        if (!currentPlayer) {
-          console.error('Current player is undefined! gameState:', gameState);
-          return;
-        }
-        
-        const casinoPositions = [13, 15, 18, 21, 29, 35];
+        // Bias dice toward casino squares REMOVED - players hate seeing wrong dice results
+        // const casinoPositions = [13, 15, 18, 21, 29, 35];
         
         // Calculate what position we would land on with current roll
-        const potentialPosition = (currentPlayer.position + totalDice) % 40;
+        // const potentialPosition = (currentPlayer.position + totalDice) % 40;
         
-        // Reduced bias: 10% chance to adjust for casino if not already on one
-        if (!casinoPositions.includes(potentialPosition) && Math.random() < 0.1) {
-          // Find nearest casino position
-          let nearestCasino = casinoPositions[0];
-          let minDistance = 40;
-          
-          casinoPositions.forEach(casinoPos => {
-            const distance = Math.abs(casinoPos - potentialPosition);
-            if (distance < minDistance) {
-              minDistance = distance;
-              nearestCasino = casinoPos;
-            }
-          });
-          
-          // Calculate needed roll to reach casino
-          let neededRoll = nearestCasino - potentialPosition;
-          if (neededRoll < 0) neededRoll += 40;
-          
-          // If needed roll is between 2-12, use it
-          if (neededRoll >= 2 && neededRoll <= 12) {
-            console.log(`Adjusting roll from ${totalDice} to ${neededRoll} to land on casino at position ${nearestCasino}`);
-            totalDice = neededRoll;
-          }
-        }
+        // Reduced bias: 1% chance to adjust for casino if not already on one
+        // if (!casinoPositions.includes(potentialPosition) && Math.random() < 0.01) {
+        //   // Find nearest casino position
+        //   let nearestCasino = casinoPositions[0];
+        //   let minDistance = 40;
+        //   
+        //   casinoPositions.forEach(casinoPos => {
+        //     const distance = Math.abs(casinoPos - potentialPosition);
+        //     if (distance < minDistance) {
+        //       minDistance = distance;
+        //       nearestCasino = casinoPos;
+        //     }
+        //   });
+        //   
+        //   // Calculate needed roll to reach casino
+        //   let neededRoll = nearestCasino - potentialPosition;
+        //   if (neededRoll < 0) neededRoll += 40;
+        //   
+        //   // If needed roll is between 2-12, use it
+        //   if (neededRoll >= 2 && neededRoll <= 12) {
+        //     console.log(`Adjusted roll from ${totalDice} to ${neededRoll} to land on casino at position ${nearestCasino}`);
+        //     totalDice = neededRoll;
+        //   }
+        // }
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
-        // Move current player token
-        // currentPlayer is already declared above
+        // Calculate target position
+        let newPosition = (currentPlayer.position + totalDice) % 40;
+        console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
         
-        // Check if player is in jail
-        if (currentPlayer.isInJail) {
-          // Player paid to get out, now move normally
-          currentPlayer.isInJail = false;
-          currentPlayer.jailTurns = 0;
-          currentPlayer.money -= 50;
-          
-          let newPosition = (currentPlayer.position + totalDice) % 40;
-          
-          // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
-          // Skip Baccarat property (position 13) - move to position 14 instead
-          if (newPosition === 13) {
-            console.log('Skipping Baccarat property (position 13), moving to position 14');
-            newPosition = 14;
-          }
-          
+        // Check if passed GO (if roll would go past position 39 and wrap around)
+        if (currentPlayer.position + totalDice >= 40) {
+          console.log(`${currentPlayer.name} passed GO, collecting $200`);
+          currentPlayer.money += 200;
+          updatePlayerMoney();
+        }
+        
+        // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+        // Skip Baccarat property (position 13) - move to position 14 instead
+        if (newPosition === 13) {
+          console.log('Skipping Baccarat property (position 13), moving to position 14');
+          newPosition = 14;
+        }
+        
+        // Check for Go To Jail (position 30)
+        if (newPosition === 30) {
+          console.log(`${currentPlayer.name} landed on Go To Jail, sending to position 10`);
+          switchAnimation(rollingPlayerIndex, 'walk');
+          animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, 10, () => {
+            currentPlayer.position = 10;
+            currentPlayer.isInJail = true;
+            currentPlayer.jailTurns = 0;
+            switchAnimation(rollingPlayerIndex, 'idle');
+            showJailUI('Go directly to Jail!', () => {
+              endTurn();
+            });
+          }, false);
+        } else {
+          // Normal movement
           switchAnimation(rollingPlayerIndex, 'walk');
           animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
             currentPlayer.position = newPosition;
-            // console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+            console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
             handleLanding(currentPlayer, newPosition);
-          });
-        } else {
-          let newPosition = (currentPlayer.position + totalDice) % 40;
-          
-          // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
-          // Skip Baccarat property (position 13) - move to position 14 instead
-          if (newPosition === 13) {
-            console.log('Skipping Baccarat property (position 13), moving to position 14');
-            newPosition = 14;
-          }
-          
-          // Check for Go To Jail (position 30)
-          if (newPosition === 30) {
-            // Send to jail (position 10)
-            switchAnimation(rollingPlayerIndex, 'walk');
-            animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, 10, () => {
-              currentPlayer.position = 10;
-              currentPlayer.isInJail = true;
-              currentPlayer.jailTurns = 0;
-              switchAnimation(rollingPlayerIndex, 'idle');
-              showJailUI('Go directly to Jail!', () => {
-                endTurn();
-              });
-            });
-          } else {
-            // Normal movement
-            // console.log(`Starting normal movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
-            switchAnimation(rollingPlayerIndex, 'walk');
-            animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
-              currentPlayer.position = newPosition;
-              // console.log(`${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
-              handleLanding(currentPlayer, newPosition);
-            });
-          }
+          }, false);
         }
       }, 500);
     }
@@ -2064,6 +2053,14 @@ function roll3DDice() {
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
+      console.log(`Fallback: Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
+      
+      // Check if passed GO (if roll would go past position 39 and wrap around)
+      if (currentPlayer.position + totalDice >= 40) {
+        console.log(`${currentPlayer.name} passed GO, collecting $200`);
+        currentPlayer.money += 200;
+        updatePlayerMoney();
+      }
       
       // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
       // Skip Baccarat property (position 13) - move to position 14 instead
@@ -2074,6 +2071,7 @@ function roll3DDice() {
 
       // Check for Go To Jail (position 30)
       if (newPosition === 30) {
+        console.log(`${currentPlayer.name} landed on Go To Jail, sending to position 10`);
         switchAnimation(rollingPlayerIndex, 'walk');
         animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, 10, () => {
           currentPlayer.position = 10;
@@ -2083,16 +2081,15 @@ function roll3DDice() {
           showJailUI('Go directly to Jail!', () => {
             endTurn();
           });
-        });
+        }, false);
       } else {
         // Normal movement
-        console.log(`Fallback: Starting movement for ${currentPlayer.name} from ${currentPlayer.position} to ${newPosition}`);
         switchAnimation(rollingPlayerIndex, 'walk');
         animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
           currentPlayer.position = newPosition;
-          // console.log(`Fallback: ${currentPlayer.name} movement complete, position now: ${currentPlayer.position}`);
+          console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
           handleLanding(currentPlayer, newPosition);
-        });
+        }, false);
       }
 
       // Roll button will be enabled by endTurn() when turn completes
@@ -2147,22 +2144,15 @@ function handleLanding(player, position) {
     return;
   }
   
-  // Position 10 is Jail - if landed via dice roll, send to jail
-  if (position === 10 && !player.isInJail) {
-    console.log('Landed on Jail square via dice roll - sending to jail');
-    player.isInJail = true;
-    player.jailTurns = 0;
-    switchAnimation(gameState.currentPlayerIndex, 'idle');
-    
-    if (player.isAI) {
-      addAIMove(player.name, 'sent to Jail');
-    }
-    
-    showJailUI('You landed in jail!', () => {
-      endTurn();
-    });
+  // Position 10 is Jail - "Just Visiting", no jail penalty
+  if (position === 10) {
+    console.log(`${player.name} is just visiting Jail (position 10) - no penalty`);
+    // Just visiting, can roll normally next turn
+    endTurn();
     return;
   }
+  
+  console.log(`Landed on position ${position} (${tile.name}), type: ${tile.type}`);
   
   // Handle property tiles and railroads
   if (tile.type === 'property' || tile.type === 'railroad') {
@@ -2364,7 +2354,7 @@ const communityChestCards = [
   { message: "Pay hospital fees of $300", action: "pay_fine", amount: 300 },
   { message: "Pay school fees of $200", action: "pay_fine", amount: 200 },
   { message: "Receive $200 consultancy fee", action: "gain_money", amount: 200 },
-  { message: "You are assessed for street repairs - $150 per property, $350 per hotel", action: "pay_repairs", amount: 150 },
+  { message: "You are assessed for street repairs - $150 per property", action: "pay_repairs", amount: 150 },
   { message: "You have won second prize in a beauty contest - Collect $100", action: "gain_money", amount: 100 },
   { message: "You inherit $400", action: "gain_money", amount: 400 }
 ];
@@ -2397,15 +2387,20 @@ function executeCardAction(card, player, playerIndex) {
         newPosition = 14;
       }
       
-      if (newPosition < oldPosition) {
+      // Check if passed GO (only if moving forward and wrapping around, not when moving TO GO)
+      if (newPosition < oldPosition && newPosition !== 0) {
         player.money += 200;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
       
-      player.position = newPosition;
-      addAIMove(player.name, `advanced to position ${newPosition}`);
-      handleLanding(player, newPosition);
+      // Animate forward movement
+      switchAnimation(playerIndex, 'walk');
+      animatePlayerMovement(playerIndex, oldPosition, newPosition, () => {
+        player.position = newPosition;
+        addAIMove(player.name, `advanced to position ${newPosition}`);
+        handleLanding(player, newPosition);
+      }, false); // false = forward direction
       break;
       
     case 'gain_money':
@@ -2435,14 +2430,18 @@ function executeCardAction(card, player, playerIndex) {
         showJailUI('Go directly to Jail!', () => {
           endTurn();
         });
-      });
+      }, false); // false = forward direction
       break;
       
     case 'go_back':
       let backPosition = (player.position - spaces + 40) % 40;
-      player.position = backPosition;
-      addAIMove(player.name, `went back ${spaces} spaces to position ${backPosition}`);
-      handleLanding(player, backPosition);
+      // Animate backwards movement
+      switchAnimation(playerIndex, 'walk');
+      animatePlayerMovement(playerIndex, player.position, backPosition, () => {
+        player.position = backPosition;
+        addAIMove(player.name, `went back ${spaces} spaces to position ${backPosition}`);
+        handleLanding(player, backPosition);
+      }, true); // true = reverse direction
       break;
       
     case 'get_out_of_jail':
@@ -2804,8 +2803,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         newPosition = 14;
       }
       
-      // Check if passed GO
-      if (newPosition < oldPosition) {
+      // Check if passed GO (only if moving forward and wrapping around)
+      if (newPosition < oldPosition && newPosition !== 0) {
         currentPlayer.money += 200;
         updatePlayerMoney();
         console.log(`${currentPlayer.name} passed GO and collected $200`);
@@ -2815,7 +2814,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
         currentPlayer.position = newPosition;
         handleLanding(currentPlayer, newPosition);
-      });
+      }, false); // false = forward direction
       break;
       
     case 'gain_money':
@@ -2857,16 +2856,17 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         showJailUI('Go directly to Jail!', () => {
           endTurn();
         });
-      });
+      }, false);
       break;
       
     case 'go_back':
       let backPosition = (currentPlayer.position - spaces + 40) % 40;
+      // Animate backwards movement
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, backPosition, () => {
         currentPlayer.position = backPosition;
         handleLanding(currentPlayer, backPosition);
-      });
+      }, true); // true = reverse direction
       break;
       
     case 'get_out_of_jail':
@@ -3402,7 +3402,7 @@ window.teleportToBellagio = () => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to Bellagio`);
 };
 
@@ -3418,7 +3418,7 @@ window.teleportToSantaFe = () => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to Santa Fe Hotel and Casino`);
 };
 
@@ -3434,7 +3434,7 @@ window.teleportToHardRock = () => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to Hard Rock Hotel`);
 };
 
@@ -3450,7 +3450,7 @@ window.teleportToCaesars = () => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to Caesars Palace`);
 };
 
@@ -3466,7 +3466,7 @@ window.teleportToWynn = () => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to Wynn Las Vegas`);
 };
 
@@ -3494,7 +3494,7 @@ window.teleportTo = (position) => {
   animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
     currentPlayer.position = newPosition;
     handleLanding(currentPlayer, newPosition);
-  });
+  }, false);
   console.log(`Teleported ${currentPlayer.name} to position ${newPosition}`);
 };
 
