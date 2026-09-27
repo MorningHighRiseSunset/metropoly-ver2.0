@@ -699,7 +699,7 @@ function loadWalkModel(player, index, baseModel) {
           const walkClip = clip.clone();
           walkClip.name = 'Walk';
           const walkAction = playerAnimations[index].mixer.clipAction(walkClip, baseModel);
-          walkAction.timeScale = 5.0; // Much faster walk animation
+          walkAction.timeScale = 2.5; // Moderate walk animation speed
           playerAnimations[index].animations['Walk'] = walkAction;
         });
       }
@@ -846,11 +846,10 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
   function animate() {
     const elapsed = Date.now() - startTime;
     const progress = Math.min(elapsed / totalDuration, 1);
-    const easedProgress = 1 - Math.pow(1 - progress, 3);
     
-    // Calculate current position along path
+    // Calculate current position along path - use linear progress for constant speed
     const totalDistance = steps;
-    const currentDistance = easedProgress * totalDistance;
+    const currentDistance = progress * totalDistance;
     const currentIndex = Math.floor(currentDistance);
     const nextIndex = Math.min(currentIndex + 1, path.length - 1);
     const segmentProgress = currentDistance - currentIndex;
@@ -2293,10 +2292,10 @@ function handleLanding(player, position, canRollAgain = false) {
         // If it's a casino property and not disabled, launch game first, then show purchase UI
         if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
           // console.log(`[CASINO DEBUG] Launching casino game: ${tile.casinoGame} for ${tile.name}`);
-          launchCasinoGame(tile.casinoGame, tile);
+          launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         } else {
           // console.log(`[CASINO DEBUG] Skipping casino game (disabled or not casino), showing purchase UI`);
-          showPropertyPurchaseUI(tile, player);
+          showPropertyPurchaseUI(tile, player, position, canRollAgain);
         }
       } else {
         addAIMove(player.name, `landed on ${tile.name}`);
@@ -2319,6 +2318,12 @@ function handleLanding(player, position, canRollAgain = false) {
           checkGameEnd();
         }
         if (!canRollAgain) endTurn();
+        else {
+          // Re-enable roll button for player to roll again on doubles
+          if (rollDiceBtn) {
+            rollDiceBtn.disabled = false;
+          }
+        }
       }
     } else if (owner !== player) {
       let rent;
@@ -2331,7 +2336,7 @@ function handleLanding(player, position, canRollAgain = false) {
       // If it's a casino property and not disabled, launch game first, then pay rent
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino && !player.isAI) {
         // console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
-        launchCasinoGame(tile.casinoGame, tile);
+        launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         // After game closes, pay rent (handled in closeCasinoBtn)
       } else {
         // console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
@@ -2347,13 +2352,19 @@ function handleLanding(player, position, canRollAgain = false) {
         updatePlayersList();
         checkGameEnd();
         if (!canRollAgain) endTurn();
+        else {
+          // Re-enable roll button for player to roll again on doubles
+          if (rollDiceBtn) {
+            rollDiceBtn.disabled = false;
+          }
+        }
       }
     } else {
       // Player owns the property - show UI
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
         if (!player.isAI) {
           // console.log(`[CASINO DEBUG] Player owns ${tile.name}, launching casino game: ${tile.casinoGame}`);
-          launchCasinoGame(tile.casinoGame, tile);
+          launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         } else {
           // AI plays casino game
           const winAmount = Math.floor(Math.random() * 100) + 50;
@@ -2362,14 +2373,26 @@ function handleLanding(player, position, canRollAgain = false) {
           updatePlayerMoney();
           checkGameEnd();
           if (!canRollAgain) endTurn();
+          else {
+            // Re-enable roll button for player to roll again on doubles
+            if (rollDiceBtn) {
+              rollDiceBtn.disabled = false;
+            }
+          }
         }
       } else {
         // console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
         if (!player.isAI) {
-          showOwnedPropertyUI(tile);
+          showOwnedPropertyUI(tile, canRollAgain);
         } else {
           addAIMove(player.name, `landed on ${tile.name} (owned)`);
           if (!canRollAgain) endTurn();
+          else {
+            // Re-enable roll button for player to roll again on doubles
+            if (rollDiceBtn) {
+              rollDiceBtn.disabled = false;
+            }
+          }
         }
       }
     }
@@ -2378,7 +2401,7 @@ function handleLanding(player, position, canRollAgain = false) {
     
     if (!owner) {
       if (!player.isAI) {
-        showPropertyPurchaseUI(tile, player);
+        showPropertyPurchaseUI(tile, player, position, canRollAgain);
       } else {
         addAIMove(player.name, `landed on ${tile.name}`);
         if (player.money >= tile.price) {
@@ -2406,28 +2429,40 @@ function handleLanding(player, position, canRollAgain = false) {
       updatePlayerMoney();
       checkGameEnd();
       if (!canRollAgain) endTurn();
+      else {
+        // Re-enable roll button for player to roll again on doubles
+        if (rollDiceBtn) {
+          rollDiceBtn.disabled = false;
+        }
+      }
     } else {
       if (player.isAI) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
         if (!canRollAgain) endTurn();
       } else {
-        showOwnedPropertyUI(tile);
+        showOwnedPropertyUI(tile, canRollAgain);
       }
     }
   } else if (tile.type === 'tax') {
     if (!player.isAI) {
-      showTaxUI(tile, player);
+      showTaxUI(tile, player, canRollAgain);
     } else {
       player.money -= tile.amount;
       console.log(`${player.name} paid $${tile.amount}`);
       updatePlayerMoney();
       checkGameEnd();
       if (!canRollAgain) endTurn();
+      else {
+        // Re-enable roll button for player to roll again on doubles
+        if (rollDiceBtn) {
+          rollDiceBtn.disabled = false;
+        }
+      }
     }
   } else if (tile.type === 'chance' || tile.type === 'community-chest') {
     // Show chance/community card UI
     if (!player.isAI) {
-      showCardUI(tile);
+      showCardUI(tile, canRollAgain);
     } else {
       // AI draws and executes a random card
       const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
@@ -2443,6 +2478,12 @@ function handleLanding(player, position, canRollAgain = false) {
   } else {
     // Other tile types (corners)
     if (!canRollAgain) endTurn();
+    else {
+      // Re-enable roll button for player to roll again on doubles
+      if (rollDiceBtn) {
+        rollDiceBtn.disabled = false;
+      }
+    }
   }
 }
 
@@ -2622,7 +2663,7 @@ function executeCardAction(card, player, playerIndex) {
 }
 
 // Show chance/community card UI
-function showCardUI(tile) {
+function showCardUI(tile, canRollAgain = false) {
   const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
   const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
   
@@ -2635,6 +2676,7 @@ function showCardUI(tile) {
   document.getElementById('cardOverlay').dataset.cardAmount = randomCard.amount || 0;
   document.getElementById('cardOverlay').dataset.cardPosition = randomCard.position || 0;
   document.getElementById('cardOverlay').dataset.cardSpaces = randomCard.spaces || 0;
+  document.getElementById('cardOverlay').dataset.canRollAgain = canRollAgain;
 
   // Disable roll dice button while card UI is open
   if (rollDiceBtn) {
@@ -2802,7 +2844,7 @@ function handleAIInJail(aiPlayer) {
 }
 
 // Show tax/utility UI
-function showTaxUI(tile, player) {
+function showTaxUI(tile, player, canRollAgain = false) {
   document.getElementById('taxTitle').textContent = tile.name;
   
   let amount;
@@ -2835,6 +2877,7 @@ function showTaxUI(tile, player) {
   // Store for button handler
   window.currentTaxTile = tile;
   window.currentTaxPlayer = player;
+  window.currentTaxCanRollAgain = canRollAgain;
 }
 
 // Tax OK button handler
@@ -2857,11 +2900,20 @@ document.getElementById('taxOkBtn').addEventListener('click', () => {
   }
   
   document.getElementById('taxOverlay').style.display = 'none';
-  endTurn();
+  
+  // Only end turn if player can't roll again (no doubles)
+  if (!window.currentTaxCanRollAgain) {
+    endTurn();
+  } else {
+    // Re-enable roll button for player to roll again
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = false;
+    }
+  }
 });
 
 // Launch casino game
-function launchCasinoGame(gameType, tile) {
+function launchCasinoGame(gameType, tile, canRollAgain = false) {
   // console.log(`[CASINO DEBUG] ===== LAUNCHING CASINO GAME =====`);
   // console.log(`[CASINO DEBUG] Game type: ${gameType}`);
   // console.log(`[CASINO DEBUG] Tile name: ${tile.name}`);
@@ -2913,6 +2965,10 @@ function launchCasinoGame(gameType, tile) {
   `;
   
   document.body.appendChild(casinoOverlay);
+  
+  // Store canRollAgain state for when casino closes
+  window.currentCasinoCanRollAgain = canRollAgain;
+  
   // console.log(`[CASINO DEBUG] Casino overlay added to DOM`);
   
   // Wait for iframe to load, then initialize the game
@@ -2982,7 +3038,7 @@ function launchCasinoGame(gameType, tile) {
     if (!owner) {
       // Property is unowned - show purchase UI
       // console.log(`[CASINO DEBUG] Property unowned, showing purchase UI`);
-      showPropertyPurchaseUI(tile, currentPlayer);
+      showPropertyPurchaseUI(tile, currentPlayer, tile.position, window.currentCasinoCanRollAgain);
     } else if (owner !== currentPlayer) {
       // Property is owned by someone else - pay rent
       let rent;
@@ -2996,11 +3052,20 @@ function launchCasinoGame(gameType, tile) {
       console.log(`${currentPlayer.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
       updatePlayerMoney();
       checkGameEnd();
-      endTurn();
+      
+      // Only end turn if player can't roll again (no doubles)
+      if (!window.currentCasinoCanRollAgain) {
+        endTurn();
+      } else {
+        // Re-enable roll button for player to roll again
+        if (rollDiceBtn) {
+          rollDiceBtn.disabled = false;
+        }
+      }
     } else {
       // Player owns the property
       // console.log(`[CASINO DEBUG] Player owns property, showing owned property UI`);
-      showOwnedPropertyUI(tile);
+      showOwnedPropertyUI(tile, window.currentCasinoCanRollAgain);
     }
   });
 }
@@ -3012,6 +3077,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
   const amount = parseInt(cardOverlay.dataset.cardAmount) || 0;
   const position = parseInt(cardOverlay.dataset.cardPosition) || 0;
   const spaces = parseInt(cardOverlay.dataset.cardSpaces) || 0;
+  const canRollAgain = cardOverlay.dataset.canRollAgain === 'true';
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   
@@ -3026,7 +3092,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         updatePlayerMoney();
         console.log(`${currentPlayer.name} advanced to GO and collected $200`);
       }
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'advance_to':
@@ -3051,7 +3118,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
         currentPlayer.position = newPosition;
-        handleLanding(currentPlayer, newPosition);
+        handleLanding(currentPlayer, newPosition, canRollAgain);
       }, false); // false = forward direction
       break;
       
@@ -3059,7 +3126,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       currentPlayer.money += amount;
       updatePlayerMoney();
       console.log(`${currentPlayer.name} gained $${amount} from card`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'pay_fine':
@@ -3067,7 +3135,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       updatePlayerMoney();
       checkGameEnd();
       console.log(`${currentPlayer.name} paid $${amount} fine from card`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'pay_repairs':
@@ -3080,7 +3149,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       } else {
         console.log(`${currentPlayer.name} has no properties to repair, no charge`);
       }
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'go_to_jail':
@@ -3103,14 +3173,15 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, currentPlayer.position, backPosition, () => {
         currentPlayer.position = backPosition;
-        handleLanding(currentPlayer, backPosition);
+        handleLanding(currentPlayer, backPosition, canRollAgain);
       }, true); // true = reverse direction
       break;
       
     case 'get_out_of_jail':
       currentPlayer.getOutOfJailCards = (currentPlayer.getOutOfJailCards || 0) + 1;
       console.log(`${currentPlayer.name} got a Get Out of Jail Free card (now has ${currentPlayer.getOutOfJailCards})`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'pay_players':
@@ -3125,7 +3196,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       updatePlayersList();
       checkGameEnd();
       console.log(`${currentPlayer.name} paid $${amount} to each player`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else if (rollDiceBtn) rollDiceBtn.disabled = false;
       break;
       
     case 'collect_from_players':
@@ -3149,7 +3221,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
 });
 
 // Show owned property UI
-function showOwnedPropertyUI(tile) {
+function showOwnedPropertyUI(tile, canRollAgain = false) {
   document.getElementById('propertyTitle').textContent = tile.name;
   document.getElementById('propertyAddress').textContent = tile.address || '';
   document.getElementById('propertyPrice').textContent = 'OWNED';
@@ -3176,7 +3248,7 @@ function showOwnedPropertyUI(tile) {
       window.lastPlayedVideos = {};
     }
     
-    const positionKey = position;
+    const positionKey = tile.position;
     const lastPlayed = window.lastPlayedVideos[positionKey];
     
     // Get a random video that's different from the last one
@@ -3245,6 +3317,10 @@ function showOwnedPropertyUI(tile) {
   // Change button to just OK
   document.getElementById('propertyBuyBtn').style.display = 'none';
   document.getElementById('propertyPassBtn').textContent = 'OK';
+  
+  // Store canRollAgain state for button handler
+  window.currentCanRollAgain = canRollAgain;
+  
   document.getElementById('propertyPassBtn').onclick = () => {
     // Clean up video and image
     const propertyVideo = document.getElementById('propertyVideo');
@@ -3272,14 +3348,23 @@ function showOwnedPropertyUI(tile) {
     document.getElementById('propertyBuyBtn').style.display = 'inline-block';
     document.getElementById('propertyPassBtn').textContent = 'Pass';
     document.getElementById('propertyPassBtn').onclick = null;
-    endTurn();
+    
+    // Only end turn if player can't roll again (no doubles)
+    if (!window.currentCanRollAgain) {
+      endTurn();
+    } else {
+      // Re-enable roll button for player to roll again
+      if (rollDiceBtn) {
+        rollDiceBtn.disabled = false;
+      }
+    }
   };
   
   document.getElementById('propertyOverlay').style.display = 'flex';
 }
 
 // Show property purchase UI
-function showPropertyPurchaseUI(tile, player) {
+function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
   document.getElementById('propertyTitle').textContent = tile.name;
   document.getElementById('propertyAddress').textContent = tile.address || '';
   document.getElementById('propertyPrice').textContent = `$${tile.price}`;
@@ -3314,7 +3399,7 @@ function showPropertyPurchaseUI(tile, player) {
       window.lastPlayedVideos = {};
     }
     
-    const positionKey = position;
+    const positionKey = tile.position;
     const lastPlayed = window.lastPlayedVideos[positionKey];
     
     // Get a random video that's different from the last one
@@ -3390,6 +3475,7 @@ function showPropertyPurchaseUI(tile, player) {
   // Store current tile and player for button handlers
   window.currentPropertyTile = tile;
   window.currentPropertyPlayer = player;
+  window.currentCanRollAgain = canRollAgain;
 }
 
 // Property purchase button handlers
@@ -3429,7 +3515,16 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   }
   
   document.getElementById('propertyOverlay').style.display = 'none';
-  endTurn();
+  
+  // Only end turn if player can't roll again (no doubles)
+  if (!window.currentCanRollAgain) {
+    endTurn();
+  } else {
+    // Re-enable roll button for player to roll again
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = false;
+    }
+  }
 });
 
 document.getElementById('propertyPassBtn').addEventListener('click', () => {
@@ -3455,7 +3550,16 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   }
   
   document.getElementById('propertyOverlay').style.display = 'none';
-  endTurn();
+  
+  // Only end turn if player can't roll again (no doubles)
+  if (!window.currentCanRollAgain) {
+    endTurn();
+  } else {
+    // Re-enable roll button for player to roll again
+    if (rollDiceBtn) {
+      rollDiceBtn.disabled = false;
+    }
+  }
 });
 
 // End current turn and move to next player
