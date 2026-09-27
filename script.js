@@ -2097,6 +2097,7 @@ function roll3DDice() {
             if (isDoubles && currentPlayer.doublesCount < 3) {
               console.log('Doubles rolled - player can roll again');
               handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+              window.turnCompleting = false; // Reset flag so player can roll again
             } else {
               handleLanding(currentPlayer, newPosition, false);
             }
@@ -2204,7 +2205,15 @@ function roll3DDice() {
         animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
           currentPlayer.position = newPosition;
           console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
-          handleLanding(currentPlayer, newPosition);
+          
+          // If doubles, don't end turn - allow rolling again
+          if (isDoubles && currentPlayer.doublesCount < 3) {
+            console.log('Fallback: Doubles rolled - player can roll again');
+            handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+            window.turnCompleting = false; // Reset flag so player can roll again
+          } else {
+            handleLanding(currentPlayer, newPosition, false);
+          }
         }, false);
       }
 
