@@ -286,7 +286,8 @@ startGameBtn.addEventListener('click', () => {
     money: 2500,
     isInJail: false,
     jailTurns: 0,
-    properties: []
+    properties: [],
+    getOutOfJailCards: 0
   };
 
   // Add walk model for female character
@@ -336,7 +337,8 @@ startGameBtn.addEventListener('click', () => {
         money: 2500,
         isInJail: false,
         jailTurns: 0,
-        properties: []
+        properties: [],
+        getOutOfJailCards: 0
       };
 
       // Add walk model for female AI character
@@ -697,7 +699,7 @@ function loadWalkModel(player, index, baseModel) {
           const walkClip = clip.clone();
           walkClip.name = 'Walk';
           const walkAction = playerAnimations[index].mixer.clipAction(walkClip, baseModel);
-          walkAction.timeScale = 3.0; // Faster walk animation
+          walkAction.timeScale = 5.0; // Much faster walk animation
           playerAnimations[index].animations['Walk'] = walkAction;
         });
       }
@@ -735,13 +737,13 @@ function switchAnimation(playerIndex, animationType) {
     const currentAction = animData.animations[animData.currentAction];
     
     if (currentAction && animData.currentAction !== targetAction) {
-      currentAction.fadeOut(0.05); // Faster fade out over 50ms
+      currentAction.fadeOut(0.01); // Very fast fade out over 10ms
       currentAction.stop(); // Explicitly stop the current animation
     }
     
     // Start new action with fade in
     newAction.reset();
-    newAction.fadeIn(0.05); // Faster fade in over 50ms
+    newAction.fadeIn(0.01); // Very fast fade in over 10ms
     newAction.play();
     animData.currentAction = targetAction;
     
@@ -891,6 +893,13 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       const finalCell = boardCells.find(c => c.index === newPosition % 40);
       // console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
       switchAnimation(playerIndex, 'idle');
+      
+      // Re-enable dice button if player can roll again (doubles)
+      const currentPlayer = gameState.players[playerIndex];
+      if (currentPlayer && currentPlayer.doublesCount > 0 && currentPlayer.doublesCount < 3) {
+        rollDiceBtn.disabled = false;
+      }
+      
       if (callback) callback();
     }
   }
@@ -919,7 +928,13 @@ rollDiceBtn.addEventListener('click', () => {
   // Don't allow rolling if in jail (must pay first)
   if (currentPlayer.isInJail) {
     console.log('Cannot roll - you are in jail, showing pay UI');
-    document.getElementById('jailPayOverlay').style.display = 'flex';
+    // Only show jail pay overlay if actually on jail square (position 10)
+    if (currentPlayer.position === 10) {
+      document.getElementById('jailPayOverlay').style.display = 'flex';
+    } else {
+      console.log('Player is in jail but not on jail square - showing regular jail UI');
+      showJailOptionsUI();
+    }
     return;
   }
 
@@ -1317,7 +1332,7 @@ function create3DBoard() {
     { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 192, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
     { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
-    { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg', address: '', rent: [] },
+    { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'Images/yellow_light_bulb.jpg', address: '', rent: [] },
     { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
@@ -1333,7 +1348,7 @@ function create3DBoard() {
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png', address: '', rent: [] },
+    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
     { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
     { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
@@ -1342,8 +1357,8 @@ function create3DBoard() {
     { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'craps', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 37, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
+    { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
+    { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp3'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
     { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
   ];
 
@@ -2077,7 +2092,14 @@ function roll3DDice() {
           animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
             currentPlayer.position = newPosition;
             console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
-            handleLanding(currentPlayer, newPosition);
+            
+            // If doubles, don't end turn - allow rolling again
+            if (isDoubles && currentPlayer.doublesCount < 3) {
+              console.log('Doubles rolled - player can roll again');
+              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+            } else {
+              handleLanding(currentPlayer, newPosition, false);
+            }
           }, false);
         }
       }, 500);
@@ -2229,12 +2251,12 @@ function getDiceResult(diceBody) {
 }
 
 // Handle landing on a square
-function handleLanding(player, position) {
+function handleLanding(player, position, canRollAgain = false) {
   // Get the tile configuration
   const tile = boardConfig.find(t => t.position === position);
   
   if (!tile) {
-    endTurn();
+    if (!canRollAgain) endTurn();
     return;
   }
   
@@ -2242,7 +2264,7 @@ function handleLanding(player, position) {
   if (position === 10) {
     console.log(`${player.name} is just visiting Jail (position 10) - no penalty`);
     // Just visiting, can roll normally next turn
-    endTurn();
+    if (!canRollAgain) endTurn();
     return;
   }
   
@@ -2287,7 +2309,7 @@ function handleLanding(player, position) {
           updatePropertiesList();
           checkGameEnd();
         }
-        endTurn();
+        if (!canRollAgain) endTurn();
       }
     } else if (owner !== player) {
       let rent;
@@ -2315,7 +2337,7 @@ function handleLanding(player, position) {
         updatePlayerMoney();
         updatePlayersList();
         checkGameEnd();
-        endTurn();
+        if (!canRollAgain) endTurn();
       }
     } else {
       // Player owns the property - show UI
@@ -2330,7 +2352,7 @@ function handleLanding(player, position) {
           addAIMove(player.name, `won $${winAmount} at ${tile.casinoGame}`);
           updatePlayerMoney();
           checkGameEnd();
-          endTurn();
+          if (!canRollAgain) endTurn();
         }
       } else {
         // console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
@@ -2338,7 +2360,7 @@ function handleLanding(player, position) {
           showOwnedPropertyUI(tile);
         } else {
           addAIMove(player.name, `landed on ${tile.name} (owned)`);
-          endTurn();
+          if (!canRollAgain) endTurn();
         }
       }
     }
@@ -2360,7 +2382,7 @@ function handleLanding(player, position) {
           updatePropertiesList();
           checkGameEnd();
         }
-        endTurn();
+        if (!canRollAgain) endTurn();
       }
     } else if (owner !== player) {
       const rent = Math.floor(tile.price * 0.1);
@@ -2374,11 +2396,11 @@ function handleLanding(player, position) {
       
       updatePlayerMoney();
       checkGameEnd();
-      endTurn();
+      if (!canRollAgain) endTurn();
     } else {
       if (player.isAI) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
-        endTurn();
+        if (!canRollAgain) endTurn();
       } else {
         showOwnedPropertyUI(tile);
       }
@@ -2391,7 +2413,7 @@ function handleLanding(player, position) {
       console.log(`${player.name} paid $${tile.amount}`);
       updatePlayerMoney();
       checkGameEnd();
-      endTurn();
+      if (!canRollAgain) endTurn();
     }
   } else if (tile.type === 'chance' || tile.type === 'community-chest') {
     // Show chance/community card UI
@@ -2411,7 +2433,7 @@ function handleLanding(player, position) {
     }
   } else {
     // Other tile types (corners)
-    endTurn();
+    if (!canRollAgain) endTurn();
   }
 }
 
@@ -2421,35 +2443,35 @@ const chanceCards = [
   { message: "Advance to Las Vegas Grand Prix", action: "advance_to", position: 3 },
   { message: "Advance to Bellagio - If you pass Go, collect $200", action: "advance_to", position: 15 },
   { message: "Advance to The Cosmopolitan - If you pass Go, collect $200", action: "advance_to", position: 36 },
-  { message: "Bank pays you dividend of $50", action: "gain_money", amount: 50 },
+  { message: "Casino dividend of $50", action: "gain_money", amount: 50 },
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Make general repairs on all your property - $25 per property", action: "pay_repairs", amount: 25 },
-  { message: "Speeding fine $150", action: "pay_fine", amount: 150 },
-  { message: "Take a trip to Reading Railroad - If you pass Go, collect $200", action: "advance_to", position: 5 },
+  { message: "Casino repair fees - $25 per property", action: "pay_repairs", amount: 25 },
+  { message: "Las Vegas speeding fine $150", action: "pay_fine", amount: 150 },
+  { message: "Take a trip to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 5 },
   { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 14 },
-  { message: "You have been elected Chairman of the Board - Pay each player $50", action: "pay_players", amount: 50 },
-  { message: "Your building loan matures - Collect $150", action: "gain_money", amount: 150 },
-  { message: "You have won a crossword competition - Collect $100", action: "gain_money", amount: 100 }
+  { message: "You have been elected Casino Chairman - Pay each player $50", action: "pay_players", amount: 50 },
+  { message: "Your casino investment matures - Collect $150", action: "gain_money", amount: 150 },
+  { message: "You have won a Blackjack competition - Collect $150", action: "gain_money", amount: 150 }
 ];
 
 const communityChestCards = [
   { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
-  { message: "Bank error in your favor - Collect $400", action: "gain_money", amount: 400 },
+  { message: "Casino jackpot error in your favor - Collect $400", action: "gain_money", amount: 400 },
   { message: "Doctor's fee - Pay $200", action: "pay_fine", amount: 200 },
-  { message: "From sale of stock you get $300", action: "gain_money", amount: 300 },
+  { message: "From casino investment you get $300", action: "gain_money", amount: 300 },
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Holiday fund matures - Collect $400", action: "gain_money", amount: 400 },
-  { message: "Income tax refund - Collect $480", action: "gain_money", amount: 480 },
+  { message: "Vegas vacation fund matures - Collect $400", action: "gain_money", amount: 400 },
+  { message: "Casino tax refund - Collect $480", action: "gain_money", amount: 480 },
   { message: "It is your birthday - Collect $50 from each player", action: "collect_from_players", amount: 50 },
-  { message: "Life insurance matures - Collect $400", action: "gain_money", amount: 400 },
+  { message: "Casino life insurance matures - Collect $400", action: "gain_money", amount: 400 },
   { message: "Pay hospital fees of $300", action: "pay_fine", amount: 300 },
   { message: "Pay school fees of $200", action: "pay_fine", amount: 200 },
-  { message: "Receive $200 consultancy fee", action: "gain_money", amount: 200 },
-  { message: "You are assessed for street repairs - $150 per property", action: "pay_repairs", amount: 150 },
-  { message: "You have won second prize in a beauty contest - Collect $100", action: "gain_money", amount: 100 },
+  { message: "Receive $200 poker tournament fee", action: "gain_money", amount: 200 },
+  { message: "You are assessed for casino repairs - $150 per property", action: "pay_repairs", amount: 150 },
+  { message: "You have won second prize in a Vegas contest - Collect $100", action: "gain_money", amount: 100 },
   { message: "You inherit $400", action: "gain_money", amount: 400 }
 ];
 
@@ -2539,6 +2561,7 @@ function executeCardAction(card, player, playerIndex) {
       break;
       
     case 'get_out_of_jail':
+      player.getOutOfJailCards = (player.getOutOfJailCards || 0) + 1;
       addAIMove(player.name, 'got a Get Out of Jail Free card');
       endTurn();
       break;
@@ -2649,8 +2672,23 @@ function showJailUI(message, callback) {
   const jailTile = boardConfig.find(t => t.position === 10);
   
   if (jailTile && jailTile.videos && jailTile.videos.length > 0) {
-    const randomVideo = jailTile.videos[Math.floor(Math.random() * jailTile.videos.length)];
+    // Track last played jail video to avoid repeats
+    if (!window.lastPlayedVideos) {
+      window.lastPlayedVideos = {};
+    }
+    
+    const lastPlayed = window.lastPlayedVideos['jail'];
+    let randomVideo;
+    let attempts = 0;
+    do {
+      randomVideo = jailTile.videos[Math.floor(Math.random() * jailTile.videos.length)];
+      attempts++;
+    } while (lastPlayed === randomVideo && attempts < 10 && jailTile.videos.length > 1);
+    
+    window.lastPlayedVideos['jail'] = randomVideo;
     jailVideo.src = randomVideo;
+    jailVideo.muted = false; // Ensure audio is not muted
+    jailVideo.volume = 1.0; // Set volume to max
     jailVideo.load();
     
     let videoEnded = false;
@@ -2718,10 +2756,22 @@ function showJailOptionsUI() {
   document.getElementById('jailPayOverlay').style.display = 'flex';
 }
 
-// Handle AI in jail - AI will pay to get out if they have money
+// Handle AI in jail - AI will use get out of jail card first, then pay if they have money
 function handleAIInJail(aiPlayer) {
   setTimeout(() => {
-    if (aiPlayer.money >= 50) {
+    // Check if AI has get out of jail cards first
+    if (aiPlayer.getOutOfJailCards && aiPlayer.getOutOfJailCards > 0) {
+      // AI uses get out of jail card
+      aiPlayer.getOutOfJailCards--;
+      aiPlayer.isInJail = false;
+      aiPlayer.jailTurns = 0;
+      console.log(`${aiPlayer.name} used Get Out of Jail Free card (now has ${aiPlayer.getOutOfJailCards})`);
+      
+      // AI rolls dice
+      setTimeout(() => {
+        roll3DDice();
+      }, 1000);
+    } else if (aiPlayer.money >= 50) {
       // AI pays to get out
       aiPlayer.money -= 50;
       updatePlayerMoney();
@@ -3049,8 +3099,8 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       break;
       
     case 'get_out_of_jail':
-      // For now, just add a message (could implement jail-free card system later)
-      console.log(`${currentPlayer.name} got a Get Out of Jail Free card`);
+      currentPlayer.getOutOfJailCards = (currentPlayer.getOutOfJailCards || 0) + 1;
+      console.log(`${currentPlayer.name} got a Get Out of Jail Free card (now has ${currentPlayer.getOutOfJailCards})`);
       endTurn();
       break;
       
@@ -3112,8 +3162,26 @@ function showOwnedPropertyUI(tile) {
   }
   
   if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
-    const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+    // Track last played video for each position to avoid repeats
+    if (!window.lastPlayedVideos) {
+      window.lastPlayedVideos = {};
+    }
+    
+    const positionKey = position;
+    const lastPlayed = window.lastPlayedVideos[positionKey];
+    
+    // Get a random video that's different from the last one
+    let randomVideo;
+    let attempts = 0;
+    do {
+      randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+      attempts++;
+    } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
+    
+    window.lastPlayedVideos[positionKey] = randomVideo;
     propertyVideo.src = randomVideo;
+    propertyVideo.muted = false; // Ensure audio is not muted
+    propertyVideo.volume = 1.0; // Set volume to max
     propertyVideo.load();
     propertyVideo.play().catch(e => {
       console.log('Video play error:', e);
@@ -3232,8 +3300,26 @@ function showPropertyPurchaseUI(tile, player) {
   }
   
   if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
-    const randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+    // Track last played video for each position to avoid repeats
+    if (!window.lastPlayedVideos) {
+      window.lastPlayedVideos = {};
+    }
+    
+    const positionKey = position;
+    const lastPlayed = window.lastPlayedVideos[positionKey];
+    
+    // Get a random video that's different from the last one
+    let randomVideo;
+    let attempts = 0;
+    do {
+      randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+      attempts++;
+    } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
+    
+    window.lastPlayedVideos[positionKey] = randomVideo;
     propertyVideo.src = randomVideo;
+    propertyVideo.muted = false; // Ensure audio is not muted
+    propertyVideo.volume = 1.0; // Set volume to max
     propertyVideo.load();
     propertyVideo.play().catch(e => {
       console.log('Video play error:', e);
@@ -3489,7 +3575,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('jailPayBtn').addEventListener('click', () => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    if (currentPlayer.money >= 50) {
+    
+    // Check if player has get out of jail cards first
+    if (currentPlayer.getOutOfJailCards && currentPlayer.getOutOfJailCards > 0) {
+      document.getElementById('jailPayOverlay').style.display = 'none';
+      // Use get out of jail card instead of paying
+      currentPlayer.getOutOfJailCards--;
+      currentPlayer.isInJail = false;
+      currentPlayer.jailTurns = 0;
+      console.log(`${currentPlayer.name} used Get Out of Jail Free card (now has ${currentPlayer.getOutOfJailCards})`);
+      updatePlayerMoney();
+      checkGameEnd();
+
+      // Disable button while rolling
+      if (rollDiceBtn) {
+        rollDiceBtn.disabled = true;
+      }
+
+      roll3DDice();
+    } else if (currentPlayer.money >= 50) {
       document.getElementById('jailPayOverlay').style.display = 'none';
       // Player pays, gets out of jail, and rolls dice
       currentPlayer.money -= 50;
