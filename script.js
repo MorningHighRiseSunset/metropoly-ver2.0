@@ -19,6 +19,32 @@ window.diceProcessed = false;
 // Store animation mixers for each player
 const playerAnimations = {};
 
+// High heels walking sound management
+let highHeelsWalkSound = null;
+
+function playHighHeelsWalkSound() {
+  try {
+    // Stop any existing sound first
+    stopHighHeelsWalkSound();
+    
+    // Create and play the high heels walking sound
+    highHeelsWalkSound = new Audio('Sounds/steps-high-heels-beautiful-fashion-shopping-mall-walking-movie-and-tv-sound-effects.mp3');
+    highHeelsWalkSound.volume = 0.5;
+    highHeelsWalkSound.loop = true; // Loop while walking
+    highHeelsWalkSound.play().catch(e => console.warn('Could not play high heels walking sound:', e));
+  } catch (e) {
+    console.warn('Could not play high heels walking sound:', e);
+  }
+}
+
+function stopHighHeelsWalkSound() {
+  if (highHeelsWalkSound) {
+    highHeelsWalkSound.pause();
+    highHeelsWalkSound.currentTime = 0;
+    highHeelsWalkSound = null;
+  }
+}
+
 // ===== DOM ELEMENTS =====
 const scene = document.querySelector('.scene');
 const lobbyOverlay = document.getElementById('lobbyOverlay');
@@ -709,14 +735,26 @@ function switchAnimation(playerIndex, animationType) {
     const currentAction = animData.animations[animData.currentAction];
     
     if (currentAction && animData.currentAction !== targetAction) {
-      currentAction.fadeOut(0.1); // Fade out over 100ms
+      currentAction.fadeOut(0.05); // Faster fade out over 50ms
+      currentAction.stop(); // Explicitly stop the current animation
     }
     
     // Start new action with fade in
     newAction.reset();
-    newAction.fadeIn(0.1); // Fade in over 100ms
+    newAction.fadeIn(0.05); // Faster fade in over 50ms
     newAction.play();
     animData.currentAction = targetAction;
+    
+    // Play high heels walking sound for female character when starting to walk
+    if (animationType === 'walk') {
+      const player = gameState.players[playerIndex];
+      if (player && player.token === 'WhiteGirlIdle') {
+        playHighHeelsWalkSound();
+      }
+    } else if (animationType === 'idle') {
+      // Stop high heels walking sound when switching to idle
+      stopHighHeelsWalkSound();
+    }
   } else {
     // No animation found - that's okay, just update currentAction
     animData.currentAction = targetAction;
@@ -839,12 +877,17 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
+      // Ensure the model is exactly at the final position
+      const finalPos = path[path.length - 1];
+      tokenData.model.position.x = finalPos.x;
+      tokenData.model.position.z = finalPos.z;
+      
       // Return camera to top-down view
       threeCamera.position.set(0, 7, 0);
       threeCamera.lookAt(0, 0, 0);
       orbitControls.enabled = true;
       
-      // Done - switch to idle
+      // Done - switch to idle immediately
       const finalCell = boardCells.find(c => c.index === newPosition % 40);
       // console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
       switchAnimation(playerIndex, 'idle');
@@ -1275,7 +1318,7 @@ function create3DBoard() {
     { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
     { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
     { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg', address: '', rent: [] },
-    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155], disableCasino: true },
+    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
     { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
     { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
@@ -3063,7 +3106,7 @@ function showOwnedPropertyUI(tile) {
   // Play horse sound for Horseback Riding property
   let horseSound = null;
   if (tile.name === 'Horseback Riding') {
-    horseSound = new Audio('Videos/pwlpl-horses-galloping-sound-effect-359257.mp3');
+    horseSound = new Audio('Sounds/pwlpl-horses-galloping-sound-effect-359257.mp3');
     horseSound.play().catch(e => console.log('Horse sound play error:', e));
     window.currentHorseSound = horseSound;
   }
@@ -3183,7 +3226,7 @@ function showPropertyPurchaseUI(tile, player) {
   // Play horse sound for Horseback Riding property
   let horseSound = null;
   if (tile.name === 'Horseback Riding') {
-    horseSound = new Audio('Videos/pwlpl-horses-galloping-sound-effect-359257.mp3');
+    horseSound = new Audio('Sounds/pwlpl-horses-galloping-sound-effect-359257.mp3');
     horseSound.play().catch(e => console.log('Horse sound play error:', e));
     window.currentHorseSound = horseSound;
   }
