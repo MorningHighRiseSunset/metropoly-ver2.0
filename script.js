@@ -1966,35 +1966,6 @@ function roll3DDice() {
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
-        // Check if this was a jail roll attempt
-        if (window.jailRollAttempt) {
-          window.jailRollAttempt = false;
-          const isDoubles = (diceResult1 === diceResult2);
-          
-          if (isDoubles) {
-            // Player got doubles, they get out of jail and move
-            currentPlayer.isInJail = false;
-            currentPlayer.jailTurns = 0;
-            console.log('Player rolled doubles, getting out of jail');
-          } else {
-            // Player didn't get doubles, stay in jail and end turn
-            currentPlayer.jailTurns++;
-            if (currentPlayer.jailTurns >= 3) {
-              // After 3 turns, must pay
-              if (currentPlayer.money >= 50) {
-                currentPlayer.money -= 50;
-                currentPlayer.isInJail = false;
-                currentPlayer.jailTurns = 0;
-                updatePlayerMoney();
-                checkGameEnd();
-              }
-            }
-            console.log('Player did not roll doubles, staying in jail');
-            endTurn();
-            return;
-          }
-        }
-
         // Calculate target position
         let newPosition = (currentPlayer.position + totalDice) % 40;
         console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
@@ -2068,35 +2039,6 @@ function roll3DDice() {
       let totalDice = diceResult1 + diceResult2;
 
       // console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
-
-      // Check if this was a jail roll attempt
-      if (window.jailRollAttempt) {
-        window.jailRollAttempt = false;
-        const isDoubles = (diceResult1 === diceResult2);
-        
-        if (isDoubles) {
-          // Player got doubles, they get out of jail and move
-          currentPlayer.isInJail = false;
-          currentPlayer.jailTurns = 0;
-          console.log('Fallback: Player rolled doubles, getting out of jail');
-        } else {
-          // Player didn't get doubles, stay in jail and end turn
-          currentPlayer.jailTurns++;
-          if (currentPlayer.jailTurns >= 3) {
-            // After 3 turns, must pay
-            if (currentPlayer.money >= 50) {
-              currentPlayer.money -= 50;
-              currentPlayer.isInJail = false;
-              currentPlayer.jailTurns = 0;
-              updatePlayerMoney();
-              checkGameEnd();
-            }
-          }
-          console.log('Fallback: Player did not roll doubles, staying in jail');
-          endTurn();
-          return;
-        }
-      }
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
@@ -3458,21 +3400,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       roll3DDice();
     }
-  });
-
-  document.getElementById('jailRollBtn').addEventListener('click', () => {
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    document.getElementById('jailPayOverlay').style.display = 'none';
-    
-    // Player rolls for doubles - if they get doubles, they get out
-    // For now, just roll normally and check for doubles in the dice result handler
-    if (rollDiceBtn) {
-      rollDiceBtn.disabled = true;
-    }
-    
-    // Store that this is a jail roll attempt
-    window.jailRollAttempt = true;
-    roll3DDice();
   });
 
   document.getElementById('jailSkipBtn').addEventListener('click', () => {
