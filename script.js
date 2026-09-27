@@ -1966,6 +1966,37 @@ function roll3DDice() {
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
+        // Check for doubles
+        const isDoubles = (diceResult1 === diceResult2);
+        if (isDoubles) {
+          console.log('DOUBLES! Player gets to roll again');
+          // Show doubles notification
+          const doublesNotification = document.getElementById('doublesNotification');
+          if (doublesNotification) {
+            doublesNotification.style.display = 'block';
+            setTimeout(() => {
+              doublesNotification.style.display = 'none';
+            }, 2000);
+          }
+          // Track doubles count for this player
+          currentPlayer.doublesCount = (currentPlayer.doublesCount || 0) + 1;
+          // If 3 doubles in a row, send to jail
+          if (currentPlayer.doublesCount >= 3) {
+            console.log('Three doubles in a row! Sending to jail');
+            currentPlayer.doublesCount = 0;
+            currentPlayer.position = 10;
+            currentPlayer.isInJail = true;
+            currentPlayer.jailTurns = 0;
+            showJailUI('Three doubles! Go to Jail!', () => {
+              endTurn();
+            });
+            return;
+          }
+        } else {
+          // Reset doubles count if not doubles
+          currentPlayer.doublesCount = 0;
+        }
+
         // Calculate target position
         let newPosition = (currentPlayer.position + totalDice) % 40;
         console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
@@ -2039,6 +2070,37 @@ function roll3DDice() {
       let totalDice = diceResult1 + diceResult2;
 
       // console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
+
+      // Check for doubles
+      const isDoubles = (diceResult1 === diceResult2);
+      if (isDoubles) {
+        console.log('Fallback: DOUBLES! Player gets to roll again');
+        // Show doubles notification
+        const doublesNotification = document.getElementById('doublesNotification');
+        if (doublesNotification) {
+          doublesNotification.style.display = 'block';
+          setTimeout(() => {
+            doublesNotification.style.display = 'none';
+          }, 2000);
+        }
+        // Track doubles count for this player
+        currentPlayer.doublesCount = (currentPlayer.doublesCount || 0) + 1;
+        // If 3 doubles in a row, send to jail
+        if (currentPlayer.doublesCount >= 3) {
+          console.log('Fallback: Three doubles in a row! Sending to jail');
+          currentPlayer.doublesCount = 0;
+          currentPlayer.position = 10;
+          currentPlayer.isInJail = true;
+          currentPlayer.jailTurns = 0;
+          showJailUI('Three doubles! Go to Jail!', () => {
+            endTurn();
+          });
+          return;
+        }
+      } else {
+        // Reset doubles count if not doubles
+        currentPlayer.doublesCount = 0;
+      }
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;

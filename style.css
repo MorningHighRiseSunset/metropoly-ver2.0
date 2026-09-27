@@ -971,6 +971,53 @@ body {
   box-shadow: 0 12px 40px rgba(74, 158, 255, 0.4);
 }
 
+/* ===== DOUBLES NOTIFICATION ===== */
+.doubles-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5000;
+  animation: doublesPop 0.3s ease-out;
+}
+
+@keyframes doublesPop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.doubles-content {
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  border: 3px solid #fff;
+  border-radius: 16px;
+  padding: 30px 50px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.5);
+}
+
+.doubles-content h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.doubles-content p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+}
+
 /* ===== PROPERTY OVERLAY ===== */
 .property-overlay {
   position: fixed;
