@@ -579,7 +579,7 @@ function loadPlayerToken(player, index) {
       if (player.token === 'WhiteGirlIdle') {
         tokenModel.rotation.y = Math.PI / 2; // Face forward (90 degrees)
       } else if (player.token === 'Shoe') {
-        tokenModel.rotation.y = -Math.PI / 2; // Face right
+        tokenModel.rotation.y = 0; // Face east (same as helicopter)
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'Football') {
         tokenModel.position.y = 0.2; // Raise a bit higher
@@ -926,11 +926,11 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       if (Math.abs(segDx) > 0.01 || Math.abs(segDz) > 0.01) {
         const calculatedAngle = Math.atan2(segDx, segDz);
         
-        // Helicopter faces east by default, but Math.atan2 returns 0 for north
-        // So we need to adjust the angle for helicopter
+        // Helicopter and shoe face east by default, but Math.atan2 returns 0 for north
+        // So we need to adjust the angle for these tokens
         const player = gameState.players[playerIndex];
-        if (player && player.token === 'Helicopter') {
-          // Subtract PI/2 because helicopter faces east (0) but atan2(0,+) = 0 for north
+        if (player && (player.token === 'Helicopter' || player.token === 'Shoe')) {
+          // Subtract PI/2 because these tokens face east (0) but atan2(0,+) = 0 for north
           tokenData.model.rotation.y = calculatedAngle - Math.PI / 2;
         } else {
           tokenData.model.rotation.y = calculatedAngle;
@@ -963,15 +963,12 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
         rollDiceBtn.disabled = false;
       }
       
-      // Wait 2 seconds to show idle animation, then return camera and show UI
-      setTimeout(() => {
-        // Return camera to top-down view
-        threeCamera.position.set(0, 9, 0);
-        threeCamera.lookAt(0, 0, 0);
-        orbitControls.enabled = true;
-        
-        if (callback) callback();
-      }, 2000);
+      // Return camera to top-down view and trigger callback
+      threeCamera.position.set(0, 9, 0);
+      threeCamera.lookAt(0, 0, 0);
+      orbitControls.enabled = true;
+      
+      if (callback) callback();
     }
   }
   
@@ -2219,22 +2216,14 @@ function roll3DDice() {
             currentPlayer.position = newPosition;
             console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
             
-            // Wait 2 seconds to show idle animation, then return camera and show UI
-            setTimeout(() => {
-              // Return camera to top-down view
-              threeCamera.position.set(0, 9, 0);
-              threeCamera.lookAt(0, 0, 0);
-              orbitControls.enabled = true;
-              
-              // If doubles, don't end turn - allow rolling again
-              if (isDoubles && currentPlayer.doublesCount < 3) {
-                console.log('Doubles rolled - player can roll again');
-                handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-                window.turnCompleting = false; // Reset flag so player can roll again
-              } else {
-                handleLanding(currentPlayer, newPosition, false);
-              }
-            }, 2000);
+            // If doubles, don't end turn - allow rolling again
+            if (isDoubles && currentPlayer.doublesCount < 3) {
+              console.log('Doubles rolled - player can roll again');
+              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+              window.turnCompleting = false; // Reset flag so player can roll again
+            } else {
+              handleLanding(currentPlayer, newPosition, false);
+            }
           }, false);
         }
       }, 500);
@@ -2340,22 +2329,14 @@ function roll3DDice() {
           currentPlayer.position = newPosition;
           console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
           
-          // Wait 2 seconds to show idle animation, then return camera and show UI
-          setTimeout(() => {
-            // Return camera to top-down view
-            threeCamera.position.set(0, 9, 0);
-            threeCamera.lookAt(0, 0, 0);
-            orbitControls.enabled = true;
-            
-            // If doubles, don't end turn - allow rolling again
-            if (isDoubles && currentPlayer.doublesCount < 3) {
-              console.log('Fallback: Doubles rolled - player can roll again');
-              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-              window.turnCompleting = false; // Reset flag so player can roll again
-            } else {
-              handleLanding(currentPlayer, newPosition, false);
-            }
-          }, 2000);
+          // If doubles, don't end turn - allow rolling again
+          if (isDoubles && currentPlayer.doublesCount < 3) {
+            console.log('Fallback: Doubles rolled - player can roll again');
+            handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+            window.turnCompleting = false; // Reset flag so player can roll again
+          } else {
+            handleLanding(currentPlayer, newPosition, false);
+          }
         }, false);
       }
 
