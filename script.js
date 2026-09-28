@@ -1970,13 +1970,13 @@ function animateThreeJS() {
       
       // Handle football throw animation
       if (player && player.token === 'Football') {
-        if (animData.isThrowing) {
-          const elapsed = (Date.now() - animData.throwStartTime) / 1000;
-          // Spinning animation when thrown
+        if (animData.isMoving) {
+          const elapsed = (Date.now() - animData.moveStartTime) / 1000;
+          // Spinning animation when moving
           tokenData.model.rotation.x = elapsed * 10; // Spin forward
           tokenData.model.rotation.z = elapsed * 5; // Side spin
         } else {
-          // Reset rotation when not throwing
+          // Reset rotation when not moving
           tokenData.model.rotation.x = 0;
           tokenData.model.rotation.z = 0;
         }
@@ -2154,9 +2154,36 @@ function roll3DDice() {
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
-        // Check for doubles
+        // Check for doubles - reroll for AI, keep for human
+        let rerollCount = 0;
+        const maxRerolls = 10;
+        while (diceResult1 === diceResult2 && currentPlayer.isAI && rerollCount < maxRerolls) {
+          console.log(`AI doubles detected (${diceResult1}, ${diceResult2}), rerolling... (${rerollCount + 1}/${maxRerolls})`);
+          diceResult1 = Math.floor(Math.random() * 6) + 1;
+          diceResult2 = Math.floor(Math.random() * 6) + 1;
+          totalDice = diceResult1 + diceResult2;
+          rerollCount++;
+        }
+        
+        if (rerollCount >= maxRerolls) {
+          console.log('Max rerolls reached for AI, forcing non-double result');
+          diceResult1 = 1;
+          diceResult2 = 2;
+          totalDice = 3;
+        }
+        
+        console.log('Final dice results:', diceResult1, diceResult2, 'Total:', totalDice);
+        
+        // Calculate landing prediction for console
+        const currentPosition = currentPlayer.position;
+        const predictedPosition = (currentPosition + totalDice) % 40;
+        const landingTile = boardConfig.find(t => t.position === predictedPosition);
+        const landingName = landingTile ? landingTile.name : 'Unknown';
+        console.log(`${currentPlayer.name} will land on: ${landingName} (position ${predictedPosition})`);
+
+        // Check for doubles (for human players only)
         const isDoubles = (diceResult1 === diceResult2);
-        if (isDoubles) {
+        if (isDoubles && !currentPlayer.isAI) {
           console.log('DOUBLES! Player gets to roll again');
           // Show doubles notification
           const doublesNotification = document.getElementById('doublesNotification');
@@ -2352,6 +2379,113 @@ function roll3DDice() {
   }, 10000);
 }
 
+// Debug function to force AI to roll
+window.forceAIRoll = function() {
+  const aiIndex = gameState.players.findIndex(p => p.isAI);
+  if (aiIndex === -1) {
+    console.log('No AI player found');
+    return;
+  }
+  gameState.currentPlayerIndex = aiIndex;
+  window.turnCompleting = false;
+  isRolling = false;
+  console.log(`[DEBUG] Forcing AI ${gameState.players[aiIndex].name} to roll`);
+  roll3DDice();
+};
+
+// Debug function to force doubles
+window.forceDoubles = function(diceValue = 4, playerIndex = null) {
+  console.log(`[DEBUG] Forcing doubles: ${diceValue} and ${diceValue}`);
+  
+  // If playerIndex is provided, use that, otherwise use current player
+  const intendedPlayerIndex = playerIndex !== null ? playerIndex : gameState.currentPlayerIndex;
+  const intendedPlayer = gameState.players[intendedPlayerIndex];
+  
+  console.log(`[DEBUG] Target player index: ${intendedPlayerIndex}, Target player: ${intendedPlayer?.name}`);
+  
+  // Stop any current roll and clear intervals
+  isRolling = false;
+  window.turnCompleting = false;
+  window.diceProcessed = false;
+  
+  // Cancel any pending AI roll timeouts
+  if (window.aiRollTimeout) {
+    clearTimeout(window.aiRollTimeout);
+    window.aiRollTimeout = null;
+  }
+  
+  // Set the current player to the intended player
+  gameState.currentPlayerIndex = intendedPlayerIndex;
+  
+  const totalDice = diceValue + diceValue;
+  
+  console.log('Dice results:', diceValue, diceValue, 'Total:', totalDice);
+  console.log(`[DEBUG] Moving player: ${intendedPlayer.name} (index: ${intendedPlayerIndex})`);
+  
+  // Check for doubles
+  const isDoubles = true;
+  console.log('DOUBLES! Player gets to roll again');
+  
+  // Show doubles notification
+  const doublesNotification = document.getElementById('doublesNotification');
+  if (doublesNotification) {
+    doublesNotification.style.display = 'block';
+    setTimeout(() => {
+      doublesNotification.style.display = 'none';
+    }, 2000);
+  }
+  
+  // Track doubles count
+  intendedPlayer.doublesCount = (intendedPlayer.doublesCount || 0) + 1;
+  
+  // If 3 doubles in a row, send to jail
+  if (intendedPlayer.doublesCount >= 3) {
+    console.log('Three doubles in a row! Sending to jail');
+    intendedPlayer.doublesCount = 0;
+    intendedPlayer.position = 10;
+    intendedPlayer.isInJail = true;
+    intendedPlayer.jailTurns = 0;
+    showJailUI('Three doubles! Go to Jail!', () => {
+      endTurn();
+    });
+    return;
+  }
+  
+  // Calculate target position
+  let newPosition = (intendedPlayer.position + totalDice) % 40;
+  
+  // Check for Go To Jail
+  if (newPosition === 30) {
+    console.log(`${intendedPlayer.name} landed on Go To Jail, sending to position 10`);
+    switchAnimation(intendedPlayerIndex, 'walk');
+    animatePlayerMovement(intendedPlayerIndex, intendedPlayer.position, 10, () => {
+      intendedPlayer.position = 10;
+      intendedPlayer.isInJail = true;
+      intendedPlayer.jailTurns = 0;
+      switchAnimation(intendedPlayerIndex, 'idle');
+      showJailUI('Go directly to Jail!', () => {
+        endTurn();
+      });
+    }, false);
+  } else {
+    // Normal movement
+    switchAnimation(intendedPlayerIndex, 'walk');
+    animatePlayerMovement(intendedPlayerIndex, intendedPlayer.position, newPosition, () => {
+      intendedPlayer.position = newPosition;
+      console.log(`${intendedPlayer.name} completed movement to position ${newPosition}`);
+      
+      // If doubles, don't end turn - allow rolling again
+      if (isDoubles && intendedPlayer.doublesCount < 3) {
+        console.log('Doubles rolled - player can roll again');
+        handleLanding(intendedPlayer, newPosition, true);
+        window.turnCompleting = false;
+      } else {
+        handleLanding(intendedPlayer, newPosition, false);
+      }
+    }, false);
+  }
+};
+
 function getDiceResult(diceBody) {
   // Face detection based on which local axis points up
   // Mapping from user's dice model:
@@ -2452,15 +2586,29 @@ function handleLanding(player, position, canRollAgain = false) {
         else {
           // AI gets another roll on doubles - schedule it
           if (player.isAI) {
+            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
+            // Store reference to check later
+            const aiPlayerIndex = gameState.players.indexOf(player);
+            // Use a shorter delay and ensure turn state is clean
             setTimeout(() => {
-              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
+              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
+              if (gameState.currentPlayerIndex === aiPlayerIndex) {
+                // Clear all blocking flags
+                isRolling = false;
+                window.turnCompleting = false;
+                window.diceProcessed = false;
+                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
                 roll3DDice();
+              } else {
+                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
               }
-            }, 2000);
+            }, 1000);
           } else {
             // Re-enable roll button for human player to roll again on doubles
             if (rollDiceBtn) {
               rollDiceBtn.disabled = false;
+              window.turnCompleting = false; // Reset flag for human doubles
             }
           }
         }
@@ -2495,15 +2643,29 @@ function handleLanding(player, position, canRollAgain = false) {
         else {
           // AI gets another roll on doubles - schedule it
           if (player.isAI) {
+            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
+            // Store reference to check later
+            const aiPlayerIndex = gameState.players.indexOf(player);
+            // Use a shorter delay and ensure turn state is clean
             setTimeout(() => {
-              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
+              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
+              if (gameState.currentPlayerIndex === aiPlayerIndex) {
+                // Clear all blocking flags
+                isRolling = false;
+                window.turnCompleting = false;
+                window.diceProcessed = false;
+                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
                 roll3DDice();
+              } else {
+                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
               }
-            }, 2000);
+            }, 1000);
           } else {
             // Re-enable roll button for human player to roll again on doubles
             if (rollDiceBtn) {
               rollDiceBtn.disabled = false;
+              window.turnCompleting = false; // Reset flag for human doubles
             }
           }
         }
@@ -2591,15 +2753,29 @@ function handleLanding(player, position, canRollAgain = false) {
         else {
           // AI gets another roll on doubles - schedule it
           if (player.isAI) {
+            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
+            // Store reference to check later
+            const aiPlayerIndex = gameState.players.indexOf(player);
+            // Use a shorter delay and ensure turn state is clean
             setTimeout(() => {
-              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
+              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
+              if (gameState.currentPlayerIndex === aiPlayerIndex) {
+                // Clear all blocking flags
+                isRolling = false;
+                window.turnCompleting = false;
+                window.diceProcessed = false;
+                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
                 roll3DDice();
+              } else {
+                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
               }
-            }, 2000);
+            }, 1000);
           } else {
             // Re-enable roll button for human player to roll again on doubles
             if (rollDiceBtn) {
               rollDiceBtn.disabled = false;
+              window.turnCompleting = false; // Reset flag for human doubles
             }
           }
         }
@@ -2637,7 +2813,7 @@ function handleLanding(player, position, canRollAgain = false) {
       
       // Execute card action for AI
       const playerIndex = gameState.players.findIndex(p => p === player);
-      executeCardAction(randomCard, player, playerIndex);
+      executeCardAction(randomCard, player, playerIndex, canRollAgain);
     }
   } else {
     // Other tile types (corners)
@@ -2690,7 +2866,7 @@ const communityChestCards = [
 ];
 
 // Execute card action (for AI players)
-function executeCardAction(card, player, playerIndex) {
+function executeCardAction(card, player, playerIndex, canRollAgain = false) {
   const action = card.action;
   const amount = card.amount || 0;
   const position = card.position || 0;
@@ -2704,7 +2880,18 @@ function executeCardAction(card, player, playerIndex) {
         updatePlayerMoney();
         addAIMove(player.name, 'advanced to GO and collected $200');
       }
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else {
+        // AI gets another roll on doubles
+        setTimeout(() => {
+          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+            isRolling = false;
+            window.turnCompleting = false;
+            window.diceProcessed = false;
+            roll3DDice();
+          }
+        }, 1000);
+      }
       break;
       
     case 'advance_to':
@@ -2731,7 +2918,7 @@ function executeCardAction(card, player, playerIndex) {
       animatePlayerMovement(playerIndex, oldPosition, newPosition, () => {
         player.position = newPosition;
         addAIMove(player.name, `advanced to position ${newPosition}`);
-        handleLanding(player, newPosition);
+        handleLanding(player, newPosition, canRollAgain);
       }, false); // false = forward direction
       break;
       
@@ -2770,7 +2957,7 @@ function executeCardAction(card, player, playerIndex) {
       animatePlayerMovement(playerIndex, oldPositionNearest, nearestPosition, () => {
         player.position = nearestPosition;
         addAIMove(player.name, `advanced to nearest railroad at position ${nearestPosition}`);
-        handleLanding(player, nearestPosition);
+        handleLanding(player, nearestPosition, canRollAgain);
       }, false);
       break;
       
@@ -2778,7 +2965,17 @@ function executeCardAction(card, player, playerIndex) {
       player.money += amount;
       updatePlayerMoney();
       addAIMove(player.name, `gained $${amount} from card`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else {
+        setTimeout(() => {
+          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+            isRolling = false;
+            window.turnCompleting = false;
+            window.diceProcessed = false;
+            roll3DDice();
+          }
+        }, 1000);
+      }
       break;
       
     case 'pay_fine':
@@ -2786,7 +2983,17 @@ function executeCardAction(card, player, playerIndex) {
       updatePlayerMoney();
       checkGameEnd();
       addAIMove(player.name, `paid $${amount} fine from card`);
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else {
+        setTimeout(() => {
+          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+            isRolling = false;
+            window.turnCompleting = false;
+            window.diceProcessed = false;
+            roll3DDice();
+          }
+        }, 1000);
+      }
       break;
       
     case 'go_to_jail':
@@ -2859,7 +3066,17 @@ function executeCardAction(card, player, playerIndex) {
       } else {
         addAIMove(player.name, `no properties to repair, no charge`);
       }
-      endTurn();
+      if (!canRollAgain) endTurn();
+      else {
+        setTimeout(() => {
+          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+            isRolling = false;
+            window.turnCompleting = false;
+            window.diceProcessed = false;
+            roll3DDice();
+          }
+        }, 1000);
+      }
       break;
       
     default:
