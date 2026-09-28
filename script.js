@@ -584,7 +584,8 @@ function loadPlayerToken(player, index) {
       } else if (player.token === 'Football') {
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'Helicopter') {
-        tokenModel.rotation.y = -Math.PI / 2; // Face right
+        tokenModel.rotation.y = 0; // Faces east by default, which is correct
+        tokenModel.position.y = 0.5; // Raise helicopter higher above the board
       } else if (player.token === 'Cheeseburger') {
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'RollsRoyce') {
@@ -652,6 +653,27 @@ function loadPlayerToken(player, index) {
 
       // Store mixer and animations (even if empty)
       playerAnimations[index] = { mixer, animations, currentAction: 'idle' };
+      
+      // Set up animations for specific tokens
+      if (player.token === 'Helicopter') {
+        const animData = playerAnimations[index];
+        animData.isHovering = true;
+        animData.hoverStartTime = Date.now();
+        animData.hoverBaseY = tokenModel.position.y;
+        animData.isMoving = false;
+      } else if (player.token === 'Cheeseburger' || player.token === 'CoffeeCup' || player.token === 'Shoe' || player.token === 'TopHat') {
+        // Hopping animation for these tokens
+        const animData = playerAnimations[index];
+        animData.isHopping = true;
+        animData.hopStartTime = Date.now();
+        animData.hopBaseY = tokenModel.position.y;
+        animData.isMoving = false;
+      } else if (player.token === 'Football') {
+        // Football throw animation
+        const animData = playerAnimations[index];
+        animData.isThrowing = false;
+        animData.throwBaseY = tokenModel.position.y;
+      }
 
       playerTokenModels.push({
         model: tokenModel,
@@ -717,6 +739,43 @@ function switchAnimation(playerIndex, animationType) {
   const animData = playerAnimations[playerIndex];
   if (!animData || !animData.mixer) {
     console.log(`No animation data for player ${playerIndex}`);
+    return;
+  }
+
+  const player = gameState.players[playerIndex];
+  
+  // Special handling for helicopter
+  if (player && player.token === 'Helicopter') {
+    if (animationType === 'walk') {
+      animData.isMoving = true;
+      animData.moveStartTime = Date.now();
+    } else if (animationType === 'idle') {
+      animData.isMoving = false;
+      animData.hoverStartTime = Date.now(); // Reset hover timing
+    }
+    return; // Don't process standard animation switching for helicopter
+  }
+  
+  // Special handling for hopping tokens
+  if (player && (player.token === 'Cheeseburger' || player.token === 'CoffeeCup' || player.token === 'Shoe' || player.token === 'TopHat')) {
+    if (animationType === 'walk') {
+      animData.isMoving = true;
+      animData.moveStartTime = Date.now();
+    } else if (animationType === 'idle') {
+      animData.isMoving = false;
+      animData.hopStartTime = Date.now(); // Reset hop timing
+    }
+    return;
+  }
+  
+  // Special handling for football
+  if (player && player.token === 'Football') {
+    if (animationType === 'walk') {
+      animData.isThrowing = true;
+      animData.throwStartTime = Date.now();
+    } else if (animationType === 'idle') {
+      animData.isThrowing = false;
+    }
     return;
   }
 
@@ -865,7 +924,17 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       const segDx = nextPos.x - currentPos.x;
       const segDz = nextPos.z - currentPos.z;
       if (Math.abs(segDx) > 0.01 || Math.abs(segDz) > 0.01) {
-        tokenData.model.rotation.y = Math.atan2(segDx, segDz);
+        const calculatedAngle = Math.atan2(segDx, segDz);
+        
+        // Helicopter faces east by default, but Math.atan2 returns 0 for north
+        // So we need to adjust the angle for helicopter
+        const player = gameState.players[playerIndex];
+        if (player && player.token === 'Helicopter') {
+          // Subtract PI/2 because helicopter faces east (0) but atan2(0,+) = 0 for north
+          tokenData.model.rotation.y = calculatedAngle - Math.PI / 2;
+        } else {
+          tokenData.model.rotation.y = calculatedAngle;
+        }
       }
       
       // Camera follows token (very close zoom - disable controls)
@@ -883,11 +952,6 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       tokenData.model.position.x = finalPos.x;
       tokenData.model.position.z = finalPos.z;
       
-      // Return camera to top-down view
-      threeCamera.position.set(0, 7, 0);
-      threeCamera.lookAt(0, 0, 0);
-      orbitControls.enabled = true;
-      
       // Done - switch to idle immediately
       const finalCell = boardCells.find(c => c.index === newPosition % 40);
       // console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
@@ -899,7 +963,15 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
         rollDiceBtn.disabled = false;
       }
       
-      if (callback) callback();
+      // Wait 2 seconds to show idle animation, then return camera and show UI
+      setTimeout(() => {
+        // Return camera to top-down view
+        threeCamera.position.set(0, 9, 0);
+        threeCamera.lookAt(0, 0, 0);
+        orbitControls.enabled = true;
+        
+        if (callback) callback();
+      }, 2000);
     }
   }
   
@@ -1847,9 +1919,64 @@ function animateThreeJS() {
   }
 
   // Update animation mixers (update all, not just walk)
-  Object.values(playerAnimations).forEach(animData => {
+  Object.values(playerAnimations).forEach((animData, index) => {
     if (animData.mixer) {
       animData.mixer.update(0.016); // Update all animations
+    }
+    
+    // Handle helicopter animations
+    const tokenData = playerTokenModels.find(t => t.playerIndex === index);
+    if (tokenData) {
+      const player = gameState.players[index];
+      
+      if (player && player.token === 'Helicopter') {
+        // Hover animation (only when not moving)
+        if (animData.isHovering && !animData.isMoving) {
+          const elapsed = (Date.now() - animData.hoverStartTime) / 1000;
+          const hoverOffset = Math.sin(elapsed * 2) * 0.03; // Reduced bobbing (less up/down)
+          tokenData.model.position.y = animData.hoverBaseY + hoverOffset;
+        } else if (animData.isMoving) {
+          // Keep at base height when moving
+          tokenData.model.position.y = animData.hoverBaseY;
+        }
+        
+        // Movement animation (forward tilt when moving)
+        if (animData.isMoving) {
+          const moveElapsed = (Date.now() - animData.moveStartTime) / 1000;
+          // Gentle forward tilt during movement
+          const tiltAngle = Math.sin(moveElapsed * 5) * 0.05; // Subtle tilting
+          tokenData.model.rotation.x = tiltAngle;
+        } else {
+          // Reset tilt when not moving
+          tokenData.model.rotation.x = 0;
+        }
+      }
+      
+      // Handle hopping animations (Cheeseburger, CoffeeCup, Shoe, TopHat)
+      if (player && (player.token === 'Cheeseburger' || player.token === 'CoffeeCup' || player.token === 'Shoe' || player.token === 'TopHat')) {
+        if (animData.isHopping && !animData.isMoving) {
+          const elapsed = (Date.now() - animData.hopStartTime) / 1000;
+          const hopOffset = Math.abs(Math.sin(elapsed * 4)) * 0.05; // Hopping motion
+          tokenData.model.position.y = animData.hopBaseY + hopOffset;
+        } else if (animData.isMoving) {
+          // Keep at base height when moving
+          tokenData.model.position.y = animData.hopBaseY;
+        }
+      }
+      
+      // Handle football throw animation
+      if (player && player.token === 'Football') {
+        if (animData.isThrowing) {
+          const elapsed = (Date.now() - animData.throwStartTime) / 1000;
+          // Spinning animation when thrown
+          tokenData.model.rotation.x = elapsed * 10; // Spin forward
+          tokenData.model.rotation.z = elapsed * 5; // Side spin
+        } else {
+          // Reset rotation when not throwing
+          tokenData.model.rotation.x = 0;
+          tokenData.model.rotation.z = 0;
+        }
+      }
     }
   });
 
@@ -2092,14 +2219,22 @@ function roll3DDice() {
             currentPlayer.position = newPosition;
             console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
             
-            // If doubles, don't end turn - allow rolling again
-            if (isDoubles && currentPlayer.doublesCount < 3) {
-              console.log('Doubles rolled - player can roll again');
-              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-              window.turnCompleting = false; // Reset flag so player can roll again
-            } else {
-              handleLanding(currentPlayer, newPosition, false);
-            }
+            // Wait 2 seconds to show idle animation, then return camera and show UI
+            setTimeout(() => {
+              // Return camera to top-down view
+              threeCamera.position.set(0, 9, 0);
+              threeCamera.lookAt(0, 0, 0);
+              orbitControls.enabled = true;
+              
+              // If doubles, don't end turn - allow rolling again
+              if (isDoubles && currentPlayer.doublesCount < 3) {
+                console.log('Doubles rolled - player can roll again');
+                handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+                window.turnCompleting = false; // Reset flag so player can roll again
+              } else {
+                handleLanding(currentPlayer, newPosition, false);
+              }
+            }, 2000);
           }, false);
         }
       }, 500);
@@ -2205,14 +2340,22 @@ function roll3DDice() {
           currentPlayer.position = newPosition;
           console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
           
-          // If doubles, don't end turn - allow rolling again
-          if (isDoubles && currentPlayer.doublesCount < 3) {
-            console.log('Fallback: Doubles rolled - player can roll again');
-            handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-            window.turnCompleting = false; // Reset flag so player can roll again
-          } else {
-            handleLanding(currentPlayer, newPosition, false);
-          }
+          // Wait 2 seconds to show idle animation, then return camera and show UI
+          setTimeout(() => {
+            // Return camera to top-down view
+            threeCamera.position.set(0, 9, 0);
+            threeCamera.lookAt(0, 0, 0);
+            orbitControls.enabled = true;
+            
+            // If doubles, don't end turn - allow rolling again
+            if (isDoubles && currentPlayer.doublesCount < 3) {
+              console.log('Fallback: Doubles rolled - player can roll again');
+              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
+              window.turnCompleting = false; // Reset flag so player can roll again
+            } else {
+              handleLanding(currentPlayer, newPosition, false);
+            }
+          }, 2000);
         }, false);
       }
 
@@ -2439,6 +2582,12 @@ function handleLanding(player, position, canRollAgain = false) {
       if (player.isAI) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
         if (!canRollAgain) endTurn();
+        else {
+          // Re-enable roll button for player to roll again on doubles
+          if (rollDiceBtn) {
+            rollDiceBtn.disabled = false;
+          }
+        }
       } else {
         showOwnedPropertyUI(tile, canRollAgain);
       }

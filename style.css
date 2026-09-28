@@ -996,12 +996,12 @@ body {
 }
 
 .doubles-content {
-  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  background: linear-gradient(135deg, #4a9eff 0%, #3a8eef 100%);
   border: 3px solid #fff;
   border-radius: 16px;
   padding: 30px 50px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(74, 158, 255, 0.5);
 }
 
 .doubles-content h2 {
