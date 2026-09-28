@@ -579,7 +579,7 @@ function loadPlayerToken(player, index) {
       if (player.token === 'WhiteGirlIdle') {
         tokenModel.rotation.y = Math.PI / 2; // Face forward (90 degrees)
       } else if (player.token === 'Shoe') {
-        tokenModel.rotation.y = 0; // Face east (same as helicopter)
+        tokenModel.rotation.y = -Math.PI / 2; // Face east (-90 degrees)
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'Football') {
         tokenModel.position.y = 0.2; // Raise a bit higher
@@ -926,11 +926,15 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       if (Math.abs(segDx) > 0.01 || Math.abs(segDz) > 0.01) {
         const calculatedAngle = Math.atan2(segDx, segDz);
         
-        // Helicopter and shoe face east by default, but Math.atan2 returns 0 for north
-        // So we need to adjust the angle for these tokens
+        // Helicopter and shoe face east by default with different initial rotations
+        // Helicopter: 0 rotation faces east
+        // Shoe: -PI/2 rotation faces east
         const player = gameState.players[playerIndex];
-        if (player && (player.token === 'Helicopter' || player.token === 'Shoe')) {
-          // Subtract PI/2 because these tokens face east (0) but atan2(0,+) = 0 for north
+        if (player && player.token === 'Helicopter') {
+          // Subtract PI/2 because helicopter faces east (0) but atan2(0,+) = 0 for north
+          tokenData.model.rotation.y = calculatedAngle - Math.PI / 2;
+        } else if (player && player.token === 'Shoe') {
+          // Shoe has -PI/2 initial rotation to face east, so adjust accordingly
           tokenData.model.rotation.y = calculatedAngle - Math.PI / 2;
         } else {
           tokenData.model.rotation.y = calculatedAngle;
@@ -963,12 +967,15 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
         rollDiceBtn.disabled = false;
       }
       
-      // Return camera to top-down view and trigger callback
-      threeCamera.position.set(0, 9, 0);
-      threeCamera.lookAt(0, 0, 0);
-      orbitControls.enabled = true;
-      
-      if (callback) callback();
+      // Wait 2 seconds to show idle animation, then return camera and show UI
+      setTimeout(() => {
+        // Return camera to top-down view
+        threeCamera.position.set(0, 9, 0);
+        threeCamera.lookAt(0, 0, 0);
+        orbitControls.enabled = true;
+        
+        if (callback) callback();
+      }, 2000);
     }
   }
   
@@ -1918,7 +1925,7 @@ function animateThreeJS() {
   // Update animation mixers (update all, not just walk)
   Object.values(playerAnimations).forEach((animData, index) => {
     if (animData.mixer) {
-      animData.mixer.update(0.016); // Update all animations
+      animData.mixer.update(0.01); // Update all animations at 100fps for smoother rotors
     }
     
     // Handle helicopter animations
@@ -2425,7 +2432,7 @@ function handleLanding(player, position, canRollAgain = false) {
         addAIMove(player.name, `landed on ${tile.name}`);
         if (player.money >= tile.price) {
           player.money -= tile.price;
-          player.properties.push(position);
+          player.properties.push(tile.position);
           console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
           
           // If it's a casino property, AI plays the game
@@ -2530,7 +2537,7 @@ function handleLanding(player, position, canRollAgain = false) {
         addAIMove(player.name, `landed on ${tile.name}`);
         if (player.money >= tile.price) {
           player.money -= tile.price;
-          player.properties.push(position);
+          player.properties.push(tile.position);
           console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
           addAIMove(player.name, `bought ${tile.name} for $${tile.price}`);
           updatePlayerMoney();
@@ -2629,8 +2636,8 @@ const chanceCards = [
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
   { message: "Casino repair fees - $25 per property", action: "pay_repairs", amount: 25 },
   { message: "Las Vegas speeding fine $150", action: "pay_fine", amount: 150 },
-  { message: "Take a trip to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 5 },
-  { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to", position: 14 },
+  { message: "Take a trip to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to_nearest", type: "railroad" },
+  { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to_nearest", type: "railroad" },
   { message: "You have been elected Casino Chairman - Pay each player $50", action: "pay_players", amount: 50 },
   { message: "Your casino investment matures - Collect $150", action: "gain_money", amount: 150 },
   { message: "You have won a Blackjack competition - Collect $150", action: "gain_money", amount: 150 }
@@ -2661,6 +2668,7 @@ function executeCardAction(card, player, playerIndex) {
   const amount = card.amount || 0;
   const position = card.position || 0;
   const spaces = card.spaces || 0;
+  const type = card.type || '';
   
   switch (action) {
     case 'advance_to_go':
@@ -2683,8 +2691,9 @@ function executeCardAction(card, player, playerIndex) {
         newPosition = 14;
       }
       
-      // Check if passed GO (only if moving forward and wrapping around, not when moving TO GO)
-      if (newPosition < oldPosition && newPosition !== 0) {
+      // Check if passed GO (handles both forward and backward movement)
+      const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
+      if (passedGo) {
         player.money += 200;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
@@ -2697,6 +2706,45 @@ function executeCardAction(card, player, playerIndex) {
         addAIMove(player.name, `advanced to position ${newPosition}`);
         handleLanding(player, newPosition);
       }, false); // false = forward direction
+      break;
+      
+    case 'advance_to_nearest':
+      // Find nearest tile of specified type
+      const oldPositionNearest = player.position;
+      let nearestPosition = oldPositionNearest;
+      
+      if (type === 'railroad') {
+        // Find nearest railroad (monorail)
+        const railroadPositions = [5, 14];
+        let nearestRailroad = railroadPositions[0];
+        let minDistance = Math.abs(oldPositionNearest - railroadPositions[0]);
+        
+        for (let i = 1; i < railroadPositions.length; i++) {
+          const distance = Math.abs(oldPositionNearest - railroadPositions[i]);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestRailroad = railroadPositions[i];
+          }
+        }
+        nearestPosition = nearestRailroad;
+        console.log(`AI Card: Advancing to nearest railroad at position ${nearestPosition}`);
+      }
+      
+      // Check if passed GO (handles both forward and backward movement)
+      const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
+      if (passedGoNearest) {
+        player.money += 200;
+        updatePlayerMoney();
+        addAIMove(player.name, 'passed GO and collected $200');
+      }
+      
+      // Animate forward movement
+      switchAnimation(playerIndex, 'walk');
+      animatePlayerMovement(playerIndex, oldPositionNearest, nearestPosition, () => {
+        player.position = nearestPosition;
+        addAIMove(player.name, `advanced to nearest railroad at position ${nearestPosition}`);
+        handleLanding(player, nearestPosition);
+      }, false);
       break;
       
     case 'gain_money':
@@ -2806,6 +2854,7 @@ function showCardUI(tile, canRollAgain = false) {
   document.getElementById('cardOverlay').dataset.cardAmount = randomCard.amount || 0;
   document.getElementById('cardOverlay').dataset.cardPosition = randomCard.position || 0;
   document.getElementById('cardOverlay').dataset.cardSpaces = randomCard.spaces || 0;
+  document.getElementById('cardOverlay').dataset.cardType = randomCard.type || '';
   document.getElementById('cardOverlay').dataset.canRollAgain = canRollAgain;
 
   // Disable roll dice button while card UI is open
@@ -3238,8 +3287,9 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         newPosition = 14;
       }
       
-      // Check if passed GO (only if moving forward and wrapping around)
-      if (newPosition < oldPosition && newPosition !== 0) {
+      // Check if passed GO (handles both forward and backward movement)
+      const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
+      if (passedGo) {
         currentPlayer.money += 200;
         updatePlayerMoney();
         console.log(`${currentPlayer.name} passed GO and collected $200`);
@@ -3250,6 +3300,43 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         currentPlayer.position = newPosition;
         handleLanding(currentPlayer, newPosition, canRollAgain);
       }, false); // false = forward direction
+      break;
+      
+    case 'advance_to_nearest':
+      // Find nearest tile of specified type
+      const oldPosition = currentPlayer.position;
+      let nearestPosition = position;
+      
+      if (cardOverlay.dataset.type === 'railroad') {
+        // Find nearest railroad (monorail)
+        const railroadPositions = [5, 14];
+        let nearestRailroad = railroadPositions[0];
+        let minDistance = Math.abs(oldPosition - railroadPositions[0]);
+        
+        for (let i = 1; i < railroadPositions.length; i++) {
+          const distance = Math.abs(oldPosition - railroadPositions[i]);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestRailroad = railroadPositions[i];
+          }
+        }
+        nearestPosition = nearestRailroad;
+        console.log(`Card: Advancing to nearest railroad at position ${nearestPosition}`);
+      }
+      
+      // Check if passed GO (handles both forward and backward movement)
+      const passedGoNearest = (oldPosition < nearestPosition && nearestPosition > 30) || (oldPosition > nearestPosition && oldPosition > 30 && nearestPosition < 10);
+      if (passedGoNearest) {
+        currentPlayer.money += 200;
+        updatePlayerMoney();
+        console.log(`${currentPlayer.name} passed GO and collected $200`);
+      }
+      
+      switchAnimation(gameState.currentPlayerIndex, 'walk');
+      animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, nearestPosition, () => {
+        currentPlayer.position = nearestPosition;
+        handleLanding(currentPlayer, nearestPosition, canRollAgain);
+      }, false);
       break;
       
     case 'gain_money':
