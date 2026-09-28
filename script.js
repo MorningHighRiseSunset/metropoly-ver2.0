@@ -2450,9 +2450,18 @@ function handleLanding(player, position, canRollAgain = false) {
         }
         if (!canRollAgain) endTurn();
         else {
-          // Re-enable roll button for player to roll again on doubles
-          if (rollDiceBtn) {
-            rollDiceBtn.disabled = false;
+          // AI gets another roll on doubles - schedule it
+          if (player.isAI) {
+            setTimeout(() => {
+              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+                roll3DDice();
+              }
+            }, 2000);
+          } else {
+            // Re-enable roll button for human player to roll again on doubles
+            if (rollDiceBtn) {
+              rollDiceBtn.disabled = false;
+            }
           }
         }
       }
@@ -2484,9 +2493,18 @@ function handleLanding(player, position, canRollAgain = false) {
         checkGameEnd();
         if (!canRollAgain) endTurn();
         else {
-          // Re-enable roll button for player to roll again on doubles
-          if (rollDiceBtn) {
-            rollDiceBtn.disabled = false;
+          // AI gets another roll on doubles - schedule it
+          if (player.isAI) {
+            setTimeout(() => {
+              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+                roll3DDice();
+              }
+            }, 2000);
+          } else {
+            // Re-enable roll button for human player to roll again on doubles
+            if (rollDiceBtn) {
+              rollDiceBtn.disabled = false;
+            }
           }
         }
       }
@@ -2571,9 +2589,18 @@ function handleLanding(player, position, canRollAgain = false) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
         if (!canRollAgain) endTurn();
         else {
-          // Re-enable roll button for player to roll again on doubles
-          if (rollDiceBtn) {
-            rollDiceBtn.disabled = false;
+          // AI gets another roll on doubles - schedule it
+          if (player.isAI) {
+            setTimeout(() => {
+              if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
+                roll3DDice();
+              }
+            }, 2000);
+          } else {
+            // Re-enable roll button for human player to roll again on doubles
+            if (rollDiceBtn) {
+              rollDiceBtn.disabled = false;
+            }
           }
         }
       } else {
@@ -3304,17 +3331,17 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       
     case 'advance_to_nearest':
       // Find nearest tile of specified type
-      const oldPosition = currentPlayer.position;
+      const oldPositionNearest = currentPlayer.position;
       let nearestPosition = position;
       
       if (cardOverlay.dataset.type === 'railroad') {
         // Find nearest railroad (monorail)
         const railroadPositions = [5, 14];
         let nearestRailroad = railroadPositions[0];
-        let minDistance = Math.abs(oldPosition - railroadPositions[0]);
+        let minDistance = Math.abs(oldPositionNearest - railroadPositions[0]);
         
         for (let i = 1; i < railroadPositions.length; i++) {
-          const distance = Math.abs(oldPosition - railroadPositions[i]);
+          const distance = Math.abs(oldPositionNearest - railroadPositions[i]);
           if (distance < minDistance) {
             minDistance = distance;
             nearestRailroad = railroadPositions[i];
@@ -3325,7 +3352,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       }
       
       // Check if passed GO (handles both forward and backward movement)
-      const passedGoNearest = (oldPosition < nearestPosition && nearestPosition > 30) || (oldPosition > nearestPosition && oldPosition > 30 && nearestPosition < 10);
+      const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
       if (passedGoNearest) {
         currentPlayer.money += 200;
         updatePlayerMoney();
@@ -3333,7 +3360,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       }
       
       switchAnimation(gameState.currentPlayerIndex, 'walk');
-      animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, nearestPosition, () => {
+      animatePlayerMovement(gameState.currentPlayerIndex, oldPositionNearest, nearestPosition, () => {
         currentPlayer.position = nearestPosition;
         handleLanding(currentPlayer, nearestPosition, canRollAgain);
       }, false);
@@ -3740,6 +3767,7 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
     // Re-enable roll button for player to roll again
     if (rollDiceBtn) {
       rollDiceBtn.disabled = false;
+      window.turnCompleting = false; // Reset turn completing flag for doubles
     }
   }
 });
