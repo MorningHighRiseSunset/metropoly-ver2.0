@@ -1925,15 +1925,17 @@ function animateThreeJS() {
       
       // Handle football throw animation
       if (player && player.token === 'Football') {
-        if (animData.isMoving) {
-          const elapsed = (Date.now() - animData.moveStartTime) / 1000;
-          // Spinning animation when moving
-          tokenData.model.rotation.x = elapsed * 10; // Spin forward
-          tokenData.model.rotation.z = elapsed * 5; // Side spin
+        if (animData.isThrowing) {
+          const elapsed = (Date.now() - animData.throwStartTime) / 1000;
+          // Spiral spinning animation when moving
+          tokenData.model.rotation.x = elapsed * 15; // Fast forward spin
+          tokenData.model.rotation.z = elapsed * 8; // Side spin for spiral effect
+          tokenData.model.rotation.y = elapsed * 20; // Add rotation around Y axis for spiral
         } else {
           // Reset rotation when not moving
           tokenData.model.rotation.x = 0;
           tokenData.model.rotation.z = 0;
+          tokenData.model.rotation.y = 0;
         }
       }
     }
