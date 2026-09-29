@@ -358,18 +358,20 @@ startGameBtn.addEventListener('click', () => {
   // Create the 3D board
   create3DBoard();
 
-  // Load 3D token models onto the board
-  loadPlayerTokens();
+  // Load 3D token models asynchronously to improve button responsiveness
+  setTimeout(() => {
+    loadPlayerTokens();
 
-  // Hide lobby and show game UI
-  lobbyOverlay.style.display = 'none';
-  gameUI.style.display = 'flex';
+    // Hide lobby and show game UI
+    lobbyOverlay.style.display = 'none';
+    gameUI.style.display = 'flex';
 
-  // Initialize UI panels
-  updatePlayersList();
-  
-  // Show carousel
-  showCarousel();
+    // Initialize UI panels
+    updatePlayersList();
+    
+    // Show carousel
+    showCarousel();
+  }, 10); // Small delay to allow UI to update immediately
 });
 
 // Update players list in UI
@@ -646,9 +648,10 @@ function loadPlayerToken(player, index) {
           animations['Idle'].play();
         }
       } else {
-        // console.log(`[ANIMATION DEBUG] No animations found for ${player.token}`);
-        // Create empty mixer for models without animations
-        mixer = new THREE.AnimationMixer(tokenModel);
+        // Only create mixer for models that actually need animations
+        if (player.token === 'WhiteGirlIdle' || player.token === 'Helicopter') {
+          mixer = new THREE.AnimationMixer(tokenModel);
+        }
       }
 
       // Store mixer and animations (even if empty)
@@ -961,11 +964,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       // console.log(`Movement complete for player ${playerIndex}, landed on: ${finalCell ? finalCell.tile.name : 'unknown'}`);
       switchAnimation(playerIndex, 'idle');
       
-      // Re-enable dice button if player can roll again (doubles)
-      const currentPlayer = gameState.players[playerIndex];
-      if (currentPlayer && currentPlayer.doublesCount > 0 && currentPlayer.doublesCount < 3) {
-        rollDiceBtn.disabled = false;
-      }
+      // Re-enable dice button if player can roll again (doubles) - DISABLED
       
       // Wait 2 seconds to show idle animation, then return camera and show UI
       setTimeout(() => {
@@ -1191,53 +1190,6 @@ function updateCarouselPlane() {
     carouselPlane.material.map = carouselTexture;
     carouselPlane.material.needsUpdate = true;
     carouselPlane.visible = true;
-    
-    // Preload next image
-    preloadNextCarouselImage();
-  });
-}
-
-function preloadNextCarouselImage() {
-  const nextIndex = (currentCarouselIndex + 1) % carouselImageList.length;
-  const nextImagePath = carouselImageList[nextIndex];
-  
-  // Skip if already failed
-  if (failedImages.has(nextImagePath)) {
-    // Try the one after instead of recursing
-    const afterNextIndex = (nextIndex + 1) % carouselImageList.length;
-    const afterNextImagePath = carouselImageList[afterNextIndex];
-    
-    loadCarouselTexture(afterNextImagePath, (error, texture) => {
-      if (!error && texture) {
-        texture.anisotropy = 16;
-        nextTexture = texture;
-      }
-    });
-    return;
-  }
-  
-  // Skip if it's a hotel/casino and current is also hotel/casino (prevent back-to-back)
-  const currentIsHotelCasino = hotelCasinoImages.includes(carouselImageList[currentCarouselIndex]);
-  const nextIsHotelCasino = hotelCasinoImages.includes(nextImagePath);
-  if (currentIsHotelCasino && nextIsHotelCasino) {
-    // Skip this image and try the one after instead of recursing
-    const afterNextIndex = (nextIndex + 1) % carouselImageList.length;
-    const afterNextImagePath = carouselImageList[afterNextIndex];
-    
-    loadCarouselTexture(afterNextImagePath, (error, texture) => {
-      if (!error && texture) {
-        texture.anisotropy = 16;
-        nextTexture = texture;
-      }
-    });
-    return;
-  }
-  
-  loadCarouselTexture(nextImagePath, (error, texture) => {
-    if (!error && texture) {
-      texture.anisotropy = 8;
-      nextTexture = texture;
-    }
   });
 }
 
@@ -1386,56 +1338,56 @@ const tileHeight = 0.12;
 const step = 0.73;
 let boardConfig = [];
 
+// Board configuration - defined once at startup
+boardConfig = [
+  { name: 'GO', type: 'corner', position: 0, videos: [] },
+  { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 140, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
+  { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
+  { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
+  { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: '' },
+  { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+  { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
+  { name: 'Chance', type: 'chance', position: 7, videos: [] },
+  { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 165, position: 8, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Golden%20Knights.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] },
+  { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 192, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
+  { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
+  { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
+  { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'Images/yellow_light_bulb.jpg', address: '', rent: [] },
+  { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
+  { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
+  { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
+  { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
+  { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'FREE PARKING', type: 'corner', position: 20, videos: [] },
+  { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
+  { name: 'Chance', type: 'chance', position: 22, videos: [] },
+  { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 192, position: 23, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%204.mp4'], address: '1700 Village Center Circle Las Vegas NV 89134', rent: [35, 71, 214, 638, 880, 1045] },
+  { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], model: 'Models/Ferris Wheel/countyfairferrisWheel.glb', address: '', rent: [33, 66, 198, 594, 825, 990] },
+  { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
+  { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
+  { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
+  { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
+  { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
+  { name: 'Chance', type: 'chance', position: 32, videos: [] },
+  { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
+  { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'craps', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
+  { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp3'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
+  { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
+];
+
 function create3DBoard() {
   const boardSize = 11;
 
   // Calculate board dimensions to match tile positions
   const boardSpan = 10 * step; // 10 tiles across
   const boardActualSize = boardSpan + tileSize * 0.5; // Add slight margin
-
-  // Board configuration
-  boardConfig = [
-    { name: 'GO', type: 'corner', position: 0, videos: [] },
-    { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 140, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
-    { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
-    { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
-    { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: '' },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
-    { name: 'Chance', type: 'chance', position: 7, videos: [] },
-    { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 165, position: 8, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20GKnights%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Golden%20Knights.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] },
-    { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 192, position: 9, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MavHeli%203.mp4'], address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [35, 71, 214, 638, 880, 1045] },
-    { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
-    { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
-    { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: [], image: 'Images/yellow_light_bulb.jpg', address: '', rent: [] },
-    { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, isCasino: true, casinoGame: 'baccarat', videos: [], address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, isCasino: true, casinoGame: 'blackjack', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/bellagio.mp4'], address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
-    { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
-    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'FREE PARKING', type: 'corner', position: 20, videos: [] },
-    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
-    { name: 'Chance', type: 'chance', position: 22, videos: [] },
-    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 192, position: 23, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Shriners%204.mp4'], address: '1700 Village Center Circle Las Vegas NV 89134', rent: [35, 71, 214, 638, 880, 1045] },
-    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], model: 'Models/Ferris Wheel/countyfairferrisWheel.glb', address: '', rent: [33, 66, 198, 594, 825, 990] },
-    { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
-    { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
-    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
-    { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
-    { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
-    { name: 'Chance', type: 'chance', position: 32, videos: [] },
-    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
-    { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'craps', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
-    { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
-    { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp3'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
-    { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
-  ];
 
   // Board base - sized to match tile positions
   const boardBase = new THREE.Mesh(
@@ -1494,20 +1446,23 @@ function create3DBoard() {
 
       const x = (col - 5) * step;
       const z = (row - 5) * step;
-      const tile = createTile(spaceData, row, col);
-      tile.position.set(x, tileHeight / 2, z);
-      tile.rotation.y = getTileFacingRotationY(row, col);
-      tile.userData.position = position;
-
-      board3DGroup.add(tile);
-
-      // Store cell position for tokens
+      
+      // Store cell position for tokens (create tile asynchronously)
       boardCells.push({
         index: position,
         x: x,
         z: z,
         tile: spaceData
       });
+      
+      // Create tile asynchronously to avoid blocking UI
+      setTimeout(() => {
+        const tile = createTile(spaceData, row, col);
+        tile.position.set(x, tileHeight / 2, z);
+        tile.rotation.y = getTileFacingRotationY(row, col);
+        tile.userData.position = position;
+        board3DGroup.add(tile);
+      }, 0);
     }
   }
 }
@@ -2117,15 +2072,9 @@ function roll3DDice() {
           return;
         }
 
-        const diceResult1 = getDiceResult(diceBody1);
-        const diceResult2 = getDiceResult(diceBody2);
+        let diceResult1 = getDiceResult(diceBody1);
+        let diceResult2 = getDiceResult(diceBody2);
         let totalDice = diceResult1 + diceResult2;
-
-        // Bias dice toward casino squares REMOVED - players hate seeing wrong dice results
-        // const casinoPositions = [13, 15, 18, 21, 29, 35];
-        
-        // Calculate what position we would land on with current roll
-        // const potentialPosition = (currentPlayer.position + totalDice) % 40;
         
         // Reduced bias: 1% chance to adjust for casino if not already on one
         // if (!casinoPositions.includes(potentialPosition) && Math.random() < 0.01) {
@@ -2153,64 +2102,6 @@ function roll3DDice() {
         // }
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
-
-        // Check for doubles - reroll for AI, keep for human
-        let rerollCount = 0;
-        const maxRerolls = 10;
-        while (diceResult1 === diceResult2 && currentPlayer.isAI && rerollCount < maxRerolls) {
-          console.log(`AI doubles detected (${diceResult1}, ${diceResult2}), rerolling... (${rerollCount + 1}/${maxRerolls})`);
-          diceResult1 = Math.floor(Math.random() * 6) + 1;
-          diceResult2 = Math.floor(Math.random() * 6) + 1;
-          totalDice = diceResult1 + diceResult2;
-          rerollCount++;
-        }
-        
-        if (rerollCount >= maxRerolls) {
-          console.log('Max rerolls reached for AI, forcing non-double result');
-          diceResult1 = 1;
-          diceResult2 = 2;
-          totalDice = 3;
-        }
-        
-        console.log('Final dice results:', diceResult1, diceResult2, 'Total:', totalDice);
-        
-        // Calculate landing prediction for console
-        const currentPosition = currentPlayer.position;
-        const predictedPosition = (currentPosition + totalDice) % 40;
-        const landingTile = boardConfig.find(t => t.position === predictedPosition);
-        const landingName = landingTile ? landingTile.name : 'Unknown';
-        console.log(`${currentPlayer.name} will land on: ${landingName} (position ${predictedPosition})`);
-
-        // Check for doubles (for human players only)
-        const isDoubles = (diceResult1 === diceResult2);
-        if (isDoubles && !currentPlayer.isAI) {
-          console.log('DOUBLES! Player gets to roll again');
-          // Show doubles notification
-          const doublesNotification = document.getElementById('doublesNotification');
-          if (doublesNotification) {
-            doublesNotification.style.display = 'block';
-            setTimeout(() => {
-              doublesNotification.style.display = 'none';
-            }, 2000);
-          }
-          // Track doubles count for this player
-          currentPlayer.doublesCount = (currentPlayer.doublesCount || 0) + 1;
-          // If 3 doubles in a row, send to jail
-          if (currentPlayer.doublesCount >= 3) {
-            console.log('Three doubles in a row! Sending to jail');
-            currentPlayer.doublesCount = 0;
-            currentPlayer.position = 10;
-            currentPlayer.isInJail = true;
-            currentPlayer.jailTurns = 0;
-            showJailUI('Three doubles! Go to Jail!', () => {
-              endTurn();
-            });
-            return;
-          }
-        } else {
-          // Reset doubles count if not doubles
-          currentPlayer.doublesCount = 0;
-        }
 
         // Calculate target position
         let newPosition = (currentPlayer.position + totalDice) % 40;
@@ -2249,15 +2140,7 @@ function roll3DDice() {
           animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
             currentPlayer.position = newPosition;
             console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
-            
-            // If doubles, don't end turn - allow rolling again
-            if (isDoubles && currentPlayer.doublesCount < 3) {
-              console.log('Doubles rolled - player can roll again');
-              handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-              window.turnCompleting = false; // Reset flag so player can roll again
-            } else {
-              handleLanding(currentPlayer, newPosition, false);
-            }
+            handleLanding(currentPlayer, newPosition, false);
           }, false);
         }
       }, 500);
@@ -2293,37 +2176,6 @@ function roll3DDice() {
       let totalDice = diceResult1 + diceResult2;
 
       // console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
-
-      // Check for doubles
-      const isDoubles = (diceResult1 === diceResult2);
-      if (isDoubles) {
-        console.log('Fallback: DOUBLES! Player gets to roll again');
-        // Show doubles notification
-        const doublesNotification = document.getElementById('doublesNotification');
-        if (doublesNotification) {
-          doublesNotification.style.display = 'block';
-          setTimeout(() => {
-            doublesNotification.style.display = 'none';
-          }, 2000);
-        }
-        // Track doubles count for this player
-        currentPlayer.doublesCount = (currentPlayer.doublesCount || 0) + 1;
-        // If 3 doubles in a row, send to jail
-        if (currentPlayer.doublesCount >= 3) {
-          console.log('Fallback: Three doubles in a row! Sending to jail');
-          currentPlayer.doublesCount = 0;
-          currentPlayer.position = 10;
-          currentPlayer.isInJail = true;
-          currentPlayer.jailTurns = 0;
-          showJailUI('Three doubles! Go to Jail!', () => {
-            endTurn();
-          });
-          return;
-        }
-      } else {
-        // Reset doubles count if not doubles
-        currentPlayer.doublesCount = 0;
-      }
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
@@ -2362,15 +2214,7 @@ function roll3DDice() {
         animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
           currentPlayer.position = newPosition;
           console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
-          
-          // If doubles, don't end turn - allow rolling again
-          if (isDoubles && currentPlayer.doublesCount < 3) {
-            console.log('Fallback: Doubles rolled - player can roll again');
-            handleLanding(currentPlayer, newPosition, true); // Pass true for canRollAgain
-            window.turnCompleting = false; // Reset flag so player can roll again
-          } else {
-            handleLanding(currentPlayer, newPosition, false);
-          }
+          handleLanding(currentPlayer, newPosition, false);
         }, false);
       }
 
@@ -2393,9 +2237,9 @@ window.forceAIRoll = function() {
   roll3DDice();
 };
 
-// Debug function to force doubles
-window.forceDoubles = function(diceValue = 4, playerIndex = null) {
-  console.log(`[DEBUG] Forcing doubles: ${diceValue} and ${diceValue}`);
+// Debug function to force specific dice roll (not doubles-specific anymore)
+window.forceDiceRoll = function(dice1, dice2, playerIndex = null) {
+  console.log(`[DEBUG] Forcing dice roll: ${dice1} and ${dice2}`);
   
   // If playerIndex is provided, use that, otherwise use current player
   const intendedPlayerIndex = playerIndex !== null ? playerIndex : gameState.currentPlayerIndex;
@@ -2417,39 +2261,10 @@ window.forceDoubles = function(diceValue = 4, playerIndex = null) {
   // Set the current player to the intended player
   gameState.currentPlayerIndex = intendedPlayerIndex;
   
-  const totalDice = diceValue + diceValue;
+  const totalDice = dice1 + dice2;
   
-  console.log('Dice results:', diceValue, diceValue, 'Total:', totalDice);
+  console.log('Dice results:', dice1, dice2, 'Total:', totalDice);
   console.log(`[DEBUG] Moving player: ${intendedPlayer.name} (index: ${intendedPlayerIndex})`);
-  
-  // Check for doubles
-  const isDoubles = true;
-  console.log('DOUBLES! Player gets to roll again');
-  
-  // Show doubles notification
-  const doublesNotification = document.getElementById('doublesNotification');
-  if (doublesNotification) {
-    doublesNotification.style.display = 'block';
-    setTimeout(() => {
-      doublesNotification.style.display = 'none';
-    }, 2000);
-  }
-  
-  // Track doubles count
-  intendedPlayer.doublesCount = (intendedPlayer.doublesCount || 0) + 1;
-  
-  // If 3 doubles in a row, send to jail
-  if (intendedPlayer.doublesCount >= 3) {
-    console.log('Three doubles in a row! Sending to jail');
-    intendedPlayer.doublesCount = 0;
-    intendedPlayer.position = 10;
-    intendedPlayer.isInJail = true;
-    intendedPlayer.jailTurns = 0;
-    showJailUI('Three doubles! Go to Jail!', () => {
-      endTurn();
-    });
-    return;
-  }
   
   // Calculate target position
   let newPosition = (intendedPlayer.position + totalDice) % 40;
@@ -2473,15 +2288,7 @@ window.forceDoubles = function(diceValue = 4, playerIndex = null) {
     animatePlayerMovement(intendedPlayerIndex, intendedPlayer.position, newPosition, () => {
       intendedPlayer.position = newPosition;
       console.log(`${intendedPlayer.name} completed movement to position ${newPosition}`);
-      
-      // If doubles, don't end turn - allow rolling again
-      if (isDoubles && intendedPlayer.doublesCount < 3) {
-        console.log('Doubles rolled - player can roll again');
-        handleLanding(intendedPlayer, newPosition, true);
-        window.turnCompleting = false;
-      } else {
-        handleLanding(intendedPlayer, newPosition, false);
-      }
+      handleLanding(intendedPlayer, newPosition, false);
     }, false);
   }
 };
@@ -2525,19 +2332,20 @@ function getDiceResult(diceBody) {
 
 // Handle landing on a square
 function handleLanding(player, position, canRollAgain = false) {
+  // Doubles are now treated as normal rolls - always end turn
+  canRollAgain = false;
   // Get the tile configuration
   const tile = boardConfig.find(t => t.position === position);
   
   if (!tile) {
-    if (!canRollAgain) endTurn();
+    endTurn();
     return;
   }
   
   // Position 10 is Jail - "Just Visiting", no jail penalty
   if (position === 10) {
     console.log(`${player.name} is just visiting Jail (position 10) - no penalty`);
-    // Just visiting, can roll normally next turn
-    if (!canRollAgain) endTurn();
+    endTurn();
     return;
   }
   
@@ -2582,36 +2390,7 @@ function handleLanding(player, position, canRollAgain = false) {
           updatePropertiesList();
           checkGameEnd();
         }
-        if (!canRollAgain) endTurn();
-        else {
-          // AI gets another roll on doubles - schedule it
-          if (player.isAI) {
-            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
-            // Store reference to check later
-            const aiPlayerIndex = gameState.players.indexOf(player);
-            // Use a shorter delay and ensure turn state is clean
-            setTimeout(() => {
-              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
-              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
-              if (gameState.currentPlayerIndex === aiPlayerIndex) {
-                // Clear all blocking flags
-                isRolling = false;
-                window.turnCompleting = false;
-                window.diceProcessed = false;
-                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
-                roll3DDice();
-              } else {
-                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
-              }
-            }, 1000);
-          } else {
-            // Re-enable roll button for human player to roll again on doubles
-            if (rollDiceBtn) {
-              rollDiceBtn.disabled = false;
-              window.turnCompleting = false; // Reset flag for human doubles
-            }
-          }
-        }
+        endTurn();
       }
     } else if (owner !== player) {
       let rent;
@@ -2639,36 +2418,7 @@ function handleLanding(player, position, canRollAgain = false) {
         updatePlayerMoney();
         updatePlayersList();
         checkGameEnd();
-        if (!canRollAgain) endTurn();
-        else {
-          // AI gets another roll on doubles - schedule it
-          if (player.isAI) {
-            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
-            // Store reference to check later
-            const aiPlayerIndex = gameState.players.indexOf(player);
-            // Use a shorter delay and ensure turn state is clean
-            setTimeout(() => {
-              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
-              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
-              if (gameState.currentPlayerIndex === aiPlayerIndex) {
-                // Clear all blocking flags
-                isRolling = false;
-                window.turnCompleting = false;
-                window.diceProcessed = false;
-                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
-                roll3DDice();
-              } else {
-                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
-              }
-            }, 1000);
-          } else {
-            // Re-enable roll button for human player to roll again on doubles
-            if (rollDiceBtn) {
-              rollDiceBtn.disabled = false;
-              window.turnCompleting = false; // Reset flag for human doubles
-            }
-          }
-        }
+        endTurn();
       }
     } else {
       // Player owns the property - show UI
@@ -2683,13 +2433,7 @@ function handleLanding(player, position, canRollAgain = false) {
           addAIMove(player.name, `won $${winAmount} at ${tile.casinoGame}`);
           updatePlayerMoney();
           checkGameEnd();
-          if (!canRollAgain) endTurn();
-          else {
-            // Re-enable roll button for player to roll again on doubles
-            if (rollDiceBtn) {
-              rollDiceBtn.disabled = false;
-            }
-          }
+          endTurn();
         }
       } else {
         // console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
@@ -2697,13 +2441,7 @@ function handleLanding(player, position, canRollAgain = false) {
           showOwnedPropertyUI(tile, canRollAgain);
         } else {
           addAIMove(player.name, `landed on ${tile.name} (owned)`);
-          if (!canRollAgain) endTurn();
-          else {
-            // Re-enable roll button for player to roll again on doubles
-            if (rollDiceBtn) {
-              rollDiceBtn.disabled = false;
-            }
-          }
+          endTurn();
         }
       }
     }
@@ -2725,7 +2463,7 @@ function handleLanding(player, position, canRollAgain = false) {
           updatePropertiesList();
           checkGameEnd();
         }
-        if (!canRollAgain) endTurn();
+        endTurn();
       }
     } else if (owner !== player) {
       const rent = Math.floor(tile.price * 0.1);
@@ -2739,46 +2477,11 @@ function handleLanding(player, position, canRollAgain = false) {
       
       updatePlayerMoney();
       checkGameEnd();
-      if (!canRollAgain) endTurn();
-      else {
-        // Re-enable roll button for player to roll again on doubles
-        if (rollDiceBtn) {
-          rollDiceBtn.disabled = false;
-        }
-      }
+      endTurn();
     } else {
       if (player.isAI) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);
-        if (!canRollAgain) endTurn();
-        else {
-          // AI gets another roll on doubles - schedule it
-          if (player.isAI) {
-            console.log(`[AI DOUBLES] AI ${player.name} will roll again after completing landing`);
-            // Store reference to check later
-            const aiPlayerIndex = gameState.players.indexOf(player);
-            // Use a shorter delay and ensure turn state is clean
-            setTimeout(() => {
-              console.log(`[AI DOUBLES] Timeout fired. Current index: ${gameState.currentPlayerIndex}, AI index: ${aiPlayerIndex}`);
-              console.log(`[AI DOUBLES] isRolling: ${isRolling}, turnCompleting: ${window.turnCompleting}, diceProcessed: ${window.diceProcessed}`);
-              if (gameState.currentPlayerIndex === aiPlayerIndex) {
-                // Clear all blocking flags
-                isRolling = false;
-                window.turnCompleting = false;
-                window.diceProcessed = false;
-                console.log(`[AI DOUBLES] AI ${player.name} rolling again`);
-                roll3DDice();
-              } else {
-                console.log(`[AI DOUBLES] Turn changed from ${player.name} to ${gameState.players[gameState.currentPlayerIndex]?.name}, skipping AI doubles roll`);
-              }
-            }, 1000);
-          } else {
-            // Re-enable roll button for human player to roll again on doubles
-            if (rollDiceBtn) {
-              rollDiceBtn.disabled = false;
-              window.turnCompleting = false; // Reset flag for human doubles
-            }
-          }
-        }
+        endTurn();
       } else {
         showOwnedPropertyUI(tile, canRollAgain);
       }
@@ -2791,13 +2494,7 @@ function handleLanding(player, position, canRollAgain = false) {
       console.log(`${player.name} paid $${tile.amount}`);
       updatePlayerMoney();
       checkGameEnd();
-      if (!canRollAgain) endTurn();
-      else {
-        // Re-enable roll button for player to roll again on doubles
-        if (rollDiceBtn) {
-          rollDiceBtn.disabled = false;
-        }
-      }
+      endTurn();
     }
   } else if (tile.type === 'chance' || tile.type === 'community-chest') {
     // Show chance/community card UI
@@ -2817,13 +2514,7 @@ function handleLanding(player, position, canRollAgain = false) {
     }
   } else {
     // Other tile types (corners)
-    if (!canRollAgain) endTurn();
-    else {
-      // Re-enable roll button for player to roll again on doubles
-      if (rollDiceBtn) {
-        rollDiceBtn.disabled = false;
-      }
-    }
+    endTurn();
   }
 }
 
@@ -2839,8 +2530,6 @@ const chanceCards = [
   { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
   { message: "Casino repair fees - $25 per property", action: "pay_repairs", amount: 25 },
   { message: "Las Vegas speeding fine $150", action: "pay_fine", amount: 150 },
-  { message: "Take a trip to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to_nearest", type: "railroad" },
-  { message: "Advance to Las Vegas Monorail - If you pass Go, collect $200", action: "advance_to_nearest", type: "railroad" },
   { message: "You have been elected Casino Chairman - Pay each player $50", action: "pay_players", amount: 50 },
   { message: "Your casino investment matures - Collect $150", action: "gain_money", amount: 150 },
   { message: "You have won a Blackjack competition - Collect $150", action: "gain_money", amount: 150 }
@@ -2867,6 +2556,8 @@ const communityChestCards = [
 
 // Execute card action (for AI players)
 function executeCardAction(card, player, playerIndex, canRollAgain = false) {
+  // Doubles are now treated as normal rolls - always end turn
+  canRollAgain = false;
   const action = card.action;
   const amount = card.amount || 0;
   const position = card.position || 0;
@@ -2880,18 +2571,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
         updatePlayerMoney();
         addAIMove(player.name, 'advanced to GO and collected $200');
       }
-      if (!canRollAgain) endTurn();
-      else {
-        // AI gets another roll on doubles
-        setTimeout(() => {
-          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
-            isRolling = false;
-            window.turnCompleting = false;
-            window.diceProcessed = false;
-            roll3DDice();
-          }
-        }, 1000);
-      }
+      endTurn();
       break;
       
     case 'advance_to':
@@ -2965,17 +2645,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       player.money += amount;
       updatePlayerMoney();
       addAIMove(player.name, `gained $${amount} from card`);
-      if (!canRollAgain) endTurn();
-      else {
-        setTimeout(() => {
-          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
-            isRolling = false;
-            window.turnCompleting = false;
-            window.diceProcessed = false;
-            roll3DDice();
-          }
-        }, 1000);
-      }
+      endTurn();
       break;
       
     case 'pay_fine':
@@ -2983,17 +2653,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       updatePlayerMoney();
       checkGameEnd();
       addAIMove(player.name, `paid $${amount} fine from card`);
-      if (!canRollAgain) endTurn();
-      else {
-        setTimeout(() => {
-          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
-            isRolling = false;
-            window.turnCompleting = false;
-            window.diceProcessed = false;
-            roll3DDice();
-          }
-        }, 1000);
-      }
+      endTurn();
       break;
       
     case 'go_to_jail':
@@ -3066,17 +2726,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       } else {
         addAIMove(player.name, `no properties to repair, no charge`);
       }
-      if (!canRollAgain) endTurn();
-      else {
-        setTimeout(() => {
-          if (gameState.currentPlayerIndex === gameState.players.indexOf(player)) {
-            isRolling = false;
-            window.turnCompleting = false;
-            window.diceProcessed = false;
-            roll3DDice();
-          }
-        }, 1000);
-      }
+      endTurn();
       break;
       
     default:
