@@ -585,10 +585,11 @@
         // Override dice configuration for craps-specific behavior
         const CRAPS_DICE_CONFIG = {
             ...DICE_GLB_CONFIG,
-            rollDurationMs: 1200,  // Longer roll for more air time
-            settleHoldMs: 6000,     // 6 second pause after landing
+            rollDurationMs: 2000,  // Longer roll for more air time
+            settleHoldMs: 3000,     // 3 second pause after landing to see the result
             tossHeight: 3.5,        // Higher toss for more air rolling
-            scale: 1.2              // Much larger dice for better visibility
+            scale: 1.2,              // Much larger dice for better visibility
+            separation: 2.5         // Separate dice so they don't overlap
         };
 
         function createDiceTexture(value) {
@@ -648,14 +649,17 @@
         function createDiceMesh() {
             const size = CRAPS_DICE_CONFIG.scale;
             const geometry = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
-            
+
+            // Three.js BoxGeometry material order: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
+            // Standard dice: opposite faces add to 7 (1-6, 2-5, 3-4)
+            // Increased roughness to reduce shiny reflections
             const materials = [
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }),
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }),
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }),
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }),
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }),
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.8, metalness: 0.0 }),  // right (+x)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.8, metalness: 0.0 }),  // left (-x)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.8, metalness: 0.0 }),  // top (+y)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.8, metalness: 0.0 }),  // bottom (-y)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.8, metalness: 0.0 }),  // front (+z)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.8, metalness: 0.0 })   // back (-z)
             ];
 
             const dice = new THREE.Mesh(geometry, materials);
@@ -694,6 +698,12 @@
 
             dice1Mesh = createDiceMesh();
             dice2Mesh = createDiceMesh();
+            
+            // Set initial positions separated
+            const sep = CRAPS_DICE_CONFIG.separation || 2.5;
+            dice1Mesh.position.set(-sep / 2, 8, 0);
+            dice2Mesh.position.set(sep / 2, 8, 0);
+            
             dice1Mesh.visible = false;
             dice2Mesh.visible = false;
             dice1Mesh.position.set(-0.9, 0, 0);
@@ -807,9 +817,9 @@
                     'dont-come-bar': 'dont-come-bar',
                     '4': '4',
                     '5': '5',
-                    'six': '6',
+                    '6': 'six',
                     '8': '8',
-                    'nine': '9',
+                    '9': 'nine',
                     '10': '10',
                     'big-6-8': 'big-6-8',
                     '7-es': '7-es',
@@ -1031,6 +1041,10 @@
                 isRolling = false;
                 rollBtn.disabled = false;
                 clearBtn.disabled = false;
+                // Clear dice result text after a delay
+                setTimeout(() => {
+                    diceResultEl.textContent = '';
+                }, 3000);
             });
         }
         

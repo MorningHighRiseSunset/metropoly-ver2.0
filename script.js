@@ -2534,7 +2534,7 @@ const chanceCards = [
   { message: "Las Vegas speeding fine $150", action: "pay_fine", amount: 150 },
   { message: "You have been elected Casino Chairman - Pay each player $50", action: "pay_players", amount: 50 },
   { message: "Your casino investment matures - Collect $150", action: "gain_money", amount: 150 },
-  { message: "You have won a Blackjack competition - Collect $150", action: "gain_money", amount: 150 }
+  { message: "You have won a Blackjack competition - Collect $500", action: "gain_money", amount: 500 }
 ];
 
 const communityChestCards = [
