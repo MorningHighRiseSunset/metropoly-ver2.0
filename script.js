@@ -630,7 +630,9 @@ function loadPlayerToken(player, index) {
           if (player.token === 'WhiteGirlIdle') {
             const idleClip = clip.clone();
             idleClip.name = 'Idle';
-            animations['Idle'] = mixer.clipAction(idleClip);
+            const idleAction = mixer.clipAction(idleClip);
+            idleAction.timeScale = 2.0; // Speed up idle animation
+            animations['Idle'] = idleAction;
             // console.log(`[ANIMATION DEBUG] Created Idle action for ${player.name}, tracks: ${idleClip.tracks.length}`);
           } else {
             // For other models, play all built-in animations (rotors, wheels, etc.)

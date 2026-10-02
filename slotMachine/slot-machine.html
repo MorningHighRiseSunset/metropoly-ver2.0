@@ -577,7 +577,7 @@
       if (spinning || balance < bet) return;
 
       // Ensure bet is valid before spinning
-      const maxBet = Math.min(1000, Math.max(5, balance));
+      const maxBet = Math.max(5, balance);
       if (bet > maxBet) {
         bet = maxBet;
         betSlider.value = bet;
@@ -647,7 +647,7 @@
         reels.forEach(r => r.classList.add('win'));
 
         // Clamp bet to new balance after win
-        const maxBet = Math.min(1000, Math.max(5, balance));
+        const maxBet = Math.max(5, balance);
         if (bet > maxBet) {
           bet = maxBet;
           betSlider.value = bet;
@@ -660,15 +660,15 @@
 
         if (results[0] === results[1] && results[1] === results[2]) {
           if (results[0] === '7️⃣' || results[0] === '💎') {
-            setMessage(results[0] === '7️⃣' ? 'JACKPOT' : 'BIG WIN', 'jackpot');
+            setMessage(results[0] === '7️⃣' ? 'JACKPOT - Bet $' + bet + ' - Won $' + payout + ' (Total)' : 'BIG WIN - Bet $' + bet + ' - Won $' + payout + ' (Total)', 'jackpot');
             particleBurst(cx, cy, 28);
             setTimeout(() => particleBurst(cx, cy, 18), 200);
           } else {
-            setMessage(`+${payout}`, 'win');
+            setMessage('Bet $' + bet + ' - Won $' + payout + ' (Total)', 'win');
             particleBurst(cx, cy, 16);
           }
         } else {
-          setMessage(`+${payout}`, 'win');
+          setMessage('Bet $' + bet + ' - Won $' + payout + ' (Total)', 'win');
           particleBurst(cx, cy, 12);
         }
       } else {
@@ -689,7 +689,7 @@
       let newBet = parseInt(e.target.value, 10);
 
       // CRITICAL: Real-time balance check to prevent exceeding balance
-      const maxBet = Math.min(1000, Math.max(5, balance));
+      const maxBet = Math.max(5, balance);
       newBet = Math.max(5, Math.min(newBet, maxBet));
 
       // Ensure bet is a multiple of 5
