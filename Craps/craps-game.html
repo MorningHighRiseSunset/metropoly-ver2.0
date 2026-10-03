@@ -1069,6 +1069,16 @@
                     if (bets["don't-pass-bar"]) {
                         addLogEntry(`❌ Don't Pass bet lost on Natural ${total}`, 'loss');
                     }
+                    // Field bets (pay on every roll regardless of phase)
+                    if (bets['field']) {
+                        if ([2,3,4,9,10,11,12].includes(total)) {
+                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                            winnings += bets['field'] * 2; // Total returned
+                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
+                        } else {
+                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
+                        }
+                    }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 2 || total === 3) {
@@ -1085,6 +1095,16 @@
                     if (bets['pass-line']) {
                         addLogEntry(`❌ Pass Line bet lost on Craps ${total}`, 'loss');
                     }
+                    // Field bets (pay on every roll regardless of phase)
+                    if (bets['field']) {
+                        if ([2,3,4,9,10,11,12].includes(total)) {
+                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                            winnings += bets['field'] * 2; // Total returned
+                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
+                        } else {
+                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
+                        }
+                    }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 12) {
@@ -1100,10 +1120,41 @@
                     if (bets['pass-line']) {
                         addLogEntry(`❌ Pass Line bet lost on Craps 12`, 'loss');
                     }
+                    // Field bets (pay on every roll regardless of phase)
+                    if (bets['field']) {
+                        if ([2,3,4,9,10,11,12].includes(total)) {
+                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                            winnings += bets['field'] * 2; // Total returned
+                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
+                        } else {
+                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
+                        }
+                    }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
                 } else {
                     // Point established (4, 5, 6, 8, 9, 10)
+                    // Check if any Place bets hit their number on come-out roll
+                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
+                        const netWin = bets[placeBetMap[total]]; // Place bet wins
+                        winnings += bets[placeBetMap[total]] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
+                        // Remove the winning Place bet
+                        delete bets[placeBetMap[total]];
+                    }
+
+                    // Field bets (pay on every roll regardless of phase)
+                    if (bets['field']) {
+                        if ([2,3,4,9,10,11,12].includes(total)) {
+                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                            winnings += bets['field'] * 2; // Total returned
+                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
+                        } else {
+                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
+                        }
+                    }
+
                     point = total;
                     isPointPhase = true;
                     message = `Point is ${point}. Roll again!`;
@@ -1180,23 +1231,24 @@
                         // Remove the winning Place bet
                         delete bets[placeBetMap[total]];
                     }
+
+                    // Field bets (pay on every roll regardless of phase)
+                    if (bets['field']) {
+                        if ([2,3,4,9,10,11,12].includes(total)) {
+                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                            winnings += bets['field'] * 2; // Total returned
+                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
+                        } else {
+                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
+                        }
+                    }
+
                     message = `Point is ${point}. Roll again!`;
                     addLogEntry(`🎲 No resolution. Point is still ${point}. Roll again!`, 'info');
                     updateBalance();
                     syncBalanceToParent();
                     diceResultEl.textContent += ` - ${message}`;
                     return; // Don't clear bets or end the round
-                }
-            }
-            
-            // Field bets (pay on every roll regardless of phase)
-            if (bets['field']) {
-                if ([2,3,4,9,10,11,12].includes(total)) {
-                    const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                    winnings += bets['field'] * 2; // Total returned
-                    addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                } else {
-                    addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                 }
             }
 
