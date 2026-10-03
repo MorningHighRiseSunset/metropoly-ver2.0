@@ -1069,6 +1069,8 @@
                     if (bets["don't-pass-bar"]) {
                         addLogEntry(`❌ Don't Pass bet lost on Natural ${total}`, 'loss');
                     }
+                    // Reset button text to "Roll Dice"
+                    rollBtn.textContent = 'Roll Dice';
                 } else if (total === 2 || total === 3) {
                     // Craps - Pass Line loses, Don't Pass wins
                     if (bets["don't-pass-bar"]) {
@@ -1083,6 +1085,8 @@
                     if (bets['pass-line']) {
                         addLogEntry(`❌ Pass Line bet lost on Craps ${total}`, 'loss');
                     }
+                    // Reset button text to "Roll Dice"
+                    rollBtn.textContent = 'Roll Dice';
                 } else if (total === 12) {
                     // Craps 12 - Pass Line loses, Don't Pass pushes (returns bet)
                     if (bets["don't-pass-bar"]) {
@@ -1096,6 +1100,8 @@
                     if (bets['pass-line']) {
                         addLogEntry(`❌ Pass Line bet lost on Craps 12`, 'loss');
                     }
+                    // Reset button text to "Roll Dice"
+                    rollBtn.textContent = 'Roll Dice';
                 } else {
                     // Point established (4, 5, 6, 8, 9, 10)
                     point = total;
@@ -1103,6 +1109,8 @@
                     message = `Point is ${point}. Roll again!`;
                     addLogEntry(`🎯 POINT ESTABLISHED: ${point}`, 'point');
                     addLogEntry(`Roll again to try to hit ${point} (Rolling 7 will lose your Pass Line bet)`, 'info');
+                    // Change button text to "Roll Again"
+                    rollBtn.textContent = 'Roll Again';
                     // Don't clear bets - they stay on the table during point phase
                     updateBalance();
                     syncBalanceToParent();
@@ -1135,6 +1143,8 @@
                     }
                     isPointPhase = false;
                     point = null;
+                    // Change button text back to "Roll Dice"
+                    rollBtn.textContent = 'Roll Dice';
                 } else if (total === 7) {
                     // Seven out - Pass Line loses, Don't Pass wins, ALL Place bets lose
                     if (bets["don't-pass-bar"]) {
@@ -1157,6 +1167,8 @@
                     });
                     isPointPhase = false;
                     point = null;
+                    // Change button text back to "Roll Dice"
+                    rollBtn.textContent = 'Roll Dice';
                 } else {
                     // Continue point phase - no resolution yet
                     // Check if any Place bets hit their number
@@ -1221,15 +1233,18 @@
         
         function clearBets() {
             if (isRolling) return;
-            
+
             // Refund bets
             Object.values(bets).forEach(amount => balance += amount);
             bets = {};
-            
+
             // Reset point phase if bets are cleared
             isPointPhase = false;
             point = null;
-            
+
+            // Reset button text to "Roll Dice"
+            rollBtn.textContent = 'Roll Dice';
+
             updateBalance();
             renderTableChips();
             diceResultEl.textContent = '';
