@@ -1068,14 +1068,15 @@ function next() {
 
     result.className = 'result';
     if (cmp > 0) {
+      const totalPayout = state.pot;
       state.chips += state.pot;
       console.log('[POKER DEBUG] PLAYER WINS, chips now:', state.chips);
       result.classList.add('win');
       // If hand names are the same, it means same hand type but better kickers
       if (pHand.name === aHand.name) {
-        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} (better kickers)</span>`;
+        result.innerHTML = `Bet $${state.bet} - Won $${totalPayout}<span class="hand-name">${pHand.name} (better kickers)</span>`;
       } else {
-        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} beats ${aHand.name}</span>`;
+        result.innerHTML = `Bet $${state.bet} - Won $${totalPayout}<span class="hand-name">${pHand.name} beats ${aHand.name}</span>`;
       }
       syncBalanceToParent();
     } else if (cmp < 0) {
@@ -1088,12 +1089,12 @@ function next() {
       }
       syncBalanceToParent();
     } else {
-      // True tie - split the pot (player gets their bet back + half of AI's bet)
-      const playerWinnings = Math.floor(state.bet + (state.bet / 2)); // Original bet + half of AI's bet
+      // True tie - split the pot (player gets their bet back)
+      const playerWinnings = state.bet; // Return original bet only
       state.chips += playerWinnings;
       console.log('[POKER DEBUG] TIE, chips now:', state.chips, 'Winnings:', playerWinnings);
       result.classList.add('tie');
-      result.innerHTML = `Tie — pot split (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
+      result.innerHTML = `Tie — bet returned (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
       syncBalanceToParent();
     }
 
