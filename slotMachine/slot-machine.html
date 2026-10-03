@@ -91,7 +91,7 @@
       background: rgba(0, 0, 0, 0.45);
       border: 1px solid rgba(140, 60, 255, 0.2);
       border-radius: 14px;
-      padding: 14px 20px;
+      padding: 14px 20px 14px 120px; /* Add right padding to avoid close button overlap */
       margin-bottom: 28px;
       font-size: 0.95rem;
       letter-spacing: 1px;
@@ -573,11 +573,15 @@
       return 0;
     }
 
+    function getNetWin(payout) {
+      return payout - bet; // Net winnings = total returned - original bet
+    }
+
     async function spin() {
       if (spinning || balance < bet) return;
 
       // Ensure bet is valid before spinning
-      const maxBet = Math.min(1000, Math.max(5, balance));
+      const maxBet = Math.max(5, balance);
       if (bet > maxBet) {
         bet = maxBet;
         betSlider.value = bet;
@@ -660,19 +664,22 @@
 
         if (results[0] === results[1] && results[1] === results[2]) {
           if (results[0] === '7️⃣' || results[0] === '💎') {
-            setMessage(results[0] === '7️⃣' ? 'JACKPOT' : 'BIG WIN', 'jackpot');
+            const netWin = getNetWin(payout);
+            setMessage(results[0] === '7️⃣' ? `JACKPOT! +$${netWin}` : `BIG WIN! +$${netWin}`, 'jackpot');
             particleBurst(cx, cy, 28);
             setTimeout(() => particleBurst(cx, cy, 18), 200);
           } else {
-            setMessage(`+${payout}`, 'win');
+            const netWin = getNetWin(payout);
+            setMessage(`+$${netWin}`, 'win');
             particleBurst(cx, cy, 16);
           }
         } else {
-          setMessage(`+${payout}`, 'win');
+          const netWin = getNetWin(payout);
+          setMessage(`+$${netWin}`, 'win');
           particleBurst(cx, cy, 12);
         }
       } else {
-        setMessage('—', 'lose');
+        setMessage(`-$${bet}`, 'lose');
       }
 
       updateUI();

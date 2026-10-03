@@ -677,6 +677,11 @@
           newValue = currentMax;
           betSlider.value = newValue;
         }
+        // CRITICAL: Ensure minimum bet of 1
+        if (newValue < 1) {
+          newValue = 1;
+          betSlider.value = newValue;
+        }
         selectedBetAmount = newValue;
         window.__selectedChip = selectedBetAmount; // Sync across minigames
         betDisplay.textContent = `$${selectedBetAmount}`;
@@ -829,6 +834,9 @@
     function resolveBets(winner) {
       let win = 0;
       const w = winner; // number or '00'
+      console.log('[ROULETTE DEBUG] ===== RESOLVING BETS =====');
+      console.log('[ROULETTE DEBUG] Winner:', w);
+      console.log('[ROULETTE DEBUG] All bets:', bets);
 
       for (const [key, amount] of Object.entries(bets)) {
         if (amount <= 0) continue;
@@ -838,20 +846,58 @@
           pays = amount * 35; // straight up 35:1 + stake returned later as *36 total? Standard is 35:1 profit + stake back = 36×
           // We treat pays as profit; we already deducted stake, so add stake + profit = amount * 36
           win += amount * 36;
+          console.log(`[ROULETTE DEBUG] Straight up on ${key}: won $${amount * 36}`);
         }
-        if (key === 'red' && typeof w === 'number' && reds.has(w)) win += amount * 2;
-        if (key === 'black' && typeof w === 'number' && !reds.has(w) && w !== 0) win += amount * 2;
-        if (key === 'odd' && typeof w === 'number' && w % 2 === 1) win += amount * 2;
-        if (key === 'even' && typeof w === 'number' && w % 2 === 0 && w !== 0) win += amount * 2;
-        if (key === '1to18' && typeof w === 'number' && w >= 1 && w <= 18) win += amount * 2;
-        if (key === '19to36' && typeof w === 'number' && w >= 19 && w <= 36) win += amount * 2;
-        if (key === '1st12' && typeof w === 'number' && w >= 1 && w <= 12) win += amount * 3;
-        if (key === '2nd12' && typeof w === 'number' && w >= 13 && w <= 24) win += amount * 3;
-        if (key === '3rd12' && typeof w === 'number' && w >= 25 && w <= 36) win += amount * 3;
-        if (key === 'col1' && typeof w === 'number' && [1,4,7,10,13,16,19,22,25,28,31,34].includes(w)) win += amount * 3;
-        if (key === 'col2' && typeof w === 'number' && [2,5,8,11,14,17,20,23,26,29,32,35].includes(w)) win += amount * 3;
-        if (key === 'col3' && typeof w === 'number' && [3,6,9,12,15,18,21,24,27,30,33,36].includes(w)) win += amount * 3;
+        if (key === 'red' && typeof w === 'number' && reds.has(w)) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] Red bet: won $${amount * 2}`);
+        }
+        if (key === 'black' && typeof w === 'number' && !reds.has(w) && w !== 0) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] Black bet: won $${amount * 2}`);
+        }
+        if (key === 'odd' && typeof w === 'number' && w % 2 === 1) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] Odd bet: won $${amount * 2}`);
+        }
+        if (key === 'even' && typeof w === 'number' && w % 2 === 0 && w !== 0) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] Even bet: won $${amount * 2}`);
+        }
+        if (key === '1to18' && typeof w === 'number' && w >= 1 && w <= 18) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] 1-18 bet: won $${amount * 2}`);
+        }
+        if (key === '19to36' && typeof w === 'number' && w >= 19 && w <= 36) {
+          win += amount * 2;
+          console.log(`[ROULETTE DEBUG] 19-36 bet: won $${amount * 2}`);
+        }
+        if (key === '1st12' && typeof w === 'number' && w >= 1 && w <= 12) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] 1st 12 bet: won $${amount * 3}`);
+        }
+        if (key === '2nd12' && typeof w === 'number' && w >= 13 && w <= 24) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] 2nd 12 bet: won $${amount * 3}`);
+        }
+        if (key === '3rd12' && typeof w === 'number' && w >= 25 && w <= 36) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] 3rd 12 bet: won $${amount * 3}`);
+        }
+        if (key === 'col1' && typeof w === 'number' && [1,4,7,10,13,16,19,22,25,28,31,34].includes(w)) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] Column 1 bet: won $${amount * 3}`);
+        }
+        if (key === 'col2' && typeof w === 'number' && [2,5,8,11,14,17,20,23,26,29,32,35].includes(w)) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] Column 2 bet: won $${amount * 3}`);
+        }
+        if (key === 'col3' && typeof w === 'number' && [3,6,9,12,15,18,21,24,27,30,33,36].includes(w)) {
+          win += amount * 3;
+          console.log(`[ROULETTE DEBUG] Column 3 bet: won $${amount * 3}`);
+        }
       }
+      console.log('[ROULETTE DEBUG] Total payout:', win);
       return win;
     }
 

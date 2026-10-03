@@ -862,21 +862,21 @@
                 alert('Insufficient balance for this bet');
                 return;
             }
-            
+
             // Log what we're about to bet for debugging
             console.log(`Placing bet: areaId=${areaId}, amount=${amount}, selectedChip=${selectedChip}`);
-            
+
             if (!bets[areaId]) bets[areaId] = 0;
             bets[areaId] += amount;
             balance -= amount;
-            
-            // Store the last chip denomination used for this area
-            bets[areaId + '_lastChip'] = amount;
-            
+
+            // Store the actual chip denomination used (selectedChip), not the total amount
+            bets[areaId + '_lastChip'] = selectedChip;
+
             updateBalance();
             syncBalanceToParent();
             renderTableChips();
-            
+
             // Log the bet placement
             addLogEntry(`You placed $${amount} on ${formatBetName(areaId)}`, 'bet');
         }
@@ -1058,9 +1058,10 @@
                 if (total === 7 || total === 11) {
                     // Natural - Pass Line wins (pays even money), Don't Pass loses
                     if (bets['pass-line']) {
-                        winnings += bets['pass-line'] * 2;
+                        const netWin = bets['pass-line']; // Win 1:1
+                        winnings += bets['pass-line'] * 2; // Total returned
                         message = 'Natural! Pass Line wins!';
-                        addLogEntry(`🎉 NATURAL! ${total}! Pass Line wins! You won $${bets['pass-line'] * 2}`, 'win');
+                        addLogEntry(`🎉 NATURAL! ${total}! Pass Line wins! Net win: $${netWin}`, 'win');
                     } else {
                         addLogEntry(`🎲 Natural ${total}! (No Pass Line bet)`, 'info');
                     }
@@ -1071,9 +1072,10 @@
                 } else if (total === 2 || total === 3) {
                     // Craps - Pass Line loses, Don't Pass wins
                     if (bets["don't-pass-bar"]) {
-                        winnings += bets["don't-pass-bar"] * 2;
+                        const netWin = bets["don't-pass-bar"]; // Win 1:1
+                        winnings += bets["don't-pass-bar"] * 2; // Total returned
                         message = 'Craps! Don\'t Pass wins!';
-                        addLogEntry(`🎉 CRAPS! ${total}! Don't Pass wins! You won $${bets["don't-pass-bar"] * 2}`, 'win');
+                        addLogEntry(`🎉 CRAPS! ${total}! Don't Pass wins! Net win: $${netWin}`, 'win');
                     } else {
                         addLogEntry(`🎲 Craps ${total}! (No Don't Pass bet)`, 'info');
                     }
@@ -1112,9 +1114,10 @@
                 if (total === point) {
                     // Point made - Pass Line wins (pays even money), Don't Pass loses
                     if (bets['pass-line']) {
-                        winnings += bets['pass-line'] * 2;
+                        const netWin = bets['pass-line']; // Win 1:1
+                        winnings += bets['pass-line'] * 2; // Total returned
                         message = 'Point made! Pass Line wins!';
-                        addLogEntry(`🎉 POINT MADE! You hit ${point}! Pass Line wins! You won $${bets['pass-line'] * 2}`, 'win');
+                        addLogEntry(`🎉 POINT MADE! You hit ${point}! Pass Line wins! Net win: $${netWin}`, 'win');
                     } else {
                         addLogEntry(`🎯 Point made! You hit ${point}!`, 'info');
                     }
@@ -1127,9 +1130,10 @@
                 } else if (total === 7) {
                     // Seven out - Pass Line loses, Don't Pass wins
                     if (bets["don't-pass-bar"]) {
-                        winnings += bets["don't-pass-bar"] * 2;
+                        const netWin = bets["don't-pass-bar"]; // Win 1:1
+                        winnings += bets["don't-pass-bar"] * 2; // Total returned
                         message = 'Seven out! Don\'t Pass wins!';
-                        addLogEntry(`🎉 SEVEN OUT! Don't Pass wins! You won $${bets["don't-pass-bar"] * 2}`, 'win');
+                        addLogEntry(`🎉 SEVEN OUT! Don't Pass wins! Net win: $${netWin}`, 'win');
                     } else {
                         addLogEntry(`💀 SEVEN OUT!`, 'loss');
                     }
@@ -1153,8 +1157,9 @@
             // Field bets (pay on every roll regardless of phase)
             if (bets['field']) {
                 if ([2,3,4,9,10,11,12].includes(total)) {
-                    winnings += bets['field'] * 2;
-                    addLogEntry(`🎰 Field bet wins! You won $${bets['field'] * 2}`, 'win');
+                    const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
+                    winnings += bets['field'] * 2; // Total returned
+                    addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
                 } else {
                     addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                 }
@@ -1162,40 +1167,51 @@
             
             // Number bets (single numbers) - these are proposition bets
             if (bets['4'] && total === 4) {
-                winnings += bets['4'] * 7;
-                addLogEntry(`🎰 Number 4 bet wins! You won $${bets['4'] * 7}`, 'win');
+                const netWin = bets['4'] * 6; // Win 6:1
+                winnings += bets['4'] * 7; // Total returned
+                addLogEntry(`🎰 Number 4 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['5'] && total === 5) {
-                winnings += bets['5'] * 7;
-                addLogEntry(`🎰 Number 5 bet wins! You won $${bets['5'] * 7}`, 'win');
+                const netWin = bets['5'] * 6; // Win 6:1
+                winnings += bets['5'] * 7; // Total returned
+                addLogEntry(`🎰 Number 5 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['six'] && total === 6) {
-                winnings += bets['six'] * 7;
-                addLogEntry(`🎰 Number 6 bet wins! You won $${bets['six'] * 7}`, 'win');
+                const netWin = bets['six'] * 6; // Win 6:1
+                winnings += bets['six'] * 7; // Total returned
+                addLogEntry(`🎰 Number 6 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['7'] && total === 7) {
-                winnings += bets['7'] * 7;
-                addLogEntry(`🎰 Number 7 bet wins! You won $${bets['7'] * 7}`, 'win');
+                const netWin = bets['7'] * 6; // Win 6:1
+                winnings += bets['7'] * 7; // Total returned
+                addLogEntry(`🎰 Number 7 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['8'] && total === 8) {
-                winnings += bets['8'] * 7;
-                addLogEntry(`🎰 Number 8 bet wins! You won $${bets['8'] * 7}`, 'win');
+                const netWin = bets['8'] * 6; // Win 6:1
+                winnings += bets['8'] * 7; // Total returned
+                addLogEntry(`🎰 Number 8 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['nine'] && total === 9) {
-                winnings += bets['nine'] * 7;
-                addLogEntry(`🎰 Number 9 bet wins! You won $${bets['nine'] * 7}`, 'win');
+                const netWin = bets['nine'] * 6; // Win 6:1
+                winnings += bets['nine'] * 7; // Total returned
+                addLogEntry(`🎰 Number 9 bet wins! Net win: $${netWin}`, 'win');
             }
             if (bets['10'] && total === 10) {
-                winnings += bets['10'] * 7;
-                addLogEntry(`🎰 Number 10 bet wins! You won $${bets['10'] * 7}`, 'win');
+                const netWin = bets['10'] * 6; // Win 6:1
+                winnings += bets['10'] * 7; // Total returned
+                addLogEntry(`🎰 Number 10 bet wins! Net win: $${netWin}`, 'win');
             }
-            
+
             // Big 6 & 8
             if (bets['big-6-8'] && (total === 6 || total === 8)) {
-                winnings += bets['big-6-8'] * 2;
-                addLogEntry(`🎰 Big 6 & 8 bet wins! You won $${bets['big-6-8'] * 2}`, 'win');
+                const netWin = bets['big-6-8']; // Win 1:1
+                winnings += bets['big-6-8'] * 2; // Total returned
+                addLogEntry(`🎰 Big 6 & 8 bet wins! Net win: $${netWin}`, 'win');
             }
-            
+
+            // Calculate total bet before clearing
+            const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
+
             balance += winnings;
             bets = {}; // Clear bets after resolution
             
@@ -1205,13 +1221,14 @@
             
             // Summary
             if (winnings > 0) {
-                addLogEntry(`💰 Total winnings: $${winnings}. New balance: $${balance}`, 'win');
-                diceResultEl.textContent += ` - ${message} Won $${winnings}!`;
+                const netWin = winnings - totalBet;
+                addLogEntry(`💰 Net win: $${netWin}. Total returned: $${winnings}. New balance: $${balance}`, 'win');
+                diceResultEl.textContent += ` - ${message} Net win: $${netWin}!`;
             } else if (message) {
-                addLogEntry(`💸 No winnings. New balance: $${balance}`, 'loss');
+                addLogEntry(`💸 Lost $${totalBet}. New balance: $${balance}`, 'loss');
                 diceResultEl.textContent += ` - ${message}`;
             } else {
-                addLogEntry(`💸 House wins. New balance: $${balance}`, 'loss');
+                addLogEntry(`💸 Lost $${totalBet}. New balance: $${balance}`, 'loss');
                 diceResultEl.textContent += ' - House wins';
             }
         }

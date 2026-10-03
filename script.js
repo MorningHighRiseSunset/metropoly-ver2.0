@@ -471,9 +471,9 @@ function updatePlayerMoney() {
     // console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money || 2500}`);
     playerMoney.textContent = `$${humanPlayer.money || 2500}`;
   }
-  
-  // Check win/lose conditions
-  checkGameEnd();
+
+  // Don't check game end here - wait until casino closes (handled in closeCasinoBtn)
+  // This prevents premature bankruptcy when player bets entire balance before game resolves
 }
 
 // Check if game should end (someone reached 10k or went bankrupt)
@@ -3126,7 +3126,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
       owner.money += rent;
       console.log(`${currentPlayer.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
       updatePlayerMoney();
-      checkGameEnd();
+      // checkGameEnd() already called when casino closes (line 3110)
       
       // Only end turn if player can't roll again (no doubles)
       if (!window.currentCasinoCanRollAgain) {

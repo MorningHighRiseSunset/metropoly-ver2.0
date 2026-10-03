@@ -617,41 +617,45 @@ function endRound(isNatural = false) {
     msg = 'Push — Both Blackjack — Bet returned';
     type = 'push';
   } else if (playerBJ) {
-    payout = Math.floor(currentBet * 2.5); // 3:2 payout: bet + 1.5x winnings = 2.5x total
-    msg = 'Bet $' + currentBet + ' - Won $' + payout;
+    const netWin = Math.floor(currentBet * 1.5); // 3:2 payout: win 1.5x bet
+    payout = currentBet + netWin; // Total returned = bet + winnings
+    msg = 'Blackjack! Bet $' + currentBet + ' - Won $' + netWin + ' (Total: $' + payout + ')';
     type = 'blackjack';
+    console.log(`[BLACKJACK DEBUG] Blackjack: bet=$${currentBet}, netWin=$${netWin}, payout=$${payout}`);
   } else if (dealerBJ) {
     payout = 0;
-    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
+    msg = 'Dealer Blackjack - Lost $' + currentBet;
     type = 'lose';
   } else if (p > 21) {
     payout = 0;
-    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
+    msg = 'Bust! Lost $' + currentBet;
     type = 'lose';
     btnDeal.textContent = 'Restart';
     // Set flag for restart behavior
     btnDeal.dataset.restart = 'true';
   } else if (d > 21) {
-    payout = currentBet * 2;
-    msg = 'Bet $' + currentBet + ' - Won $' + payout;
+    const netWin = currentBet; // Win 1:1
+    payout = currentBet * 2; // Total returned
+    msg = 'Dealer Bust! Bet $' + currentBet + ' - Won $' + netWin + ' (Total: $' + payout + ')';
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else if (p > d) {
-    payout = currentBet * 2;
-    msg = 'Bet $' + currentBet + ' - Won $' + payout;
+    const netWin = currentBet; // Win 1:1
+    payout = currentBet * 2; // Total returned
+    msg = 'You Win! Bet $' + currentBet + ' - Won $' + netWin + ' (Total: $' + payout + ')';
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else if (d > p) {
     payout = 0;
-    msg = 'Bet $' + currentBet + ' - Lost $' + currentBet;
+    msg = 'Dealer Wins - Lost $' + currentBet;
     type = 'lose';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else {
     payout = currentBet;
-    msg = 'Bet $' + currentBet + ' - Push (Returned)';
+    msg = 'Push - Bet Returned';
     type = 'push';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
