@@ -1125,10 +1125,18 @@
                     if (bets["don't-pass-bar"]) {
                         addLogEntry(`❌ Don't Pass bet lost when point was made`, 'loss');
                     }
+                    // Place bets on the point number also win
+                    const pointBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    const pointBetId = pointBetMap[point];
+                    if (pointBetId && bets[pointBetId]) {
+                        const netWin = bets[pointBetId]; // Place bets pay according to odds, simplified to 1:1 here
+                        winnings += bets[pointBetId] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${point} wins! Net win: $${netWin}`, 'win');
+                    }
                     isPointPhase = false;
                     point = null;
                 } else if (total === 7) {
-                    // Seven out - Pass Line loses, Don't Pass wins
+                    // Seven out - Pass Line loses, Don't Pass wins, ALL Place bets lose
                     if (bets["don't-pass-bar"]) {
                         const netWin = bets["don't-pass-bar"]; // Win 1:1
                         winnings += bets["don't-pass-bar"] * 2; // Total returned
@@ -1141,10 +1149,25 @@
                     if (bets['pass-line']) {
                         addLogEntry(`❌ Pass Line bet lost on Seven Out`, 'loss');
                     }
+                    // All Place bets lose on 7
+                    ['4', '5', 'six', '8', 'nine', '10'].forEach(betId => {
+                        if (bets[betId]) {
+                            addLogEntry(`❌ Place bet on ${formatBetName(betId)} lost on Seven Out`, 'loss');
+                        }
+                    });
                     isPointPhase = false;
                     point = null;
                 } else {
                     // Continue point phase - no resolution yet
+                    // Check if any Place bets hit their number
+                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
+                        const netWin = bets[placeBetMap[total]]; // Place bet wins
+                        winnings += bets[placeBetMap[total]] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
+                        // Remove the winning Place bet
+                        delete bets[placeBetMap[total]];
+                    }
                     message = `Point is ${point}. Roll again!`;
                     addLogEntry(`🎲 No resolution. Point is still ${point}. Roll again!`, 'info');
                     updateBalance();
@@ -1163,43 +1186,6 @@
                 } else {
                     addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                 }
-            }
-            
-            // Number bets (single numbers) - these are proposition bets
-            if (bets['4'] && total === 4) {
-                const netWin = bets['4'] * 6; // Win 6:1
-                winnings += bets['4'] * 7; // Total returned
-                addLogEntry(`🎰 Number 4 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['5'] && total === 5) {
-                const netWin = bets['5'] * 6; // Win 6:1
-                winnings += bets['5'] * 7; // Total returned
-                addLogEntry(`🎰 Number 5 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['six'] && total === 6) {
-                const netWin = bets['six'] * 6; // Win 6:1
-                winnings += bets['six'] * 7; // Total returned
-                addLogEntry(`🎰 Number 6 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['7'] && total === 7) {
-                const netWin = bets['7'] * 6; // Win 6:1
-                winnings += bets['7'] * 7; // Total returned
-                addLogEntry(`🎰 Number 7 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['8'] && total === 8) {
-                const netWin = bets['8'] * 6; // Win 6:1
-                winnings += bets['8'] * 7; // Total returned
-                addLogEntry(`🎰 Number 8 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['nine'] && total === 9) {
-                const netWin = bets['nine'] * 6; // Win 6:1
-                winnings += bets['nine'] * 7; // Total returned
-                addLogEntry(`🎰 Number 9 bet wins! Net win: $${netWin}`, 'win');
-            }
-            if (bets['10'] && total === 10) {
-                const netWin = bets['10'] * 6; // Win 6:1
-                winnings += bets['10'] * 7; // Total returned
-                addLogEntry(`🎰 Number 10 bet wins! Net win: $${netWin}`, 'win');
             }
 
             // Big 6 & 8
