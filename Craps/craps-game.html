@@ -1079,6 +1079,15 @@
                             addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                         }
                     }
+                    // Check if any Place bets hit their number on come-out roll
+                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
+                        const netWin = bets[placeBetMap[total]]; // Place bet wins
+                        winnings += bets[placeBetMap[total]] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
+                        // Remove the winning Place bet
+                        delete bets[placeBetMap[total]];
+                    }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 2 || total === 3) {
@@ -1105,6 +1114,15 @@
                             addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                         }
                     }
+                    // Check if any Place bets hit their number on come-out roll
+                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
+                        const netWin = bets[placeBetMap[total]]; // Place bet wins
+                        winnings += bets[placeBetMap[total]] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
+                        // Remove the winning Place bet
+                        delete bets[placeBetMap[total]];
+                    }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 12) {
@@ -1129,6 +1147,15 @@
                         } else {
                             addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
                         }
+                    }
+                    // Check if any Place bets hit their number on come-out roll
+                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
+                        const netWin = bets[placeBetMap[total]]; // Place bet wins
+                        winnings += bets[placeBetMap[total]] * 2; // Total returned
+                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
+                        // Remove the winning Place bet
+                        delete bets[placeBetMap[total]];
                     }
                     // Reset button text to "Roll Dice"
                     rollBtn.textContent = 'Roll Dice';
@@ -1155,6 +1182,12 @@
                         }
                     }
 
+                    // Add winnings to balance if any Place or Field bets won
+                    if (winnings > 0) {
+                        balance += winnings;
+                        addLogEntry(`💰 Won $${winnings} this roll. New balance: $${balance}`, 'win');
+                    }
+
                     point = total;
                     isPointPhase = true;
                     message = `Point is ${point}. Roll again!`;
@@ -1165,6 +1198,7 @@
                     // Don't clear bets - they stay on the table during point phase
                     updateBalance();
                     syncBalanceToParent();
+                    renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return; // Don't clear bets or end the round
                 }
@@ -1243,10 +1277,17 @@
                         }
                     }
 
+                    // Add winnings to balance if any Place or Field bets won
+                    if (winnings > 0) {
+                        balance += winnings;
+                        addLogEntry(`💰 Won $${winnings} this roll. New balance: $${balance}`, 'win');
+                    }
+
                     message = `Point is ${point}. Roll again!`;
                     addLogEntry(`🎲 No resolution. Point is still ${point}. Roll again!`, 'info');
                     updateBalance();
                     syncBalanceToParent();
+                    renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return; // Don't clear bets or end the round
                 }
