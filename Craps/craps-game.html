@@ -1195,7 +1195,7 @@
                     addLogEntry(`Roll again to try to hit ${point} (Rolling 7 will lose your Pass Line bet)`, 'info');
                     // Change button text to "Roll Again"
                     rollBtn.textContent = 'Roll Again';
-                    // Don't clear bets - they stay on the table during point phase
+                    // Don't clear bets - Pass Line, Don't Pass, and other bets stay on table during point phase
                     updateBalance();
                     syncBalanceToParent();
                     renderTableChips();
