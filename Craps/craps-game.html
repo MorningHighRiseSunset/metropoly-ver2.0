@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="../dice-glb-config.js"></script>
     <style>
         body {
             margin: 0;
@@ -76,11 +74,6 @@
             height: auto;
             aspect-ratio: 850/550;
             min-height: 450px;
-        }
-        
-        body.iframe-mode #dice-canvas-container {
-            width: 350px;
-            height: 280px;
         }
         
         body.iframe-mode .game-area {
@@ -218,29 +211,7 @@
             box-shadow: 0 0 0 3px #ffd700, 0 4px 12px rgba(255,215,0,0.5);
         }
         
-        /* 3D Dice Container */
-        #dice-canvas-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 500px;
-            height: 400px;
-            z-index: 50;
-            display: none;
-        }
-        
-        #dice-canvas-container.rolling {
-            display: block;
-        }
-        
-        #diceCanvas {
-            width: 100%;
-            height: 100%;
-        }
-        
 
-        
         /* Info panel */
         .info-panel {
             background: #2a2a2a;
@@ -491,10 +462,6 @@
     <div class="game-area">
         <div class="game-container" id="gameContainer">
             <div id="svgContainer"></div>
-            
-            <div id="dice-canvas-container">
-                <canvas id="diceCanvas"></canvas>
-            </div>
         </div>
         
         <div class="game-log" id="gameLog">
@@ -582,219 +549,6 @@
             document.body.classList.add('iframe-mode');
         }
 
-        // Override dice configuration for craps-specific behavior
-        const CRAPS_DICE_CONFIG = {
-            ...DICE_GLB_CONFIG,
-            rollDurationMs: 2000,  // Longer roll for more air time
-            settleHoldMs: 3000,     // 3 second pause after landing to see the result
-            tossHeight: 3.5,        // Higher toss for more air rolling
-            scale: 1.2,              // Much larger dice for better visibility
-            separation: 2.5         // Separate dice so they don't overlap
-        };
-
-        function createDiceTexture(value) {
-            const size = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-
-            // White background with subtle gradient for depth
-            const gradient = ctx.createLinearGradient(0, 0, size, size);
-            gradient.addColorStop(0, '#ffffff');
-            gradient.addColorStop(1, '#f0f0f0');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, size, size);
-
-            // Black border with rounded corners effect
-            ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(4, 4, size - 8, size - 8);
-
-            // Inner border for depth
-            ctx.strokeStyle = '#cccccc';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(12, 12, size - 24, size - 24);
-
-            // Draw pips for the value with shading
-            const pipRadius = size / 14;
-            const pipPositions = {
-                1: [[0.5, 0.5]],
-                2: [[0.25, 0.25], [0.75, 0.75]],
-                3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
-                4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
-                5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
-                6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
-            };
-
-            const positions = pipPositions[value] || pipPositions[1];
-            positions.forEach(([x, y]) => {
-                const px = x * size;
-                const py = y * size;
-
-                // Shadow for depth
-                ctx.beginPath();
-                ctx.arc(px + 3, py + 3, pipRadius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fill();
-
-                // Main pip with gradient
-                const pipGradient = ctx.createRadialGradient(px - pipRadius * 0.3, py - pipRadius * 0.3, 0, px, py, pipRadius);
-                pipGradient.addColorStop(0, '#444444');
-                pipGradient.addColorStop(1, '#000000');
-                ctx.beginPath();
-                ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
-                ctx.fillStyle = pipGradient;
-                ctx.fill();
-
-                // Highlight
-                ctx.beginPath();
-                ctx.arc(px - pipRadius * 0.3, py - pipRadius * 0.3, pipRadius * 0.25, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.fill();
-            });
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.magFilter = THREE.LinearFilter;
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
-            texture.anisotropy = 4;
-            return texture;
-        }
-
-        function createDiceMesh() {
-            const size = CRAPS_DICE_CONFIG.scale;
-            const geometry = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
-
-            // Three.js BoxGeometry material order: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
-            // Same as main game to ensure consistency
-            const materials = [
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }),  // right (+x)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }),  // left (-x)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }),  // top (+y)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }),  // bottom (-y)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }),  // front (+z)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })   // back (-z)
-            ];
-
-            const dice = new THREE.Mesh(geometry, materials);
-            dice.castShadow = true;
-            dice.receiveShadow = true;
-            return dice;
-        }
-
-        // Three.js setup
-        let scene, camera, renderer, dice1Mesh, dice2Mesh;
-        let diceRolling = false;
-        let diceRollAnimFrame = null;
-
-        function initDice() {
-            const container = document.getElementById('dice-canvas-container');
-            const canvas = document.getElementById('diceCanvas');
-            
-            console.log('Initializing dice system...');
-            console.log('Container dimensions:', container.clientWidth, container.clientHeight);
-            
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
-            camera.position.set(0, 12, 0); // Top-down view, slightly higher for larger dice
-            camera.lookAt(0, 0, 0);
-
-            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setClearColor(0x000000, 0);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-            directionalLight.position.set(0, 10, 0);
-            scene.add(directionalLight);
-
-            dice1Mesh = createDiceMesh();
-            dice2Mesh = createDiceMesh();
-            
-            // Set initial positions separated
-            const sep = CRAPS_DICE_CONFIG.separation || 2.5;
-            dice1Mesh.position.set(-sep / 2, 8, 0);
-            dice2Mesh.position.set(sep / 2, 8, 0);
-            
-            dice1Mesh.visible = false;
-            dice2Mesh.visible = false;
-            dice1Mesh.position.set(-0.9, 0, 0);
-            dice2Mesh.position.set(0.9, 0, 0);
-            // No initial rotation - let the animation handle it
-            dice1Mesh.rotation.set(0, 0, 0);
-            dice2Mesh.rotation.set(0, 0, 0);
-            scene.add(dice1Mesh);
-            scene.add(dice2Mesh);
-            
-            console.log('Dice meshes created:', dice1Mesh, dice2Mesh);
-
-            function animate() {
-                requestAnimationFrame(animate);
-                renderer.render(scene, camera);
-            }
-            animate();
-            console.log('Dice animation loop started');
-        }
-
-        // Using shared runDiceRollAnimation from dice-glb-config.js
-
-        function roll3DDice(dice1Value, dice2Value, onComplete) {
-            console.log('roll3DDice called with values:', dice1Value, dice2Value);
-            
-            if (diceRollAnimFrame) {
-                cancelAnimationFrame(diceRollAnimFrame);
-                diceRollAnimFrame = null;
-            }
-
-            // Resize renderer when container becomes visible
-            const container = document.getElementById('dice-canvas-container');
-            console.log('Container dimensions before resize:', container.clientWidth, container.clientHeight);
-            
-            if (container.clientWidth > 0 && container.clientHeight > 0) {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                console.log('Renderer resized to:', container.clientWidth, container.clientHeight);
-            }
-
-            console.log('Making dice visible...');
-            dice1Mesh.visible = true;
-            dice2Mesh.visible = true;
-            console.log('Dice visibility set to true');
-
-            const anchor = { x: 0, y: 0, z: 0 };
-            console.log('Starting roll animation with duration:', CRAPS_DICE_CONFIG.rollDurationMs);
-            
-            const rollTick = runDiceRollAnimation({
-                meshes: [dice1Mesh, dice2Mesh],
-                values: [dice1Value, dice2Value],
-                duration: CRAPS_DICE_CONFIG.rollDurationMs,
-                tossHeight: CRAPS_DICE_CONFIG.tossHeight,
-                anchor,
-                onComplete: () => {
-                    console.log('Roll animation complete');
-                    setTimeout(() => {
-                        dice1Mesh.visible = false;
-                        dice2Mesh.visible = false;
-                        container.classList.remove('rolling');
-                        if (onComplete) onComplete();
-                    }, CRAPS_DICE_CONFIG.settleHoldMs);
-                }
-            });
-
-            function animateDiceFrame(now) {
-                if (rollTick && rollTick(now)) {
-                    diceRollAnimFrame = requestAnimationFrame(animateDiceFrame);
-                } else {
-                    diceRollAnimFrame = null;
-                }
-            }
-            diceRollAnimFrame = requestAnimationFrame(animateDiceFrame);
-            console.log('Animation frame requested');
-        }
-
         let balance = 1000;
         let selectedChip = 1;
         let bets = {};
@@ -803,7 +557,6 @@
         let isPointPhase = false; // Whether we're in the point phase
         
         const gameContainer = document.getElementById('gameContainer');
-        const diceCanvasContainer = document.getElementById('dice-canvas-container');
         const balanceEl = document.getElementById('balance');
         const totalBetEl = document.getElementById('totalBet');
         const pointIndicatorEl = document.getElementById('pointIndicator');
@@ -1045,9 +798,8 @@
             addLogEntry(`🎲 ROLLING DICE... ${phaseText}`, 'roll');
             
             diceResultEl.textContent = `Rolling...`;
-            diceCanvasContainer.classList.add('rolling');
             
-            roll3DDice(result1, result2, () => {
+            setTimeout(() => {
                 console.log('Dice roll complete');
                 diceResultEl.textContent = `You rolled: ${result1} + ${result2} = ${total}`;
                 addLogEntry(`You rolled: ${result1} + ${result2} = ${total}`, 'roll');
@@ -1059,7 +811,7 @@
                 setTimeout(() => {
                     diceResultEl.textContent = '';
                 }, 3000);
-            });
+            }, 1000);
         }
         
         function processRoll(die1, die2) {
@@ -1376,9 +1128,6 @@
             }
         });
         
-        // Initialize dice system
-        initDice();
-
         updateBalance();
     </script>
 </body>
