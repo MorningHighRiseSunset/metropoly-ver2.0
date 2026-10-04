@@ -658,8 +658,7 @@
     const betSlider = document.getElementById('bet-slider');
     const betDisplay = document.getElementById('bet-display');
     if (betSlider && betDisplay) {
-      // Cap max bet at 90% of balance to prevent instant bankruptcy
-      const maxBet = Math.max(1, Math.floor(balance * 0.9));
+      const maxBet = Math.max(1, balance);
       betSlider.max = maxBet;
 
       // Ensure current value doesn't exceed the calculated max
@@ -673,7 +672,7 @@
       betSlider.addEventListener('input', (e) => {
         let newValue = parseInt(e.target.value);
         // CRITICAL: Ensure value doesn't exceed current balance in real-time
-        const currentMax = Math.max(1, Math.floor(balance * 0.9));
+        const currentMax = Math.max(1, balance);
         if (newValue > currentMax) {
           newValue = currentMax;
           betSlider.value = newValue;
@@ -708,12 +707,6 @@
       if (balance - selectedBetAmount < 0) {
         console.log('[ROULETTE DEBUG] Balance would go negative');
         messageEl.textContent = 'Insufficient balance';
-        return;
-      }
-      // Prevent betting more than 90% of balance in a single bet to avoid instant bankruptcy
-      if (selectedBetAmount > balance * 0.9) {
-        console.log('[ROULETTE DEBUG] Bet exceeds 90% of balance');
-        messageEl.textContent = 'Maximum bet is 90% of balance';
         return;
       }
       if (!bets[key]) bets[key] = 0;
@@ -795,10 +788,9 @@
 
       const betSlider = document.getElementById('bet-slider');
       if (betSlider) {
-        // Cap max bet at 90% of balance to prevent instant bankruptcy
-        const maxBet = Math.max(1, Math.floor(balance * 0.9));
+        const maxBet = Math.max(1, balance);
         betSlider.max = maxBet;
-        console.log('[ROULETTE DEBUG] Set slider max to:', maxBet, '(90% of balance)');
+        console.log('[ROULETTE DEBUG] Set slider max to:', maxBet);
         if (selectedBetAmount > maxBet) {
           selectedBetAmount = maxBet;
           betSlider.value = selectedBetAmount;
