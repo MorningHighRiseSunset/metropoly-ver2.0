@@ -3367,10 +3367,10 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     if (!window.lastPlayedVideos) {
       window.lastPlayedVideos = {};
     }
-    
+
     const positionKey = tile.position;
     const lastPlayed = window.lastPlayedVideos[positionKey];
-    
+
     // Get a random video that's different from the last one
     let randomVideo;
     let attempts = 0;
@@ -3378,32 +3378,56 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
       randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
       attempts++;
     } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
-    
+
     window.lastPlayedVideos[positionKey] = randomVideo;
-    propertyVideo.src = randomVideo;
-    propertyVideo.muted = false; // Ensure audio is not muted
-    propertyVideo.volume = 1.0; // Set volume to max
-    propertyVideo.load();
-    propertyVideo.play().catch(e => {
-      console.log('Video play error:', e);
-      // If video fails, try to show image instead
-      if (tile.image) {
-        propertyVideo.style.display = 'none';
-        const img = document.createElement('img');
-        img.src = tile.image;
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        img.id = 'propertyImageFallback';
-        propertyVideoContainer.appendChild(img);
-      } else {
-        // Try the next video if the first one fails
-        const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
-        propertyVideo.src = tile.videos[nextIndex];
-        propertyVideo.load();
-        propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
-      }
-    });
+
+    // Video retry logic with fallback to other videos
+    let currentVideoIndex = tile.videos.indexOf(randomVideo);
+    let retryCount = 0;
+    const maxRetriesPerVideo = 2;
+
+    function tryVideo(index, retryAttempt) {
+      const videoUrl = tile.videos[index];
+      propertyVideo.src = videoUrl;
+      propertyVideo.muted = false;
+      propertyVideo.volume = 1.0;
+      propertyVideo.load();
+
+      propertyVideo.play().then(() => {
+        console.log(`Video loaded successfully: ${videoUrl}`);
+      }).catch(e => {
+        console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
+
+        if (retryAttempt < maxRetriesPerVideo - 1) {
+          // Retry the same video
+          console.log(`Retrying same video...`);
+          setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+        } else {
+          // Try the next video in the array
+          const nextIndex = (index + 1) % tile.videos.length;
+          if (nextIndex !== currentVideoIndex) {
+            console.log(`Trying next video (index ${nextIndex})...`);
+            currentVideoIndex = nextIndex;
+            tryVideo(nextIndex, 0);
+          } else {
+            // All videos failed, try showing image
+            console.log('All videos failed, trying image fallback');
+            if (tile.image) {
+              propertyVideo.style.display = 'none';
+              const img = document.createElement('img');
+              img.src = tile.image;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'cover';
+              img.id = 'propertyImageFallback';
+              propertyVideoContainer.appendChild(img);
+            }
+          }
+        }
+      });
+    }
+
+    tryVideo(currentVideoIndex, 0);
     
     // Stop video and audio when it ends
     propertyVideo.onended = function() {
@@ -3518,10 +3542,10 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
     if (!window.lastPlayedVideos) {
       window.lastPlayedVideos = {};
     }
-    
+
     const positionKey = tile.position;
     const lastPlayed = window.lastPlayedVideos[positionKey];
-    
+
     // Get a random video that's different from the last one
     let randomVideo;
     let attempts = 0;
@@ -3529,32 +3553,56 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
       randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
       attempts++;
     } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
-    
+
     window.lastPlayedVideos[positionKey] = randomVideo;
-    propertyVideo.src = randomVideo;
-    propertyVideo.muted = false; // Ensure audio is not muted
-    propertyVideo.volume = 1.0; // Set volume to max
-    propertyVideo.load();
-    propertyVideo.play().catch(e => {
-      console.log('Video play error:', e);
-      // If video fails, try to show image instead
-      if (tile.image) {
-        propertyVideo.style.display = 'none';
-        const img = document.createElement('img');
-        img.src = tile.image;
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        img.id = 'propertyImageFallback';
-        propertyVideoContainer.appendChild(img);
-      } else {
-        // Try the next video if the first one fails
-        const nextIndex = (tile.videos.indexOf(randomVideo) + 1) % tile.videos.length;
-        propertyVideo.src = tile.videos[nextIndex];
-        propertyVideo.load();
-        propertyVideo.play().catch(e2 => console.log('Second video also failed:', e2));
-      }
-    });
+
+    // Video retry logic with fallback to other videos
+    let currentVideoIndex = tile.videos.indexOf(randomVideo);
+    let retryCount = 0;
+    const maxRetriesPerVideo = 2;
+
+    function tryVideo(index, retryAttempt) {
+      const videoUrl = tile.videos[index];
+      propertyVideo.src = videoUrl;
+      propertyVideo.muted = false;
+      propertyVideo.volume = 1.0;
+      propertyVideo.load();
+
+      propertyVideo.play().then(() => {
+        console.log(`Video loaded successfully: ${videoUrl}`);
+      }).catch(e => {
+        console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
+
+        if (retryAttempt < maxRetriesPerVideo - 1) {
+          // Retry the same video
+          console.log(`Retrying same video...`);
+          setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+        } else {
+          // Try the next video in the array
+          const nextIndex = (index + 1) % tile.videos.length;
+          if (nextIndex !== currentVideoIndex) {
+            console.log(`Trying next video (index ${nextIndex})...`);
+            currentVideoIndex = nextIndex;
+            tryVideo(nextIndex, 0);
+          } else {
+            // All videos failed, try showing image
+            console.log('All videos failed, trying image fallback');
+            if (tile.image) {
+              propertyVideo.style.display = 'none';
+              const img = document.createElement('img');
+              img.src = tile.image;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'cover';
+              img.id = 'propertyImageFallback';
+              propertyVideoContainer.appendChild(img);
+            }
+          }
+        }
+      });
+    }
+
+    tryVideo(currentVideoIndex, 0);
     
     // Stop video and audio when it ends
     propertyVideo.onended = function() {
