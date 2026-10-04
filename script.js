@@ -2123,11 +2123,16 @@ function roll3DDice() {
           updatePlayerMoney();
         }
         
-        // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+        // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat and Craps properties
         // Skip Baccarat property (position 13) - move to position 14 instead
         if (newPosition === 13) {
           console.log('Skipping Baccarat property (position 13), moving to position 14');
           newPosition = 14;
+        }
+        // Skip Craps property (position 35) - move to position 36 instead
+        if (newPosition === 35) {
+          console.log('Skipping Craps property (position 35), moving to position 36');
+          newPosition = 36;
         }
         
         // Check for Go To Jail (position 30)
@@ -2197,11 +2202,16 @@ function roll3DDice() {
         updatePlayerMoney();
       }
       
-      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat and Craps properties
       // Skip Baccarat property (position 13) - move to position 14 instead
       if (newPosition === 13) {
         // console.log('Fallback: Skipping Baccarat property (position 13), moving to position 14');
         newPosition = 14;
+      }
+      // Skip Craps property (position 35) - move to position 36 instead
+      if (newPosition === 35) {
+        console.log('Fallback: Skipping Craps property (position 35), moving to position 36');
+        newPosition = 36;
       }
 
       // Check for Go To Jail (position 30)
@@ -2588,10 +2598,15 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       let newPosition = position;
       
       // Skip Baccarat property (position 13) - move to position 14 instead
-      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat and Craps properties
       if (newPosition === 13) {
         console.log('AI Card: Skipping Baccarat property (position 13), moving to position 14');
         newPosition = 14;
+      }
+      // Skip Craps property (position 35) - move to position 36 instead
+      if (newPosition === 35) {
+        console.log('AI Card: Skipping Craps property (position 35), moving to position 36');
+        newPosition = 36;
       }
       
       // Check if passed GO (handles both forward and backward movement)
@@ -3184,10 +3199,15 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       let newPosition = position;
       
       // Skip Baccarat property (position 13) - move to position 14 instead
-      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
+      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat and Craps properties
       if (newPosition === 13) {
         console.log('Card: Skipping Baccarat property (position 13), moving to position 14');
         newPosition = 14;
+      }
+      // Skip Craps property (position 35) - move to position 36 instead
+      if (newPosition === 35) {
+        console.log('Card: Skipping Craps property (position 35), moving to position 36');
+        newPosition = 36;
       }
       
       // Check if passed GO (handles both forward and backward movement)
@@ -4085,18 +4105,8 @@ window.teleportToCaesars = () => {
 
 window.teleportToWynn = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  const oldPosition = currentPlayer.position;
-  const newPosition = 35; // Wynn Las Vegas position
-  
-  console.log('🎰 Teleporting to Wynn Las Vegas (Position 35) - Minigame: Roulette');
-  
-  switchAnimation(gameState.currentPlayerIndex, 'walk');
-  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
-    currentPlayer.position = newPosition;
-    handleLanding(currentPlayer, newPosition);
-  }, false);
-  console.log(`Teleported ${currentPlayer.name} to Wynn Las Vegas`);
+  console.log('Teleport to Wynn Las Vegas (Position 35 - Craps) is disabled - property cannot be landed on');
+  return;
 };
 
 // General teleport function to any position
@@ -4107,6 +4117,11 @@ window.teleportTo = (position) => {
   // Prevent teleporting to Baccarat property (position 13)
   if (position % 40 === 13) {
     console.log('Teleport to position 13 (Venetian - Baccarat) is disabled - property cannot be landed on');
+    return;
+  }
+  // Prevent teleporting to Craps property (position 35)
+  if (position % 40 === 35) {
+    console.log('Teleport to position 35 (Wynn Las Vegas - Craps) is disabled - property cannot be landed on');
     return;
   }
   
