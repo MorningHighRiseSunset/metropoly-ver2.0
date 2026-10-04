@@ -2085,16 +2085,6 @@ function roll3DDice() {
         let diceResult2 = getDiceResult(diceBody2);
         let totalDice = diceResult1 + diceResult2;
 
-        // TODO: REMOVE BEFORE PUSH - Temporary bias to avoid Baccarat (13) and Craps (35)
-        // If roll would land on 13 or 35, adjust dice roll by +1
-        let potentialPosition = (currentPlayer.position + totalDice) % 40;
-        if (potentialPosition === 13 || potentialPosition === 35) {
-          if (totalDice < 12) {
-            totalDice += 1;
-            console.log(`Bias: Adjusted roll from ${totalDice - 1} to ${totalDice} to avoid blocked property`);
-          }
-        }
-
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
         // Calculate target position
@@ -2163,16 +2153,6 @@ function roll3DDice() {
       let totalDice = diceResult1 + diceResult2;
 
       // console.log('Fallback dice results:', diceResult1, diceResult2, 'Total:', totalDice);
-
-      // TODO: REMOVE BEFORE PUSH - Temporary bias to avoid Baccarat (13) and Craps (35)
-      // If roll would land on 13 or 35, adjust dice roll by +1
-      let potentialPosition = (currentPlayer.position + totalDice) % 40;
-      if (potentialPosition === 13 || potentialPosition === 35) {
-        if (totalDice < 12) {
-          totalDice += 1;
-          console.log(`Fallback: Adjusted roll to ${totalDice} to avoid blocked property`);
-        }
-      }
 
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
@@ -2567,18 +2547,6 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
     case 'advance_to':
       const oldPosition = player.position;
       let newPosition = position;
-      
-      // Skip Baccarat property (position 13) - move to position 14 instead
-      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
-      if (newPosition === 13) {
-        console.log('AI Card: Skipping Baccarat property (position 13), moving to position 14');
-        newPosition = 14;
-      }
-      // Skip Craps property (position 35) - move to position 36 instead
-      if (newPosition === 35) {
-        console.log('AI Card: Skipping Craps property (position 35), moving to position 36');
-        newPosition = 36;
-      }
       
       // Check if passed GO (handles both forward and backward movement)
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
@@ -3174,11 +3142,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       if (newPosition === 13) {
         console.log('Card: Skipping Baccarat property (position 13), moving to position 14');
         newPosition = 14;
-      }
-      // Skip Craps property (position 35) - move to position 36 instead
-      if (newPosition === 35) {
-        console.log('Card: Skipping Craps property (position 35), moving to position 36');
-        newPosition = 36;
       }
       
       // Check if passed GO (handles both forward and backward movement)
@@ -3967,11 +3930,20 @@ if (endTurnBtn) {
 
 // ===== DEBUG/TELEPORT COMMANDS =====
 // Console commands to instantly teleport to casino squares
-// TODO: REMOVE BEFORE PUSH - Temporarily disabled Baccarat teleport
 window.teleportToVenetian = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
-  console.log('Teleport to Venetian (Baccarat) is disabled - property cannot be landed on');
-  return;
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const oldPosition = currentPlayer.position;
+  const newPosition = 13; // Venetian position
+  
+  console.log('🎰 Teleporting to Venetian (Position 13) - Minigame: Baccarat');
+  
+  switchAnimation(gameState.currentPlayerIndex, 'walk');
+  animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
+    currentPlayer.position = newPosition;
+    handleLanding(currentPlayer, newPosition);
+  }, false);
+  console.log(`Teleported ${currentPlayer.name} to Venetian`);
 };
 
 window.teleportToBellagio = () => {
@@ -4094,12 +4066,6 @@ window.teleportToWynn = () => {
 // TODO: REMOVE BEFORE PUSH - Temporarily blocking Baccarat property
 window.teleportTo = (position) => {
   if (!gameState.gameStarted) return console.log('Game not started');
-  
-  // Prevent teleporting to Baccarat property (position 13)
-  if (position % 40 === 13) {
-    console.log('Teleport to position 13 (Venetian - Baccarat) is disabled - property cannot be landed on');
-    return;
-  }
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const oldPosition = currentPlayer.position;
