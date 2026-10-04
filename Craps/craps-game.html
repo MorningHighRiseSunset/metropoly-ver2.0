@@ -722,9 +722,9 @@
             dice2Mesh.visible = false;
             dice1Mesh.position.set(-0.9, 0, 0);
             dice2Mesh.position.set(0.9, 0, 0);
-            // Rotate dice slightly for better visibility from top
-            dice1Mesh.rotation.x = Math.PI / 4;
-            dice2Mesh.rotation.x = Math.PI / 4;
+            // No initial rotation - let the animation handle it
+            dice1Mesh.rotation.set(0, 0, 0);
+            dice2Mesh.rotation.set(0, 0, 0);
             scene.add(dice1Mesh);
             scene.add(dice2Mesh);
             
