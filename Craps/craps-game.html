@@ -865,6 +865,7 @@ function roll3DDicePhysics(onComplete) {
     if (speed1 < 0.05 && speed2 < 0.05 && angularSpeed1 < 0.1 && angularSpeed2 < 0.1) {
       clearInterval(checkSettled);
 
+      console.log('=== DICE SETTLED ===');
       console.log('Dice settled, processing results');
 
       // Wait 3 seconds after settling to let player see the result, then hide dice
@@ -1122,6 +1123,7 @@ function roll3DDicePhysics(onComplete) {
         }
         
         function rollDice() {
+            console.log('=== ROLL BUTTON CLICKED ===');
             if (isRolling || Object.keys(bets).length === 0) {
                 if (Object.keys(bets).length === 0) {
                     alert('Place a bet first');
@@ -1142,7 +1144,8 @@ function roll3DDicePhysics(onComplete) {
             
             roll3DDicePhysics((result1, result2) => {
                 const total = result1 + result2;
-                console.log('Dice roll complete');
+                console.log('=== DICE ROLL CALLBACK TRIGGERED ===');
+                console.log('Dice roll complete, results:', result1, result2, 'total:', total);
                 diceResultEl.textContent = `You rolled: ${result1} + ${result2} = ${total}`;
                 addLogEntry(`You rolled: ${result1} + ${result2} = ${total}`, 'roll');
                 processRoll(result1, result2);
