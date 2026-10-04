@@ -672,7 +672,7 @@ function initDice() {
   
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
-  camera.position.set(0, 6, 0);
+  camera.position.set(0, 8, 0);
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -709,8 +709,8 @@ function initDice() {
   groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
   physicsWorld.addBody(groundBody);
 
-  const size = 0.6;
-  const sep = 1.2;
+  const size = 0.5;
+  const sep = 1.0;
 
   const geometry1 = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
   const materials1 = [
@@ -747,7 +747,7 @@ function initDice() {
   scene.add(dice2Mesh);
 
   // Create physics bodies for both dice (copied from main game)
-  const diceShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.3, 0.3)); // Half of 0.6 scale
+  const diceShape = new CANNON.Box(new CANNON.Vec3(0.25, 0.25, 0.25)); // Half of 0.5 scale
   
   diceBody1 = new CANNON.Body({
     mass: 2, // Heavy dice for realistic physics
@@ -867,7 +867,7 @@ function roll3DDicePhysics(onComplete) {
 
       console.log('Dice settled, processing results');
 
-      // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
+      // Wait 3 seconds after settling to let player see the result, then hide dice
       setTimeout(() => {
         dice1Mesh.visible = false;
         dice2Mesh.visible = false;
@@ -881,7 +881,7 @@ function roll3DDicePhysics(onComplete) {
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
         if (onComplete) onComplete(diceResult1, diceResult2);
-      }, 500);
+      }, 3000);
     }
   }, 50);
 
