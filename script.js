@@ -3070,6 +3070,16 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   // Close button handler
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
     // console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
+    
+    // Sync balance from casino iframe before closing
+    const iframeWindow = document.getElementById('casinoFrame').contentWindow;
+    if (iframeWindow && iframeWindow.__casinoBalance !== undefined) {
+      const casinoBalance = iframeWindow.__casinoBalance;
+      currentPlayer.money = casinoBalance;
+      console.log(`[CASINO DEBUG] Synced balance from casino: $${casinoBalance}`);
+      updatePlayerMoney();
+    }
+    
     document.body.removeChild(casinoOverlay);
     
     // Check for game end after casino closes
