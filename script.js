@@ -478,15 +478,20 @@ function updatePlayerMoney() {
 
 // Check if game should end (someone reached 10k or went bankrupt)
 function checkGameEnd() {
+  // Don't check game end while casino is open (player might have all-in bet on table)
+  if (document.querySelector('.casino-overlay')) {
+    return;
+  }
+
   const winningAmount = 10000;
-  
+
   for (const player of gameState.players) {
     // Check if player won
     if (player.money >= winningAmount) {
       showGameOver(player, true);
       return;
     }
-    
+
     // Check if player went bankrupt
     if (player.money <= 0) {
       showGameOver(player, false);
