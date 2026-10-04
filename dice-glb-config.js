@@ -1,4 +1,5 @@
 // Dice configuration for procedural dice
+// Material order (same as main game): right(+x)=2, left(-x)=5, top(+y)=1, bottom(-y)=6, front(+z)=4, back(-z)=3
 const DICE_GLB_CONFIG = {
   scale: 0.45,
   separation: 3.0
@@ -15,12 +16,12 @@ function getDiceRollDurationMs() {
 
 function applyDiceFace(diceMesh, value) {
   // Apply rotation to show the desired face
-  // Material order: right(+x)=1, left(-x)=6, top(+y)=2, bottom(-y)=5, front(+z)=3, back(-z)=4
+  // Material order (same as main game): right(+x)=2, left(-x)=5, top(+y)=1, bottom(-y)=6, front(+z)=4, back(-z)=3
   const faceRotations = {
-    1: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
-    2: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
-    3: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
-    4: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
+    1: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
+    2: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
+    3: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
+    4: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
     5: { x: -Math.PI / 2, y: 0, z: 0 },       // Bottom side (-y) faces forward
     6: { x: 0, y: Math.PI / 2, z: 0 }         // Left side (-x) faces forward
   };
@@ -47,12 +48,12 @@ function runDiceRollAnimation({ meshes, values, duration, anchor, onComplete }) 
   });
   
   const targetRotations = values.map(value => {
-    // Material order: right(+x)=1, left(-x)=6, top(+y)=2, bottom(-y)=5, front(+z)=3, back(-z)=4
+    // Material order (same as main game): right(+x)=2, left(-x)=5, top(+y)=1, bottom(-y)=6, front(+z)=4, back(-z)=3
     const faceRotations = {
-      1: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
-      2: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
-      3: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
-      4: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
+      1: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
+      2: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
+      3: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
+      4: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
       5: { x: -Math.PI / 2, y: 0, z: 0 },       // Bottom side (-y) faces forward
       6: { x: 0, y: Math.PI / 2, z: 0 }         // Left side (-x) faces forward
     };

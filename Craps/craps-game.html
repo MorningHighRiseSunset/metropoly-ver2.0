@@ -599,20 +599,24 @@
             canvas.height = size;
             const ctx = canvas.getContext('2d');
 
+            // White background with subtle gradient for depth
             const gradient = ctx.createLinearGradient(0, 0, size, size);
             gradient.addColorStop(0, '#ffffff');
             gradient.addColorStop(1, '#f0f0f0');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, size, size);
 
+            // Black border with rounded corners effect
             ctx.strokeStyle = '#1a1a1a';
             ctx.lineWidth = 8;
             ctx.strokeRect(4, 4, size - 8, size - 8);
 
+            // Inner border for depth
             ctx.strokeStyle = '#cccccc';
             ctx.lineWidth = 3;
             ctx.strokeRect(12, 12, size - 24, size - 24);
 
+            // Draw pips for the value with shading
             const pipRadius = size / 14;
             const pipPositions = {
                 1: [[0.5, 0.5]],
@@ -627,22 +631,33 @@
             positions.forEach(([x, y]) => {
                 const px = x * size;
                 const py = y * size;
-                
+
+                // Shadow for depth
                 ctx.beginPath();
                 ctx.arc(px + 3, py + 3, pipRadius, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.fill();
-                
+
+                // Main pip with gradient
                 const pipGradient = ctx.createRadialGradient(px - pipRadius * 0.3, py - pipRadius * 0.3, 0, px, py, pipRadius);
                 pipGradient.addColorStop(0, '#444444');
                 pipGradient.addColorStop(1, '#000000');
-                ctx.fillStyle = pipGradient;
                 ctx.beginPath();
                 ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
+                ctx.fillStyle = pipGradient;
+                ctx.fill();
+
+                // Highlight
+                ctx.beginPath();
+                ctx.arc(px - pipRadius * 0.3, py - pipRadius * 0.3, pipRadius * 0.25, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.fill();
             });
 
             const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.LinearFilter;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.anisotropy = 4;
             return texture;
         }
 
@@ -651,15 +666,14 @@
             const geometry = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
 
             // Three.js BoxGeometry material order: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
-            // Standard dice: opposite faces add to 7 (1-6, 2-5, 3-4)
-            // Increased roughness to reduce shiny reflections
+            // Same as main game to ensure consistency
             const materials = [
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.8, metalness: 0.0 }),  // right (+x)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.8, metalness: 0.0 }),  // left (-x)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.8, metalness: 0.0 }),  // top (+y)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.8, metalness: 0.0 }),  // bottom (-y)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.8, metalness: 0.0 }),  // front (+z)
-                new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.8, metalness: 0.0 })   // back (-z)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }),  // right (+x)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }),  // left (-x)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }),  // top (+y)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }),  // bottom (-y)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }),  // front (+z)
+                new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })   // back (-z)
             ];
 
             const dice = new THREE.Mesh(geometry, materials);
