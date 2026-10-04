@@ -2,6 +2,7 @@
 <html>
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -660,6 +661,8 @@ function getDiceResult(diceBody) {
 
 // Three.js setup
 let scene, camera, renderer, dice1Mesh, dice2Mesh;
+let diceBody1, diceBody2;
+let physicsWorld;
 
 function initDice() {
   const container = document.getElementById('gameContainer');
@@ -680,6 +683,21 @@ function initDice() {
   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
   directionalLight.position.set(0, 10, 0);
   scene.add(directionalLight);
+
+  // Physics World (copied from main game)
+  physicsWorld = new CANNON.World();
+  physicsWorld.gravity.set(0, -9.82, 0);
+  physicsWorld.broadphase = new CANNON.NaiveBroadphase();
+  physicsWorld.solver.iterations = 10;
+
+  // Ground plane (invisible physics ground)
+  const groundBody = new CANNON.Body({
+    mass: 0,
+    shape: new CANNON.Plane(),
+    material: new CANNON.Material({ friction: 0.3, restitution: 0.3 })
+  });
+  groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+  physicsWorld.addBody(groundBody);
 
   const size = 0.3;
   const sep = 0.8;
@@ -718,77 +736,144 @@ function initDice() {
   dice2Mesh.visible = false;
   scene.add(dice2Mesh);
 
+  // Create physics bodies for both dice (copied from main game)
+  const diceShape = new CANNON.Box(new CANNON.Vec3(0.15, 0.15, 0.15)); // Half of 0.3 scale
+  
+  diceBody1 = new CANNON.Body({
+    mass: 2, // Heavy dice for realistic physics
+    shape: diceShape,
+    material: new CANNON.Material({ friction: 0.4, restitution: 0.1 }),
+    linearDamping: 0.8, // High damping for fast settling
+    angularDamping: 0.8
+  });
+  diceBody1.position.set(-sep, 5, 0);
+  physicsWorld.addBody(diceBody1);
+
+  diceBody2 = new CANNON.Body({
+    mass: 2, // Heavy dice for realistic physics
+    shape: diceShape,
+    material: new CANNON.Material({ friction: 0.4, restitution: 0.1 }),
+    linearDamping: 0.8, // High damping for fast settling
+    angularDamping: 0.8
+  });
+  diceBody2.position.set(sep, 5, 0);
+  physicsWorld.addBody(diceBody2);
+
   function animate() {
     requestAnimationFrame(animate);
+
+    // Update physics
+    if (physicsWorld) {
+      physicsWorld.step(1 / 60);
+    }
+
+    // Sync dice models with physics bodies
+    if (dice1Mesh && diceBody1) {
+      dice1Mesh.position.copy(diceBody1.position);
+      dice1Mesh.quaternion.copy(diceBody1.quaternion);
+    }
+    if (dice2Mesh && diceBody2) {
+      dice2Mesh.position.copy(diceBody2.position);
+      dice2Mesh.quaternion.copy(diceBody2.quaternion);
+    }
+
     renderer.render(scene, camera);
   }
   animate();
 }
 
-function rollDice(dice1Value, dice2Value, onComplete) {
+function rollDice(onComplete) {
+  if (!diceBody1 || !diceBody2 || !physicsWorld) {
+    console.error('Physics bodies not ready for dice roll');
+    return;
+  }
+
   dice1Mesh.visible = true;
   dice2Mesh.visible = true;
-  dice1Mesh.position.set(-0.8, 5, 0);
-  dice2Mesh.position.set(0.8, 5, 0);
-  dice1Mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
-  dice2Mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
 
-  // Set final rotations to show correct faces
-  // Using the main game's face mapping
-  const faceRotations = {
-    1: { x: 0, y: 0, z: 0 },
-    2: { x: 0, y: 0, z: -Math.PI / 2 },
-    3: { x: -Math.PI / 2, y: 0, z: 0 },
-    4: { x: Math.PI / 2, y: 0, z: 0 },
-    5: { x: Math.PI, y: 0, z: 0 },
-    6: { x: 0, y: 0, z: Math.PI / 2 }
-  };
+  console.log('Starting dice roll');
 
-  const targetRot1 = faceRotations[dice1Value];
-  const targetRot2 = faceRotations[dice2Value];
+  // Reset dice positions above the board (drop from much higher)
+  diceBody1.position.set(-0.1, 5, 0);
+  diceBody2.position.set(0.1, 5, 0);
 
-  let startTime = null;
-  const duration = 2000;
+  // Reset dice rotations with random starting orientations
+  diceBody1.quaternion.setFromAxisAngle(new CANNON.Vec3(Math.random(), Math.random(), Math.random()), Math.random() * Math.PI * 2);
+  diceBody2.quaternion.setFromAxisAngle(new CANNON.Vec3(Math.random(), Math.random(), Math.random()), Math.random() * Math.PI * 2);
 
-  function animateRoll(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const progress = Math.min((timestamp - startTime) / duration, 1);
-    
-    // Animate position falling down
-    dice1Mesh.position.y = 5 - (progress * 4.75);
-    dice2Mesh.position.y = 5 - (progress * 4.75);
-    
-    // Spin during animation
-    if (progress < 0.8) {
-      dice1Mesh.rotation.x += 0.1;
-      dice1Mesh.rotation.y += 0.1;
-      dice2Mesh.rotation.x += 0.1;
-      dice2Mesh.rotation.y += 0.1;
-    } else {
-      // Lerp to final rotation
-      const t = (progress - 0.8) / 0.2;
-      dice1Mesh.rotation.x = dice1Mesh.rotation.x + (targetRot1.x - dice1Mesh.rotation.x) * t;
-      dice1Mesh.rotation.y = dice1Mesh.rotation.y + (targetRot1.y - dice1Mesh.rotation.y) * t;
-      dice1Mesh.rotation.z = dice1Mesh.rotation.z + (targetRot1.z - dice1Mesh.rotation.z) * t;
-      dice2Mesh.rotation.x = dice2Mesh.rotation.x + (targetRot2.x - dice2Mesh.rotation.x) * t;
-      dice2Mesh.rotation.y = dice2Mesh.rotation.y + (targetRot2.y - dice2Mesh.rotation.y) * t;
-      dice2Mesh.rotation.z = dice2Mesh.rotation.z + (targetRot2.z - dice2Mesh.rotation.z) * t;
-    }
+  // Reset velocities
+  diceBody1.angularVelocity.set(0, 0, 0);
+  diceBody1.velocity.set(0, 0, 0);
+  diceBody2.angularVelocity.set(0, 0, 0);
+  diceBody2.velocity.set(0, 0, 0);
 
-    if (progress < 1) {
-      requestAnimationFrame(animateRoll);
-    } else {
-      dice1Mesh.rotation.set(targetRot1.x, targetRot1.y, targetRot1.z);
-      dice2Mesh.rotation.set(targetRot2.x, targetRot2.y, targetRot2.z);
+  // Wake up the bodies
+  diceBody1.wakeUp();
+  diceBody2.wakeUp();
+
+  // Apply strong random rotation and velocity for dramatic effect
+  setTimeout(() => {
+    diceBody1.angularVelocity.set(
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80
+    );
+    diceBody1.velocity.set(
+      (Math.random() - 0.5) * 0.3,
+      -15,
+      (Math.random() - 0.5) * 0.3
+    );
+
+    diceBody2.angularVelocity.set(
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 80
+    );
+    diceBody2.velocity.set(
+      (Math.random() - 0.5) * 0.3,
+      -15,
+      (Math.random() - 0.5) * 0.3
+    );
+  }, 100);
+
+  // Wait for dice to settle, then hide them after a delay
+  const checkSettled = setInterval(() => {
+    const speed1 = diceBody1.velocity.length();
+    const speed2 = diceBody2.velocity.length();
+    const angularSpeed1 = diceBody1.angularVelocity.length();
+    const angularSpeed2 = diceBody2.angularVelocity.length();
+
+    // Check if both dice have settled
+    if (speed1 < 0.05 && speed2 < 0.05 && angularSpeed1 < 0.1 && angularSpeed2 < 0.1) {
+      clearInterval(checkSettled);
+
+      console.log('Dice settled, processing results');
+
+      // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
       setTimeout(() => {
         dice1Mesh.visible = false;
         dice2Mesh.visible = false;
-        if (onComplete) onComplete();
-      }, 1000);
-    }
-  }
 
-  requestAnimationFrame(animateRoll);
+        // Get dice results based on final rotation
+        let diceResult1 = getDiceResult(diceBody1);
+        let diceResult2 = getDiceResult(diceBody2);
+        let totalDice = diceResult1 + diceResult2;
+
+        console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
+
+        if (onComplete) onComplete(diceResult1, diceResult2);
+      }, 500);
+    }
+  }, 50);
+
+  // Fallback: hide after 10 seconds max to prevent hanging
+  setTimeout(() => {
+    clearInterval(checkSettled);
+    dice1Mesh.visible = false;
+    dice2Mesh.visible = false;
+    console.log('Dice roll timeout, using fallback');
+    if (onComplete) onComplete(Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1);
+  }, 10000);
 }
 
         let selectedChip = 1;
@@ -1029,18 +1114,14 @@ function rollDice(dice1Value, dice2Value, onComplete) {
             rollBtn.disabled = true;
             clearBtn.disabled = true;
             
-            const result1 = Math.floor(Math.random() * 6) + 1;
-            const result2 = Math.floor(Math.random() * 6) + 1;
-            const total = result1 + result2;
-            console.log('Dice results:', result1, result2);
-            
             // Log that dice are rolling
             const phaseText = isPointPhase ? `(Point: ${point})` : '(Come-out roll)';
             addLogEntry(`🎲 ROLLING DICE... ${phaseText}`, 'roll');
             
             diceResultEl.textContent = `Rolling...`;
             
-            rollDice(result1, result2, () => {
+            rollDice((result1, result2) => {
+                const total = result1 + result2;
                 console.log('Dice roll complete');
                 diceResultEl.textContent = `You rolled: ${result1} + ${result2} = ${total}`;
                 addLogEntry(`You rolled: ${result1} + ${result2} = ${total}`, 'roll');
