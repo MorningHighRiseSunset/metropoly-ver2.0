@@ -658,21 +658,22 @@
     const betSlider = document.getElementById('bet-slider');
     const betDisplay = document.getElementById('bet-display');
     if (betSlider && betDisplay) {
-      const maxBet = Math.max(1, balance);
+      // Cap max bet at 90% of balance to prevent instant bankruptcy
+      const maxBet = Math.max(1, Math.floor(balance * 0.9));
       betSlider.max = maxBet;
-      
+
       // Ensure current value doesn't exceed the calculated max
       if (selectedBetAmount > maxBet) {
         selectedBetAmount = maxBet;
       }
-      
+
       betSlider.value = selectedBetAmount;
       betDisplay.textContent = `$${selectedBetAmount}`;
 
       betSlider.addEventListener('input', (e) => {
         let newValue = parseInt(e.target.value);
         // CRITICAL: Ensure value doesn't exceed current balance in real-time
-        const currentMax = Math.max(1, balance);
+        const currentMax = Math.max(1, Math.floor(balance * 0.9));
         if (newValue > currentMax) {
           newValue = currentMax;
           betSlider.value = newValue;
@@ -696,7 +697,7 @@
       console.log('[ROULETTE DEBUG] ===== PLACE BET =====');
       console.log('[ROULETTE DEBUG] Betting on:', key, 'Amount:', selectedBetAmount);
       console.log('[ROULETTE DEBUG] Current balance:', balance);
-      
+
       if (isSpinning) return;
       if (balance < selectedBetAmount) {
         console.log('[ROULETTE DEBUG] Insufficient balance');
@@ -707,6 +708,12 @@
       if (balance - selectedBetAmount < 0) {
         console.log('[ROULETTE DEBUG] Balance would go negative');
         messageEl.textContent = 'Insufficient balance';
+        return;
+      }
+      // Prevent betting more than 90% of balance in a single bet to avoid instant bankruptcy
+      if (selectedBetAmount > balance * 0.9) {
+        console.log('[ROULETTE DEBUG] Bet exceeds 90% of balance');
+        messageEl.textContent = 'Maximum bet is 90% of balance';
         return;
       }
       if (!bets[key]) bets[key] = 0;
@@ -785,12 +792,13 @@
     function updateSliderLimits() {
       console.log('[ROULETTE DEBUG] ===== UPDATE SLIDER LIMITS =====');
       console.log('[ROULETTE DEBUG] Current balance:', balance);
-      
+
       const betSlider = document.getElementById('bet-slider');
       if (betSlider) {
-        const maxBet = Math.max(1, balance);
+        // Cap max bet at 90% of balance to prevent instant bankruptcy
+        const maxBet = Math.max(1, Math.floor(balance * 0.9));
         betSlider.max = maxBet;
-        console.log('[ROULETTE DEBUG] Set slider max to:', maxBet);
+        console.log('[ROULETTE DEBUG] Set slider max to:', maxBet, '(90% of balance)');
         if (selectedBetAmount > maxBet) {
           selectedBetAmount = maxBet;
           betSlider.value = selectedBetAmount;
