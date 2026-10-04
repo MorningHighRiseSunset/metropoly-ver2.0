@@ -667,6 +667,9 @@ let physicsWorld;
 function initDice() {
   const container = document.getElementById('gameContainer');
   
+  console.log('initDice called, container:', container);
+  console.log('Container dimensions:', container.clientWidth, container.clientHeight);
+  
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
   camera.position.set(0, 12, 0);
@@ -681,6 +684,8 @@ function initDice() {
   renderer.domElement.style.zIndex = '100';
   renderer.domElement.style.pointerEvents = 'none'; // Allow clicks to pass through when dice aren't visible
   container.appendChild(renderer.domElement);
+  
+  console.log('Renderer created and appended to container');
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(ambientLight);
@@ -788,6 +793,13 @@ function initDice() {
 }
 
 function rollDice(onComplete) {
+  console.log('rollDice called, checking physics bodies...');
+  console.log('diceBody1:', diceBody1);
+  console.log('diceBody2:', diceBody2);
+  console.log('physicsWorld:', physicsWorld);
+  console.log('dice1Mesh:', dice1Mesh);
+  console.log('dice2Mesh:', dice2Mesh);
+  
   if (!diceBody1 || !diceBody2 || !physicsWorld) {
     console.error('Physics bodies not ready for dice roll');
     return;
@@ -795,8 +807,9 @@ function rollDice(onComplete) {
 
   dice1Mesh.visible = true;
   dice2Mesh.visible = true;
+  renderer.domElement.style.pointerEvents = 'auto'; // Enable when dice are visible
 
-  console.log('Starting dice roll');
+  console.log('Starting dice roll, making dice visible');
 
   // Reset dice positions above the board (drop from much higher)
   diceBody1.position.set(-0.1, 5, 0);
@@ -858,6 +871,7 @@ function rollDice(onComplete) {
       setTimeout(() => {
         dice1Mesh.visible = false;
         dice2Mesh.visible = false;
+        renderer.domElement.style.pointerEvents = 'none'; // Disable when dice are hidden
 
         // Get dice results based on final rotation
         let diceResult1 = getDiceResult(diceBody1);
@@ -876,6 +890,7 @@ function rollDice(onComplete) {
     clearInterval(checkSettled);
     dice1Mesh.visible = false;
     dice2Mesh.visible = false;
+    renderer.domElement.style.pointerEvents = 'none'; // Disable when dice are hidden
     console.log('Dice roll timeout, using fallback');
     if (onComplete) onComplete(Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1);
   }, 10000);
