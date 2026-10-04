@@ -864,6 +864,7 @@ function roll3DDicePhysics(onComplete) {
     // Check if both dice have settled
     if (speed1 < 0.05 && speed2 < 0.05 && angularSpeed1 < 0.1 && angularSpeed2 < 0.1) {
       clearInterval(checkSettled);
+      clearTimeout(fallbackTimeout); // Clear the fallback timeout
 
       console.log('=== DICE SETTLED ===');
       console.log('Dice settled, processing results');
@@ -887,7 +888,7 @@ function roll3DDicePhysics(onComplete) {
   }, 50);
 
   // Fallback: hide after 10 seconds max to prevent hanging
-  setTimeout(() => {
+  const fallbackTimeout = setTimeout(() => {
     clearInterval(checkSettled);
     dice1Mesh.visible = false;
     dice2Mesh.visible = false;
