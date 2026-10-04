@@ -792,8 +792,8 @@ function initDice() {
   animate();
 }
 
-function rollDice(onComplete) {
-  console.log('rollDice called, checking physics bodies...');
+function roll3DDicePhysics(onComplete) {
+  console.log('roll3DDicePhysics called, checking physics bodies...');
   console.log('diceBody1:', diceBody1);
   console.log('diceBody2:', diceBody2);
   console.log('physicsWorld:', physicsWorld);
@@ -1140,7 +1140,7 @@ function rollDice(onComplete) {
             
             diceResultEl.textContent = `Rolling...`;
             
-            rollDice((result1, result2) => {
+            roll3DDicePhysics((result1, result2) => {
                 const total = result1 + result2;
                 console.log('Dice roll complete');
                 diceResultEl.textContent = `You rolled: ${result1} + ${result2} = ${total}`;
