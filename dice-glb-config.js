@@ -16,14 +16,15 @@ function getDiceRollDurationMs() {
 
 function applyDiceFace(diceMesh, value) {
   // Apply rotation to show the desired face
+  // Camera is looking down from above (along -Y), so we rotate to make the desired face point toward +Y (up)
   // Material order (same as main game): right(+x)=2, left(-x)=5, top(+y)=1, bottom(-y)=6, front(+z)=4, back(-z)=3
   const faceRotations = {
-    1: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
-    2: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
-    3: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
-    4: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
-    5: { x: -Math.PI / 2, y: 0, z: 0 },       // Bottom side (-y) faces forward
-    6: { x: 0, y: Math.PI / 2, z: 0 }         // Left side (-x) faces forward
+    1: { x: 0, y: 0, z: 0 },                   // Top side (+y) already points up
+    2: { x: 0, y: 0, z: Math.PI / 2 },       // Rotate +90° around Z to make right side (+x) point up
+    3: { x: Math.PI / 2, y: 0, z: 0 },        // Rotate +90° around X to make back side (-z) point up
+    4: { x: -Math.PI / 2, y: 0, z: 0 },       // Rotate -90° around X to make front side (+z) point up
+    5: { x: Math.PI, y: 0, z: 0 },             // Rotate 180° around X to make bottom side (-y) point up
+    6: { x: 0, y: 0, z: -Math.PI / 2 }       // Rotate -90° around Z to make left side (-x) point up
   };
 
   const rotation = faceRotations[value] || faceRotations[1];
@@ -48,14 +49,15 @@ function runDiceRollAnimation({ meshes, values, duration, anchor, onComplete }) 
   });
   
   const targetRotations = values.map(value => {
+    // Camera is looking down from above (along -Y), so we rotate to make the desired face point toward +Y (up toward camera)
     // Material order (same as main game): right(+x)=2, left(-x)=5, top(+y)=1, bottom(-y)=6, front(+z)=4, back(-z)=3
     const faceRotations = {
-      1: { x: Math.PI / 2, y: 0, z: 0 },        // Top side (+y) faces forward
-      2: { x: 0, y: -Math.PI / 2, z: 0 },      // Right side (+x) faces forward
-      3: { x: 0, y: Math.PI, z: 0 },             // Back side (-z) faces forward
-      4: { x: 0, y: 0, z: 0 },                   // Front side (+z) faces forward
-      5: { x: -Math.PI / 2, y: 0, z: 0 },       // Bottom side (-y) faces forward
-      6: { x: 0, y: Math.PI / 2, z: 0 }         // Left side (-x) faces forward
+      1: { x: 0, y: 0, z: 0 },                   // Top side (+y) already points up
+      2: { x: 0, y: 0, z: Math.PI / 2 },       // Rotate +90° around Z to make right side (+x) point up
+      3: { x: Math.PI / 2, y: 0, z: 0 },        // Rotate +90° around X to make back side (-z) point up
+      4: { x: -Math.PI / 2, y: 0, z: 0 },       // Rotate -90° around X to make front side (+z) point up
+      5: { x: Math.PI, y: 0, z: 0 },             // Rotate 180° around X to make bottom side (-y) point up
+      6: { x: 0, y: 0, z: -Math.PI / 2 }       // Rotate -90° around Z to make left side (-x) point up
     };
     return faceRotations[value] || faceRotations[1];
   });
