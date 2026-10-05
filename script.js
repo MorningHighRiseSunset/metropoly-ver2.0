@@ -2784,6 +2784,7 @@ function showJailUI(message, callback) {
     jailVideo.load();
     
     let videoEnded = false;
+    let jailFallbackTimeout = null;
 
     // For AI: auto-close when video ends
     // For human: show overlay with proceed button, video plays in background
@@ -2802,7 +2803,7 @@ function showJailUI(message, callback) {
         if (callback) callback();
       };
 
-      setTimeout(() => {
+      jailFallbackTimeout = setTimeout(() => {
         if (!videoEnded) {
           console.log('Jail video fallback timeout (10s), closing overlay');
           videoEnded = true;
@@ -2812,6 +2813,9 @@ function showJailUI(message, callback) {
           if (callback) callback();
         }
       }, 10000); // Increased to 10 seconds
+
+      // Store timeout for cleanup
+      window.currentJailFallbackTimeout = jailFallbackTimeout;
     } else {
       // Human: show overlay with proceed button, play video
       document.getElementById('jailOverlay').style.display = 'flex';
@@ -3356,6 +3360,7 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     let currentVideoIndex = tile.videos.indexOf(randomVideo);
     let retryCount = 0;
     const maxRetriesPerVideo = 2;
+    let videoRetryTimeout = null;
 
     function tryVideo(index, retryAttempt) {
       const videoUrl = tile.videos[index];
@@ -3366,13 +3371,19 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
 
       propertyVideo.play().then(() => {
         console.log(`Video loaded successfully: ${videoUrl}`);
+        videoRetryTimeout = null;
       }).catch(e => {
         console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
 
         if (retryAttempt < maxRetriesPerVideo - 1) {
           // Retry the same video
           console.log(`Retrying same video...`);
-          setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+          videoRetryTimeout = setTimeout(() => {
+            // Check if overlay is still visible before retrying
+            if (document.getElementById('propertyOverlay').style.display !== 'none') {
+              tryVideo(index, retryAttempt + 1);
+            }
+          }, 500);
         } else {
           // Try the next video in the array
           const nextIndex = (index + 1) % tile.videos.length;
@@ -3399,6 +3410,9 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     }
 
     tryVideo(currentVideoIndex, 0);
+
+    // Store the timeout ID for cleanup
+    window.currentVideoRetryTimeout = videoRetryTimeout;
     
     // Stop video and audio when it ends
     propertyVideo.onended = function() {
@@ -3444,6 +3458,12 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     propertyVideo.src = ''; // Clear the video source to prevent playback
     propertyVideo.load(); // Reload to clear any buffered data
     propertyVideo.style.display = 'block';
+
+    // Clear any pending video retry timeouts
+    if (window.currentVideoRetryTimeout) {
+      clearTimeout(window.currentVideoRetryTimeout);
+      window.currentVideoRetryTimeout = null;
+    }
     
     // Stop horse sound if playing
     if (window.currentHorseSound) {
@@ -3531,6 +3551,7 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
     let currentVideoIndex = tile.videos.indexOf(randomVideo);
     let retryCount = 0;
     const maxRetriesPerVideo = 2;
+    let videoRetryTimeout = null;
 
     function tryVideo(index, retryAttempt) {
       const videoUrl = tile.videos[index];
@@ -3541,13 +3562,19 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
 
       propertyVideo.play().then(() => {
         console.log(`Video loaded successfully: ${videoUrl}`);
+        videoRetryTimeout = null;
       }).catch(e => {
         console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
 
         if (retryAttempt < maxRetriesPerVideo - 1) {
           // Retry the same video
           console.log(`Retrying same video...`);
-          setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+          videoRetryTimeout = setTimeout(() => {
+            // Check if overlay is still visible before retrying
+            if (document.getElementById('propertyOverlay').style.display !== 'none') {
+              tryVideo(index, retryAttempt + 1);
+            }
+          }, 500);
         } else {
           // Try the next video in the array
           const nextIndex = (index + 1) % tile.videos.length;
@@ -3574,6 +3601,9 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
     }
 
     tryVideo(currentVideoIndex, 0);
+
+    // Store the timeout ID for cleanup
+    window.currentVideoRetryTimeout = videoRetryTimeout;
     
     // Stop video and audio when it ends
     propertyVideo.onended = function() {
@@ -3629,7 +3659,13 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
   propertyVideo.src = ''; // Clear the video source to prevent playback
   propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
-  
+
+  // Clear any pending video retry timeouts
+  if (window.currentVideoRetryTimeout) {
+    clearTimeout(window.currentVideoRetryTimeout);
+    window.currentVideoRetryTimeout = null;
+  }
+
   // Stop horse sound if playing
   if (window.currentHorseSound) {
     window.currentHorseSound.pause();
@@ -3675,7 +3711,13 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   propertyVideo.src = ''; // Clear the video source to prevent playback
   propertyVideo.load(); // Reload to clear any buffered data
   propertyVideo.style.display = 'block';
-  
+
+  // Clear any pending video retry timeouts
+  if (window.currentVideoRetryTimeout) {
+    clearTimeout(window.currentVideoRetryTimeout);
+    window.currentVideoRetryTimeout = null;
+  }
+
   // Stop horse sound if playing
   if (window.currentHorseSound) {
     window.currentHorseSound.pause();
@@ -3816,6 +3858,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('jailOverlay').style.display = 'none';
 
+    // Clear jail fallback timeout if active
+    if (window.currentJailFallbackTimeout) {
+      clearTimeout(window.currentJailFallbackTimeout);
+      window.currentJailFallbackTimeout = null;
+    }
+
     // Stop jail video
     const jailVideo = document.getElementById('jailVideo');
     if (jailVideo) {
@@ -3828,7 +3876,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('jailPayBtn').addEventListener('click', () => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    
+
+    // Clear jail fallback timeout if active
+    if (window.currentJailFallbackTimeout) {
+      clearTimeout(window.currentJailFallbackTimeout);
+      window.currentJailFallbackTimeout = null;
+    }
+
     // Check if player has get out of jail cards first
     if (currentPlayer.getOutOfJailCards && currentPlayer.getOutOfJailCards > 0) {
       document.getElementById('jailPayOverlay').style.display = 'none';
@@ -3866,6 +3920,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('jailSkipBtn').addEventListener('click', () => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+    // Clear jail fallback timeout if active
+    if (window.currentJailFallbackTimeout) {
+      clearTimeout(window.currentJailFallbackTimeout);
+      window.currentJailFallbackTimeout = null;
+    }
+
     document.getElementById('jailPayOverlay').style.display = 'none';
     
     // Player skips turn, stays in jail
