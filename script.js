@@ -2467,6 +2467,7 @@ function handleLanding(player, position, canRollAgain = false) {
     } else {
       player.money -= tile.amount;
       console.log(`${player.name} paid $${tile.amount}`);
+      addAIMove(player.name, `paid $${tile.amount} ${tile.name}`);
       updatePlayerMoney();
       checkGameEnd();
       endTurn();
@@ -2481,7 +2482,7 @@ function handleLanding(player, position, canRollAgain = false) {
       const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
       
       console.log(`AI ${player.name} drew a ${tile.type} card: ${randomCard.message}`);
-      addAIMove(player.name, `drew ${tile.type === 'chance' ? 'Chance' : 'Community Chest'} card`);
+      addAIMove(player.name, `drew ${tile.type === 'chance' ? 'Chance' : 'Community Chest'} card: ${randomCard.message}`);
       
       // Execute card action for AI
       const playerIndex = gameState.players.findIndex(p => p === player);
