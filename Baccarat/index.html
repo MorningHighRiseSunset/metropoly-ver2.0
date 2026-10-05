@@ -477,33 +477,66 @@ window.initBaccaratMinigame = function(container, initialBalance, balanceCallbac
     console.log('[BACCARAT DEBUG] ===== INITIALIZING BACCARAT MINIGAME =====');
     console.log('[BACCARAT DEBUG] Initial balance received:', initialBalance);
     console.log('[BACCARAT DEBUG] Balance callback received:', balanceCallback);
-    
-    state.bankroll = initialBalance || 0;
-    state.bets = {};
-    state.phase = "betting";
-    state.message = "Place your bets on Player or Banker!";
-    console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
-    
-    render();
 
-    // Listen for balance from parent window
-    window.addEventListener('message', function(event) {
-        if (event.data.type === 'SET_BALANCE') {
-            console.log('[BACCARAT DEBUG] Received SET_BALANCE message:', event.data.balance);
-            state.bankroll = event.data.balance;
-            console.log('[BACCARAT DEBUG] Updated state.bankroll to:', state.bankroll);
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            state.bankroll = initialBalance || 0;
+            state.bets = {};
+            state.phase = "betting";
+            state.message = "Place your bets on Player or Banker!";
+            console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
+
             render();
-        }
-    });
 
-    // Expose balance for parent window
-    window.__casinoBalance = state.bankroll;
-    window.playerBalance = state.bankroll;
-    console.log('[BACCARAT DEBUG] Exposed balance variables:', window.__casinoBalance, window.playerBalance);
+            // Listen for balance from parent window
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'SET_BALANCE') {
+                    console.log('[BACCARAT DEBUG] Received SET_BALANCE message:', event.data.balance);
+                    state.bankroll = event.data.balance;
+                    console.log('[BACCARAT DEBUG] Updated state.bankroll to:', state.bankroll);
+                    render();
+                }
+            });
 
-    // Store callback for balance sync
-    window.balanceCallback = balanceCallback;
-    console.log('[BACCARAT DEBUG] Baccarat minigame initialized successfully');
+            // Expose balance for parent window
+            window.__casinoBalance = state.bankroll;
+            window.playerBalance = state.bankroll;
+            console.log('[BACCARAT DEBUG] Exposed balance variables:', window.__casinoBalance, window.playerBalance);
+
+            // Store callback for balance sync
+            window.balanceCallback = balanceCallback;
+            console.log('[BACCARAT DEBUG] Baccarat minigame initialized successfully');
+        });
+    } else {
+        // DOM is already ready
+        state.bankroll = initialBalance || 0;
+        state.bets = {};
+        state.phase = "betting";
+        state.message = "Place your bets on Player or Banker!";
+        console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
+
+        render();
+
+        // Listen for balance from parent window
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'SET_BALANCE') {
+                console.log('[BACCARAT DEBUG] Received SET_BALANCE message:', event.data.balance);
+                state.bankroll = event.data.balance;
+                console.log('[BACCARAT DEBUG] Updated state.bankroll to:', state.bankroll);
+                render();
+            }
+        });
+
+        // Expose balance for parent window
+        window.__casinoBalance = state.bankroll;
+        window.playerBalance = state.bankroll;
+        console.log('[BACCARAT DEBUG] Exposed balance variables:', window.__casinoBalance, window.playerBalance);
+
+        // Store callback for balance sync
+        window.balanceCallback = balanceCallback;
+        console.log('[BACCARAT DEBUG] Baccarat minigame initialized successfully');
+    }
 };
 
 // Balance sync with parent window
