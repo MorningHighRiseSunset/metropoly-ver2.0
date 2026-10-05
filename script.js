@@ -3050,6 +3050,8 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
         iframeWindow.initCrapsMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else if (gameType === 'slots' && iframeWindow.initSlotsMinigame) {
         iframeWindow.initSlotsMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
+      } else if (gameType === 'baccarat' && iframeWindow.initBaccaratMinigame) {
+        iframeWindow.initBaccaratMinigame(document.getElementById('casinoFrame'), currentPlayer.money, balanceCallback);
       } else {
         // console.log(`[CASINO DEBUG] No init function found for ${gameType}, using postMessage fallback`);
       }
