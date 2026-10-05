@@ -1,4 +1,4 @@
-// ===== GAME STATE ======
+﻿// ===== GAME STATE ======
 const gameState = {
   selectedToken: null,
   selectedModel: null,
@@ -402,7 +402,7 @@ function updatePlayersList() {
         <div class="player-name">${player.name}</div>
         <div class="player-money">$${player.money || 2500}</div>
       </div>
-      ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">❓</div>`}
+      ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">â“</div>`}
     `;
     
     playersList.appendChild(playerItem);
@@ -525,7 +525,7 @@ function showGameOver(winner, playerWon) {
   gameOverOverlay.innerHTML = `
     <div class="game-over-container" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(74, 158, 255, 0.3); border-radius: 24px; padding: 64px; max-width: 500px; text-align: center; backdrop-filter: blur(20px);">
       <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 16px; background: ${youWon ? 'linear-gradient(135deg, #3dd68c 0%, #00ff88 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)'}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-        ${youWon ? '🎉 YOU WIN!' : '💔 GAME OVER'}
+        ${youWon ? 'ðŸŽ‰ YOU WIN!' : 'ðŸ’” GAME OVER'}
       </h2>
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
         ${playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
@@ -1371,7 +1371,7 @@ boardConfig = [
   { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
   { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
-  { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, image: 'Images/ResortsWorldTheater.jpg', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'FREE PARKING', type: 'corner', position: 20, videos: [] },
   { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, isCasino: true, casinoGame: 'roulette', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
   { name: 'Chance', type: 'chance', position: 22, videos: [] },
@@ -1385,12 +1385,12 @@ boardConfig = [
   { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
   { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
   { name: 'Chance', type: 'chance', position: 32, videos: [] },
-  { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
+  { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, image: 'Images/house_of_blues_sunset.webp', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGMBoxing%203.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, isCasino: true, casinoGame: 'craps', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
   { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
-  { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp3'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
+  { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
   { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
 ];
 
@@ -1637,7 +1637,7 @@ function createMonopolyFaceTexture(spaceData, row, col) {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#f5f8fc';
     ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-    const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
+    const displayName = spaceData.isCasino ? 'â˜… ' + spaceData.name : spaceData.name;
     const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
     const sub = tileSubLabel(spaceData);
     const lineH = 62;
@@ -3328,134 +3328,132 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
   }
 });
 
-// Show owned property UI
-function showOwnedPropertyUI(tile, canRollAgain = false) {
-  document.getElementById('propertyTitle').textContent = tile.name;
-  document.getElementById('propertyAddress').textContent = tile.address || '';
-  document.getElementById('propertyPrice').textContent = 'OWNED';
-  document.getElementById('propertyRentValue').textContent = 'You own this property';
-  
-  // Load and play random video or show image
+function playTileMedia(tile, isCasinoMinigame) {
   const propertyVideo = document.getElementById('propertyVideo');
-  const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
-  
-  // Disable videos for casino minigames (except Baccarat which has no videos anyway)
-  const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
-  
-  // Play horse sound for Horseback Riding property
+  const propertyVideoContainer = propertyVideo.parentElement;
+
+  const leftoverImage = document.getElementById('propertyImageFallback');
+  if (leftoverImage) leftoverImage.remove();
+
+  propertyVideo.onerror = null;
+  propertyVideo.onended = null;
+  propertyVideo.onplaying = null;
+
   let horseSound = null;
   if (tile.name === 'Horseback Riding') {
     horseSound = new Audio('Sounds/pwlpl-horses-galloping-sound-effect-359257.mp3');
     horseSound.play().catch(e => console.log('Horse sound play error:', e));
     window.currentHorseSound = horseSound;
   }
-  
-  if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
-    // Track last played video for each position to avoid repeats
-    if (!window.lastPlayedVideos) {
-      window.lastPlayedVideos = {};
-    }
 
-    const positionKey = tile.position;
-    const lastPlayed = window.lastPlayedVideos[positionKey];
+  const videos = (tile.videos || []).filter(Boolean);
+  const canPlayVideo = videos.length > 0 && !isCasinoMinigame;
 
-    // Get a random video that's different from the last one
-    let randomVideo;
-    let attempts = 0;
-    do {
-      randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
-      attempts++;
-    } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
+  function showImageFallback(src) {
+    propertyVideo.pause();
+    propertyVideo.removeAttribute('src');
+    propertyVideo.load();
+    propertyVideo.style.display = 'none';
+    if (!src) return;
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+    img.id = 'propertyImageFallback';
+    img.onerror = function() {
+      console.log(`Failed to load image: ${src}, using fallback`);
+      this.src = 'Images/images_generic.jpg';
+      this.onerror = null;
+    };
+    propertyVideoContainer.appendChild(img);
+  }
 
-    window.lastPlayedVideos[positionKey] = randomVideo;
+  if (!canPlayVideo) {
+    showImageFallback(tile.image);
+    return;
+  }
 
-    // Video retry logic with fallback to other videos
-    let currentVideoIndex = tile.videos.indexOf(randomVideo);
-    let retryCount = 0;
-    const maxRetriesPerVideo = 2;
-    let videoRetryTimeout = null;
+  if (!window.lastPlayedVideos) {
+    window.lastPlayedVideos = {};
+  }
 
-    function tryVideo(index, retryAttempt) {
-      const videoUrl = tile.videos[index];
-      propertyVideo.src = videoUrl;
+  const positionKey = tile.position;
+  const lastPlayed = window.lastPlayedVideos[positionKey];
+
+  let randomVideo;
+  let attempts = 0;
+  do {
+    randomVideo = videos[Math.floor(Math.random() * videos.length)];
+    attempts++;
+  } while (lastPlayed === randomVideo && attempts < 10 && videos.length > 1);
+
+  window.lastPlayedVideos[positionKey] = randomVideo;
+
+  let currentVideoIndex = videos.indexOf(randomVideo);
+  const startIndex = currentVideoIndex < 0 ? 0 : currentVideoIndex;
+  const maxRetriesPerVideo = 2;
+  const tried = new Set();
+
+  function tryVideo(index, retryAttempt) {
+    if (document.getElementById('propertyOverlay').style.display === 'none') return;
+
+    const videoUrl = videos[index];
+    propertyVideo.style.display = 'block';
+    propertyVideo.muted = true;
+    propertyVideo.volume = 1.0;
+
+    let failHandled = false;
+    const failOver = () => {
+      if (failHandled) return;
+      failHandled = true;
+      if (retryAttempt < maxRetriesPerVideo - 1) {
+        window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+        return;
+      }
+      tried.add(index);
+      if (tried.size >= videos.length) {
+        console.log('All videos failed, trying image fallback');
+        showImageFallback(tile.image);
+        return;
+      }
+      const nextIndex = (index + 1) % videos.length;
+      currentVideoIndex = nextIndex;
+      tryVideo(nextIndex, 0);
+    };
+
+    propertyVideo.onerror = failOver;
+    propertyVideo.onplaying = () => {
       propertyVideo.muted = false;
-      propertyVideo.volume = 1.0;
-      propertyVideo.load();
-
-      propertyVideo.play().then(() => {
-        console.log(`Video loaded successfully: ${videoUrl}`);
-        videoRetryTimeout = null;
-      }).catch(e => {
-        console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
-
-        if (retryAttempt < maxRetriesPerVideo - 1) {
-          // Retry the same video
-          console.log(`Retrying same video...`);
-          videoRetryTimeout = setTimeout(() => {
-            // Check if overlay is still visible before retrying
-            if (document.getElementById('propertyOverlay').style.display !== 'none') {
-              tryVideo(index, retryAttempt + 1);
-            }
-          }, 500);
-        } else {
-          // Try the next video in the array
-          const nextIndex = (index + 1) % tile.videos.length;
-          if (nextIndex !== currentVideoIndex) {
-            console.log(`Trying next video (index ${nextIndex})...`);
-            currentVideoIndex = nextIndex;
-            tryVideo(nextIndex, 0);
-          } else {
-            // All videos failed, try showing image
-            console.log('All videos failed, trying image fallback');
-            if (tile.image) {
-              propertyVideo.style.display = 'none';
-              const img = document.createElement('img');
-              img.src = tile.image;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.objectFit = 'cover';
-              img.id = 'propertyImageFallback';
-              propertyVideoContainer.appendChild(img);
-            }
-          }
-        }
-      });
-    }
-
-    tryVideo(currentVideoIndex, 0);
-
-    // Store the timeout ID for cleanup
-    window.currentVideoRetryTimeout = videoRetryTimeout;
-    
-    // Stop video and audio when it ends
+    };
     propertyVideo.onended = function() {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
     };
-  } else if (tile.image) {
-    // Show image if no videos or if it's a casino minigame
-    propertyVideo.style.display = 'none';
-    const img = document.createElement('img');
-    img.src = tile.image;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    img.id = 'propertyImageFallback';
-    img.onerror = function() {
-      console.log(`Failed to load image: ${tile.image}, using fallback`);
-      this.style.display = 'none';
-      // Use generic image fallback from repository
-      const fallback = document.createElement('img');
-      fallback.src = 'Images/images_generic.jpg';
-      fallback.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-      fallback.id = 'propertyImageFallback';
-      propertyVideoContainer.appendChild(fallback);
-    };
-    propertyVideoContainer.appendChild(img);
-  } else {
-    propertyVideo.src = '';
+
+    propertyVideo.src = videoUrl;
+    propertyVideo.load();
+    propertyVideo.play().then(() => {
+      console.log(`Video loaded successfully: ${videoUrl}`);
+      window.currentVideoRetryTimeout = null;
+    }).catch(e => {
+      console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
+      failOver();
+    });
   }
-  
+
+  tryVideo(startIndex, 0);
+}
+
+// Show owned property UI
+function showOwnedPropertyUI(tile, canRollAgain = false) {
+  document.getElementById('propertyTitle').textContent = tile.name;
+  document.getElementById('propertyAddress').textContent = tile.address || '';
+  document.getElementById('propertyPrice').textContent = 'OWNED';
+  document.getElementById('propertyRentValue').textContent = 'You own this property';
+
+  const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
+  document.getElementById('propertyOverlay').style.display = 'flex';
+  playTileMedia(tile, isCasinoMinigame);
+
   // Change button to just OK
   document.getElementById('propertyBuyBtn').style.display = 'none';
   document.getElementById('propertyPassBtn').textContent = 'OK';
@@ -3525,129 +3523,11 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
     rent = Math.floor(tile.price * 0.1);
   }
   document.getElementById('propertyRentValue').textContent = `$${rent}`;
-  
-  // Load and play random video or show image
-  const propertyVideo = document.getElementById('propertyVideo');
-  const propertyVideoContainer = document.getElementById('propertyVideo').parentElement;
-  
-  // Disable videos for casino minigames (except Baccarat which has no videos anyway)
+
   const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
-  
-  // Play horse sound for Horseback Riding property
-  let horseSound = null;
-  if (tile.name === 'Horseback Riding') {
-    horseSound = new Audio('Sounds/pwlpl-horses-galloping-sound-effect-359257.mp3');
-    horseSound.play().catch(e => console.log('Horse sound play error:', e));
-    window.currentHorseSound = horseSound;
-  }
-  
-  if (tile.videos && tile.videos.length > 0 && !isCasinoMinigame) {
-    // Track last played video for each position to avoid repeats
-    if (!window.lastPlayedVideos) {
-      window.lastPlayedVideos = {};
-    }
-
-    const positionKey = tile.position;
-    const lastPlayed = window.lastPlayedVideos[positionKey];
-
-    // Get a random video that's different from the last one
-    let randomVideo;
-    let attempts = 0;
-    do {
-      randomVideo = tile.videos[Math.floor(Math.random() * tile.videos.length)];
-      attempts++;
-    } while (lastPlayed === randomVideo && attempts < 10 && tile.videos.length > 1);
-
-    window.lastPlayedVideos[positionKey] = randomVideo;
-
-    // Video retry logic with fallback to other videos
-    let currentVideoIndex = tile.videos.indexOf(randomVideo);
-    let retryCount = 0;
-    const maxRetriesPerVideo = 2;
-    let videoRetryTimeout = null;
-
-    function tryVideo(index, retryAttempt) {
-      const videoUrl = tile.videos[index];
-      propertyVideo.src = videoUrl;
-      propertyVideo.muted = false;
-      propertyVideo.volume = 1.0;
-      propertyVideo.load();
-
-      propertyVideo.play().then(() => {
-        console.log(`Video loaded successfully: ${videoUrl}`);
-        videoRetryTimeout = null;
-      }).catch(e => {
-        console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
-
-        if (retryAttempt < maxRetriesPerVideo - 1) {
-          // Retry the same video
-          console.log(`Retrying same video...`);
-          videoRetryTimeout = setTimeout(() => {
-            // Check if overlay is still visible before retrying
-            if (document.getElementById('propertyOverlay').style.display !== 'none') {
-              tryVideo(index, retryAttempt + 1);
-            }
-          }, 500);
-        } else {
-          // Try the next video in the array
-          const nextIndex = (index + 1) % tile.videos.length;
-          if (nextIndex !== currentVideoIndex) {
-            console.log(`Trying next video (index ${nextIndex})...`);
-            currentVideoIndex = nextIndex;
-            tryVideo(nextIndex, 0);
-          } else {
-            // All videos failed, try showing image
-            console.log('All videos failed, trying image fallback');
-            if (tile.image) {
-              propertyVideo.style.display = 'none';
-              const img = document.createElement('img');
-              img.src = tile.image;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.objectFit = 'cover';
-              img.id = 'propertyImageFallback';
-              propertyVideoContainer.appendChild(img);
-            }
-          }
-        }
-      });
-    }
-
-    tryVideo(currentVideoIndex, 0);
-
-    // Store the timeout ID for cleanup
-    window.currentVideoRetryTimeout = videoRetryTimeout;
-    
-    // Stop video and audio when it ends
-    propertyVideo.onended = function() {
-      propertyVideo.pause();
-      propertyVideo.currentTime = 0;
-    };
-  } else if (tile.image) {
-    // Show image if no videos or if it's a casino minigame
-    propertyVideo.style.display = 'none';
-    const img = document.createElement('img');
-    img.src = tile.image;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    img.id = 'propertyImageFallback';
-    img.onerror = function() {
-      console.log(`Failed to load image: ${tile.image}, using fallback`);
-      this.style.display = 'none';
-      // Use generic image fallback from repository
-      const fallback = document.createElement('img');
-      fallback.src = 'Images/images_generic.jpg';
-      fallback.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-      fallback.id = 'propertyImageFallback';
-      propertyVideoContainer.appendChild(fallback);
-    };
-    propertyVideoContainer.appendChild(img);
-  } else {
-    propertyVideo.src = '';
-  }
-  
   document.getElementById('propertyOverlay').style.display = 'flex';
+  playTileMedia(tile, isCasinoMinigame);
+  
 
   // Disable roll dice button while property UI is open
   if (rollDiceBtn) {
@@ -4048,7 +3928,7 @@ window.teleportToVenetian = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 13; // Venetian position
   
-  console.log('🎰 Teleporting to Venetian (Position 13) - Minigame: Baccarat');
+  console.log('ðŸŽ° Teleporting to Venetian (Position 13) - Minigame: Baccarat');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4059,7 +3939,7 @@ window.teleportToBellagio = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 15; // Bellagio position
   
-  console.log('🎰 Teleporting to Bellagio (Position 15) - Minigame: Blackjack');
+  console.log('ðŸŽ° Teleporting to Bellagio (Position 15) - Minigame: Blackjack');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4075,7 +3955,7 @@ window.sendAItoJail = () => {
   
   const aiIndex = gameState.players.indexOf(aiPlayer);
   
-  console.log(`🚔 Sending ${aiPlayer.name} to Jail (position 10)`);
+  console.log(`ðŸš” Sending ${aiPlayer.name} to Jail (position 10)`);
   
   // Set current player to the AI
   gameState.currentPlayerIndex = aiIndex;
@@ -4096,7 +3976,7 @@ window.teleportToSantaFe = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 18; // Santa Fe Hotel and Casino position
   
-  console.log('🎰 Teleporting to Santa Fe Hotel and Casino (Position 18) - Minigame: Poker');
+  console.log('ðŸŽ° Teleporting to Santa Fe Hotel and Casino (Position 18) - Minigame: Poker');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4107,7 +3987,7 @@ window.teleportToHardRock = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 21; // Hard Rock Hotel position
   
-  console.log('🎰 Teleporting to Hard Rock Hotel (Position 21) - Minigame: Roulette');
+  console.log('ðŸŽ° Teleporting to Hard Rock Hotel (Position 21) - Minigame: Roulette');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4118,7 +3998,7 @@ window.teleportToCaesars = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 29; // Caesars Palace position
   
-  console.log('🎰 Teleporting to Caesars Palace (Position 29) - Minigame: Blackjack');
+  console.log('ðŸŽ° Teleporting to Caesars Palace (Position 29) - Minigame: Blackjack');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4129,7 +4009,7 @@ window.teleportToWynn = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 35; // Wynn Las Vegas position
   
-  console.log('🎰 Teleporting to Wynn Las Vegas (Position 35) - Minigame: Craps');
+  console.log('ðŸŽ° Teleporting to Wynn Las Vegas (Position 35) - Minigame: Craps');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -4146,7 +4026,7 @@ window.teleportTo = (position) => {
   const tile = boardConfig.find(t => t.position === newPosition);
   const minigameInfo = tile && tile.isCasino ? `- Minigame: ${tile.casinoGame}${tile.disableCasino ? ' (DISABLED)' : ''}` : '- Regular property';
   
-  console.log(`🎰 Teleporting to ${tile ? tile.name : 'Position ' + newPosition} (Position ${newPosition}) ${minigameInfo}`);
+  console.log(`ðŸŽ° Teleporting to ${tile ? tile.name : 'Position ' + newPosition} (Position ${newPosition}) ${minigameInfo}`);
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);

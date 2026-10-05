@@ -481,8 +481,9 @@
             
             <h3>Come-Out Roll (First Roll)</h3>
             <ul>
-                <li><strong>7 or 11 (Natural):</strong> Pass Line bets win (pay 1:1)</li>
-                <li><strong>2, 3, or 12 (Craps):</strong> Pass Line bets lose, Don't Pass bets win</li>
+                <li><strong>7 or 11 (Natural):</strong> Pass Line bets win (pay 1:1). Don't Pass loses.</li>
+                <li><strong>2 or 3 (Craps):</strong> Pass Line bets lose. Don't Pass wins.</li>
+                <li><strong>12 (Boxcars):</strong> Pass Line loses. Don't Pass pushes (bet returned). This is still called craps.</li>
                 <li><strong>4, 5, 6, 8, 9, or 10:</strong> Point is established - continue rolling</li>
             </ul>
             
@@ -496,10 +497,13 @@
             
             <h3>Available Bets</h3>
             <ul>
-                <li><strong>Pass Line:</strong> Win on 7/11 (come-out) or point (point phase)</li>
-                <li><strong>Don't Pass Bar:</strong> Win on 2/3/12 (come-out) or 7 (point phase)</li>
-                <li><strong>Field:</strong> Win on 2, 3, 4, 9, 10, 11, 12 (pays 1:1)</li>
-                <li><strong>Number Bets:</strong> Win on specific number (pays higher odds)</li>
+                <li><strong>Pass Line:</strong> Win on 7/11 (come-out) or the point (point phase)</li>
+                <li><strong>Don't Pass Bar:</strong> Win on 2/3 (come-out) or 7 (point phase). 12 is a push.</li>
+                <li><strong>Come:</strong> Same rules as Pass Line</li>
+                <li><strong>Field:</strong> Win on 2, 3, 4, 9, 10, 11, 12 (2 and 12 pay 2:1)</li>
+                <li><strong>3 or 11 (15 to 1):</strong> One-roll bet. Wins on 3 or 11 only</li>
+                <li><strong>2 or 12 (30 to 1):</strong> One-roll bet. Wins on 2 or 12 only</li>
+                <li><strong>Any Craps (7 to 1):</strong> One-roll bet. Wins on 2, 3, or 12</li>
                 <li><strong>Big 6 & 8:</strong> Win on 6 or 8 (pays 1:1)</li>
             </ul>
             
@@ -972,7 +976,7 @@ function roll3DDicePhysics(onComplete) {
         
         function placeBet(areaId, amount) {
             // CRITICAL: Check if this bet would exceed balance
-            const totalBets = Object.values(bets).reduce((sum, val) => sum + val, 0);
+            const totalBets = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
             if (balance - totalBets < amount) {
                 alert('Insufficient balance for this bet');
                 return;
@@ -1063,7 +1067,7 @@ function roll3DDicePhysics(onComplete) {
         
         function updateBalance() {
             balanceEl.textContent = balance;
-            const totalBet = Object.values(bets).reduce((sum, amount) => sum + amount, 0);
+            const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
             totalBetEl.textContent = totalBet;
             
             // Update point indicator
@@ -1092,10 +1096,10 @@ function roll3DDicePhysics(onComplete) {
                 'nine': 'Number 9',
                 '10': 'Number 10',
                 'big-6-8': 'Big 6 & 8',
-                '10-to-1': '10 to 1',
-                '8-to-1': '8 to 1',
-                '30-to-1': '30 to 1',
-                '15-to-1': '15 to 1',
+                '10-to-1': 'Hard 4/10 (10 to 1)',
+                '8-to-1': 'Hard 6/8 (8 to 1)',
+                '30-to-1': '2 or 12 (30 to 1)',
+                '15-to-1': '3 or 11 (15 to 1)',
                 'any-craps-7-to-1': 'Any Craps (7 to 1)',
                 'seven-4-to-1': 'Seven (4 to 1)',
                 'dont-come-bar': "Don't Come Bar"
@@ -1125,8 +1129,9 @@ function roll3DDicePhysics(onComplete) {
         
         function rollDice() {
             console.log('=== ROLL BUTTON CLICKED ===');
-            if (isRolling || Object.keys(bets).length === 0) {
-                if (Object.keys(bets).length === 0) {
+            const hasWager = Object.keys(bets).some(k => !k.includes('_lastChip') && bets[k] > 0);
+            if (isRolling || !hasWager) {
+                if (!hasWager) {
                     alert('Place a bet first');
                 }
                 return;
@@ -1156,292 +1161,267 @@ function roll3DDicePhysics(onComplete) {
                 // Clear dice result text after a delay
                 setTimeout(() => {
                     diceResultEl.textContent = '';
-                }, 3000);
+                }, 7000);
             });
         }
         
+        function clearBet(betId) {
+            delete bets[betId];
+            delete bets[betId + '_lastChip'];
+        }
+
+        function payBet(betId, odds, logMessage) {
+            const amount = bets[betId];
+            if (!amount) return 0;
+            addLogEntry(logMessage, 'win');
+            clearBet(betId);
+            return amount + amount * odds;
+        }
+
+        function loseBet(betId, logMessage) {
+            if (!bets[betId]) return;
+            addLogEntry(logMessage, 'loss');
+            clearBet(betId);
+        }
+
+        function pushBet(betId, logMessage) {
+            const amount = bets[betId];
+            if (!amount) return 0;
+            addLogEntry(logMessage, 'info');
+            clearBet(betId);
+            return amount;
+        }
+
+        function resolveOneRollBets(die1, die2) {
+            const total = die1 + die2;
+            let paid = 0;
+            const fieldWins = [2, 3, 4, 9, 10, 11, 12];
+
+            if (bets['field']) {
+                if (fieldWins.includes(total)) {
+                    const odds = (total === 2 || total === 12) ? 2 : 1;
+                    paid += payBet('field', odds, `🎰 Field wins on ${total}${odds === 2 ? ' (pays 2:1)' : ''}!`);
+                } else {
+                    loseBet('field', `❌ Field lost on ${total} (Field only wins on 2, 3, 4, 9, 10, 11, or 12)`);
+                }
+            }
+
+            if (bets['any-craps-7-to-1']) {
+                if ([2, 3, 12].includes(total)) {
+                    paid += payBet('any-craps-7-to-1', 7, `🎰 Any Craps wins on ${total} (pays 7:1)!`);
+                } else {
+                    loseBet('any-craps-7-to-1', `❌ Any Craps lost on ${total} (wins only on 2, 3, or 12 — not 11)`);
+                }
+            }
+
+            ['seven-4-to-1', '7-cs', '7-es'].forEach(id => {
+                if (!bets[id]) return;
+                if (total === 7) {
+                    paid += payBet(id, 4, `🎰 ${formatBetName(id)} wins on 7 (pays 4:1)!`);
+                } else {
+                    loseBet(id, `❌ ${formatBetName(id)} lost on ${total} (wins only on 7)`);
+                }
+            });
+
+            if (bets['15-to-1']) {
+                if (total === 3 || total === 11) {
+                    paid += payBet('15-to-1', 15, `🎰 3 or 11 (15 to 1) wins on ${total}!`);
+                } else {
+                    loseBet('15-to-1', `❌ 3 or 11 (15 to 1) lost on ${total}`);
+                }
+            }
+
+            if (bets['30-to-1']) {
+                if (total === 2 || total === 12) {
+                    paid += payBet('30-to-1', 30, `🎰 2 or 12 (30 to 1) wins on ${total}!`);
+                } else {
+                    loseBet('30-to-1', `❌ 2 or 12 (30 to 1) lost on ${total}`);
+                }
+            }
+
+            if (bets['10-to-1']) {
+                const hard4 = die1 === 2 && die2 === 2;
+                const hard10 = die1 === 5 && die2 === 5;
+                if (hard4 || hard10) {
+                    paid += payBet('10-to-1', 10, `🎰 Hard ${total} wins (10 to 1)!`);
+                } else if (total === 7 || total === 4 || total === 10) {
+                    loseBet('10-to-1', `❌ Hard 4/10 lost on ${die1}+${die2}=${total}`);
+                }
+            }
+
+            if (bets['8-to-1']) {
+                const hard6 = die1 === 3 && die2 === 3;
+                const hard8 = die1 === 4 && die2 === 4;
+                if (hard6 || hard8) {
+                    paid += payBet('8-to-1', 8, `🎰 Hard ${total} wins (8 to 1)!`);
+                } else if (total === 7 || total === 6 || total === 8) {
+                    loseBet('8-to-1', `❌ Hard 6/8 lost on ${die1}+${die2}=${total}`);
+                }
+            }
+
+            return paid;
+        }
+
+        function resolvePlaceAndBig(die1, die2, sevenOut) {
+            const total = die1 + die2;
+            let paid = 0;
+            const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
+            if (sevenOut) {
+                ['4', '5', 'six', '8', 'nine', '10', 'big-6-8'].forEach(id => {
+                    if (bets[id]) loseBet(id, `❌ ${formatBetName(id)} lost on Seven Out`);
+                });
+                return 0;
+            }
+            const placeId = placeBetMap[total];
+            if (placeId && bets[placeId]) {
+                paid += payBet(placeId, 1, `🎰 Place bet on ${total} wins!`);
+            }
+            if (bets['big-6-8'] && (total === 6 || total === 8)) {
+                paid += payBet('big-6-8', 1, `🎰 Big 6 & 8 wins on ${total}!`);
+            }
+            return paid;
+        }
+
+        function settleLineBets(kind, rollTotal) {
+            let paid = 0;
+            if (kind === 'natural') {
+                paid += payBet('pass-line', 1, `🎉 NATURAL ${rollTotal}! Pass Line wins (7 or 11 on the come-out pays 1:1).`);
+                paid += payBet('come', 1, `🎉 NATURAL ${rollTotal}! Come wins (same as Pass Line).`);
+                loseBet("don't-pass-bar", `❌ Don't Pass lost — ${rollTotal} is a Natural (Pass Line winner) on the come-out.`);
+                loseBet('dont-come-bar', `❌ Don't Come lost — ${rollTotal} is a Natural on the come-out.`);
+            } else if (kind === 'craps23') {
+                loseBet('pass-line', `❌ Pass Line lost on Craps ${rollTotal} (2 or 3 on the come-out is craps).`);
+                loseBet('come', `❌ Come lost on Craps ${rollTotal}.`);
+                paid += payBet("don't-pass-bar", 1, `🎉 CRAPS ${rollTotal}! Don't Pass wins.`);
+                paid += payBet('dont-come-bar', 1, `🎉 CRAPS ${rollTotal}! Don't Come wins.`);
+            } else if (kind === 'craps12') {
+                loseBet('pass-line', `❌ Pass Line lost on 12 (boxcars). On the come-out, 2, 3, or 12 is craps and Pass Line loses.`);
+                loseBet('come', `❌ Come lost on 12 (boxcars). Same rule as Pass Line.`);
+                paid += pushBet("don't-pass-bar", `🔄 12 is barred: Don't Pass pushes (bet returned, not a win).`);
+                paid += pushBet('dont-come-bar', `🔄 12 is barred: Don't Come pushes (bet returned).`);
+            }
+            return paid;
+        }
+
         function processRoll(die1, die2) {
             const total = die1 + die2;
             let winnings = 0;
             let message = '';
-            
+            let roundOver = false;
+
+            winnings += resolveOneRollBets(die1, die2);
+
             if (!isPointPhase) {
-                // Come-out roll phase
                 if (total === 7 || total === 11) {
-                    // Natural - Pass Line wins (pays even money), Don't Pass loses
-                    if (bets['pass-line']) {
-                        const netWin = bets['pass-line']; // Win 1:1
-                        winnings += bets['pass-line'] * 2; // Total returned
-                        message = 'Natural! Pass Line wins!';
-                        addLogEntry(`🎉 NATURAL! ${total}! Pass Line wins! Net win: $${netWin}`, 'win');
-                    } else {
-                        addLogEntry(`🎲 Natural ${total}! (No Pass Line bet)`, 'info');
+                    const hadPassOrCome = !!(bets['pass-line'] || bets['come']);
+                    winnings += settleLineBets('natural', total);
+                    if (!hadPassOrCome) {
+                        addLogEntry(`ℹ️ ${total} is a Natural. Pass Line / Come would win; Don't Pass would lose.`, 'info');
                     }
-                    // Don't Pass loses on 7 or 11
-                    if (bets["don't-pass-bar"]) {
-                        addLogEntry(`❌ Don't Pass bet lost on Natural ${total}`, 'loss');
-                    }
-                    // Field bets (pay on every roll regardless of phase)
-                    if (bets['field']) {
-                        if ([2,3,4,9,10,11,12].includes(total)) {
-                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                            winnings += bets['field'] * 2; // Total returned
-                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                        } else {
-                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
-                        }
-                    }
-                    // Check if any Place bets hit their number on come-out roll
-                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
-                        const netWin = bets[placeBetMap[total]]; // Place bet wins
-                        winnings += bets[placeBetMap[total]] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
-                        // Remove the winning Place bet
-                        delete bets[placeBetMap[total]];
-                    }
-                    // Reset button text to "Roll Dice"
+                    message = total === 11
+                        ? 'Natural 11 (Yo)! Pass Line wins.'
+                        : 'Natural 7! Pass Line wins.';
+                    winnings += resolvePlaceAndBig(die1, die2, false);
+                    roundOver = true;
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 2 || total === 3) {
-                    // Craps - Pass Line loses, Don't Pass wins
-                    if (bets["don't-pass-bar"]) {
-                        const netWin = bets["don't-pass-bar"]; // Win 1:1
-                        winnings += bets["don't-pass-bar"] * 2; // Total returned
-                        message = 'Craps! Don\'t Pass wins!';
-                        addLogEntry(`🎉 CRAPS! ${total}! Don't Pass wins! Net win: $${netWin}`, 'win');
-                    } else {
-                        addLogEntry(`🎲 Craps ${total}! (No Don't Pass bet)`, 'info');
-                    }
-                    // Pass Line loses (house wins)
-                    if (bets['pass-line']) {
-                        addLogEntry(`❌ Pass Line bet lost on Craps ${total}`, 'loss');
-                    }
-                    // Field bets (pay on every roll regardless of phase)
-                    if (bets['field']) {
-                        if ([2,3,4,9,10,11,12].includes(total)) {
-                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                            winnings += bets['field'] * 2; // Total returned
-                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                        } else {
-                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
-                        }
-                    }
-                    // Check if any Place bets hit their number on come-out roll
-                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
-                        const netWin = bets[placeBetMap[total]]; // Place bet wins
-                        winnings += bets[placeBetMap[total]] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
-                        // Remove the winning Place bet
-                        delete bets[placeBetMap[total]];
-                    }
-                    // Reset button text to "Roll Dice"
+                    winnings += settleLineBets('craps23', total);
+                    message = `Craps ${total}! Pass Line loses.`;
+                    winnings += resolvePlaceAndBig(die1, die2, false);
+                    roundOver = true;
                     rollBtn.textContent = 'Roll Dice';
                 } else if (total === 12) {
-                    // Craps 12 - Pass Line loses, Don't Pass pushes (returns bet)
-                    if (bets["don't-pass-bar"]) {
-                        winnings += bets["don't-pass-bar"]; // Return bet (push)
-                        message = 'Craps 12! Don\'t Pass pushes!';
-                        addLogEntry(`🔄 CRAPS 12! Don't Pass pushes! Bet returned: $${bets["don't-pass-bar"]}`, 'info');
-                    } else {
-                        addLogEntry(`🎲 Craps 12! (No Don't Pass bet)`, 'info');
-                    }
-                    // Pass Line loses (house wins)
-                    if (bets['pass-line']) {
-                        addLogEntry(`❌ Pass Line bet lost on Craps 12`, 'loss');
-                    }
-                    // Field bets (pay on every roll regardless of phase)
-                    if (bets['field']) {
-                        if ([2,3,4,9,10,11,12].includes(total)) {
-                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                            winnings += bets['field'] * 2; // Total returned
-                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                        } else {
-                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
-                        }
-                    }
-                    // Check if any Place bets hit their number on come-out roll
-                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
-                        const netWin = bets[placeBetMap[total]]; // Place bet wins
-                        winnings += bets[placeBetMap[total]] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
-                        // Remove the winning Place bet
-                        delete bets[placeBetMap[total]];
-                    }
-                    // Reset button text to "Roll Dice"
+                    winnings += settleLineBets('craps12', total);
+                    message = 'Craps 12 (boxcars)! Pass Line loses.';
+                    winnings += resolvePlaceAndBig(die1, die2, false);
+                    roundOver = true;
                     rollBtn.textContent = 'Roll Dice';
                 } else {
-                    // Point established (4, 5, 6, 8, 9, 10)
-                    // Check if any Place bets hit their number on come-out roll
-                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
-                        const netWin = bets[placeBetMap[total]]; // Place bet wins
-                        winnings += bets[placeBetMap[total]] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
-                        // Remove the winning Place bet
-                        delete bets[placeBetMap[total]];
-                    }
-
-                    // Field bets (pay on every roll regardless of phase)
-                    if (bets['field']) {
-                        if ([2,3,4,9,10,11,12].includes(total)) {
-                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                            winnings += bets['field'] * 2; // Total returned
-                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                        } else {
-                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
-                        }
-                    }
-
-                    // Add winnings to balance if any Place or Field bets won
-                    if (winnings > 0) {
-                        balance += winnings;
-                        addLogEntry(`💰 Won $${winnings} this roll. New balance: $${balance}`, 'win');
-                    }
-
+                    winnings += resolvePlaceAndBig(die1, die2, false);
                     point = total;
                     isPointPhase = true;
                     message = `Point is ${point}. Roll again!`;
                     addLogEntry(`🎯 POINT ESTABLISHED: ${point}`, 'point');
-                    addLogEntry(`Roll again to try to hit ${point} (Rolling 7 will lose your Pass Line bet)`, 'info');
-                    // Change button text to "Roll Again"
+                    addLogEntry(`Hit ${point} before a 7 to win Pass Line. A 7 is seven-out and Pass Line loses.`, 'info');
                     rollBtn.textContent = 'Roll Again';
-                    // Don't clear bets - Pass Line, Don't Pass, and other bets stay on table during point phase
-                    updateBalance();
-                    syncBalanceToParent();
-                    renderTableChips();
-                    diceResultEl.textContent += ` - ${message}`;
-                    return; // Don't clear bets or end the round
-                }
-            } else {
-                // Point phase
-                if (total === point) {
-                    // Point made - Pass Line wins (pays even money), Don't Pass loses
-                    if (bets['pass-line']) {
-                        const netWin = bets['pass-line']; // Win 1:1
-                        winnings += bets['pass-line'] * 2; // Total returned
-                        message = 'Point made! Pass Line wins!';
-                        addLogEntry(`🎉 POINT MADE! You hit ${point}! Pass Line wins! Net win: $${netWin}`, 'win');
-                    } else {
-                        addLogEntry(`🎯 Point made! You hit ${point}!`, 'info');
-                        message = 'Point made!';
-                    }
-                    // Don't Pass loses
-                    if (bets["don't-pass-bar"]) {
-                        addLogEntry(`❌ Don't Pass bet lost when point was made`, 'loss');
-                    }
-                    // Place bets on the point number also win
-                    const pointBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    const pointBetId = pointBetMap[point];
-                    if (pointBetId && bets[pointBetId]) {
-                        const netWin = bets[pointBetId]; // Place bets pay according to odds, simplified to 1:1 here
-                        winnings += bets[pointBetId] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${point} wins! Net win: $${netWin}`, 'win');
-                    }
-                    isPointPhase = false;
-                    point = null;
-                    // Change button text back to "Roll Dice"
-                    rollBtn.textContent = 'Roll Dice';
-                } else if (total === 7) {
-                    // Seven out - Pass Line loses, Don't Pass wins, ALL Place bets lose
-                    if (bets["don't-pass-bar"]) {
-                        const netWin = bets["don't-pass-bar"]; // Win 1:1
-                        winnings += bets["don't-pass-bar"] * 2; // Total returned
-                        message = 'Seven out! Don\'t Pass wins!';
-                        addLogEntry(`🎉 SEVEN OUT! Don't Pass wins! Net win: $${netWin}`, 'win');
-                    } else {
-                        addLogEntry(`💀 SEVEN OUT!`, 'loss');
-                    }
-                    // Pass Line loses (house wins)
-                    if (bets['pass-line']) {
-                        addLogEntry(`❌ Pass Line bet lost on Seven Out`, 'loss');
-                    }
-                    // All Place bets lose on 7
-                    ['4', '5', 'six', '8', 'nine', '10'].forEach(betId => {
-                        if (bets[betId]) {
-                            addLogEntry(`❌ Place bet on ${formatBetName(betId)} lost on Seven Out`, 'loss');
-                        }
-                    });
-                    isPointPhase = false;
-                    point = null;
-                    // Change button text back to "Roll Dice"
-                    rollBtn.textContent = 'Roll Dice';
-                } else {
-                    // Continue point phase - no resolution yet
-                    // Check if any Place bets hit their number
-                    const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
-                    if (placeBetMap[total] && bets[placeBetMap[total]]) {
-                        const netWin = bets[placeBetMap[total]]; // Place bet wins
-                        winnings += bets[placeBetMap[total]] * 2; // Total returned
-                        addLogEntry(`🎰 Place bet on ${total} wins! Net win: $${netWin}`, 'win');
-                        // Remove the winning Place bet
-                        delete bets[placeBetMap[total]];
-                    }
-
-                    // Field bets (pay on every roll regardless of phase)
-                    if (bets['field']) {
-                        if ([2,3,4,9,10,11,12].includes(total)) {
-                            const netWin = bets['field']; // Win 1:1 (except 2,12 which pay 2:1)
-                            winnings += bets['field'] * 2; // Total returned
-                            addLogEntry(`🎰 Field bet wins! Net win: $${netWin}`, 'win');
-                        } else {
-                            addLogEntry(`❌ Field bet lost on ${total}`, 'loss');
-                        }
-                    }
-
-                    // Add winnings to balance if any Place or Field bets won
                     if (winnings > 0) {
                         balance += winnings;
-                        addLogEntry(`💰 Won $${winnings} this roll. New balance: $${balance}`, 'win');
+                        addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
                     }
-
-                    message = `Point is ${point}. Roll again!`;
-                    addLogEntry(`🎲 No resolution. Point is still ${point}. Roll again!`, 'info');
                     updateBalance();
                     syncBalanceToParent();
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
-                    return; // Don't clear bets or end the round
+                    return;
+                }
+            } else {
+                if (total === 7 || total === 11) {
+                    winnings += payBet('come', 1, `🎉 Come wins on Natural ${total} (Come uses come-out rules during the point).`);
+                    loseBet('dont-come-bar', `❌ Don't Come lost on Natural ${total}.`);
+                } else if (total === 2 || total === 3) {
+                    loseBet('come', `❌ Come lost on Craps ${total}.`);
+                    winnings += payBet('dont-come-bar', 1, `🎉 Don't Come wins on Craps ${total}.`);
+                } else if (total === 12) {
+                    loseBet('come', `❌ Come lost on 12 (boxcars).`);
+                    winnings += pushBet('dont-come-bar', `🔄 12 is barred: Don't Come pushes.`);
+                }
+
+                if (total === point) {
+                    winnings += payBet('pass-line', 1, `🎉 POINT MADE! You hit ${point} before a 7. Pass Line wins 1:1.`);
+                    loseBet("don't-pass-bar", `❌ Don't Pass lost because the point ${point} was made.`);
+                    winnings += resolvePlaceAndBig(die1, die2, false);
+                    message = `Point ${point} made! Pass Line wins.`;
+                    isPointPhase = false;
+                    point = null;
+                    roundOver = true;
+                    rollBtn.textContent = 'Roll Dice';
+                } else if (total === 7) {
+                    loseBet('pass-line', `❌ SEVEN OUT. A 7 before the point means Pass Line loses.`);
+                    winnings += payBet("don't-pass-bar", 1, `🎉 SEVEN OUT! Don't Pass wins.`);
+                    winnings += resolvePlaceAndBig(die1, die2, true);
+                    message = 'Seven out! Pass Line loses.';
+                    isPointPhase = false;
+                    point = null;
+                    roundOver = true;
+                    rollBtn.textContent = 'Roll Dice';
+                } else {
+                    winnings += resolvePlaceAndBig(die1, die2, false);
+                    if (winnings > 0) {
+                        balance += winnings;
+                        addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                    }
+                    message = `Point is still ${point}. Roll again!`;
+                    addLogEntry(`🎲 ${die1}+${die2}=${total} does not hit the point (${point}) or 7. Pass Line is still live.`, 'info');
+                    updateBalance();
+                    syncBalanceToParent();
+                    renderTableChips();
+                    diceResultEl.textContent += ` - ${message}`;
+                    return;
                 }
             }
 
-            // Big 6 & 8
-            if (bets['big-6-8'] && (total === 6 || total === 8)) {
-                const netWin = bets['big-6-8']; // Win 1:1
-                winnings += bets['big-6-8'] * 2; // Total returned
-                addLogEntry(`🎰 Big 6 & 8 bet wins! Net win: $${netWin}`, 'win');
+            if (winnings > 0) {
+                balance += winnings;
             }
 
-            // Calculate total bet before clearing
-            const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) sum + bets[k], 0);
-
-            balance += winnings;
-            bets = {}; // Clear bets after resolution
-            
             updateBalance();
             syncBalanceToParent();
             renderTableChips();
-            
-            // Summary
+
+            if (message) {
+                diceResultEl.textContent += ` - ${message}`;
+            }
             if (winnings > 0) {
-                const netWin = winnings - totalBet;
-                addLogEntry(`💰 Net win: $${netWin}. Total returned: $${winnings}. New balance: $${balance}`, 'win');
-                diceResultEl.textContent += ` - ${message || 'You win!'} Net win: $${netWin}!`;
-            } else if (winnings === 0 && totalBet > 0) {
-                addLogEntry(`💸 Lost $${totalBet}. New balance: $${balance}`, 'loss');
-                diceResultEl.textContent += ` - ${message || 'House wins'}`;
-            } else if (totalBet === 0) {
-                addLogEntry(`No bets placed. New balance: $${balance}`, 'info');
-                diceResultEl.textContent += ` - No bets`;
+                addLogEntry(`💰 Returned $${winnings} this roll. Balance: $${balance}`, 'win');
+            } else if (roundOver) {
+                addLogEntry(`Balance: $${balance}`, 'info');
             }
         }
         
         function clearBets() {
             if (isRolling) return;
 
-            // Refund bets
-            Object.values(bets).forEach(amount => balance += amount);
+            Object.keys(bets).filter(k => !k.includes('_lastChip')).forEach(k => { balance += bets[k]; });
             bets = {};
 
             // Reset point phase if bets are cleared
