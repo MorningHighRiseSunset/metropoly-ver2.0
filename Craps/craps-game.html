@@ -1404,6 +1404,14 @@ function roll3DDicePhysics(onComplete) {
                 balance += winnings;
             }
 
+            // Calculate total bet before clearing
+            const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => {
+                return sum + bets[k];
+            }, 0);
+
+            balance += winnings;
+            bets = {}; // Clear bets after resolution
+
             updateBalance();
             syncBalanceToParent();
             renderTableChips();
