@@ -1317,19 +1317,15 @@ function roll3DDicePhysics(onComplete) {
             } else {
                 // Point phase
                 if (total === point) {
-                    console.log(`[DEBUG] Point made! Point: ${point}, total: ${total}`);
-                    console.log(`[DEBUG] Current bets:`, bets);
-                    console.log(`[DEBUG] Initial winnings: $${winnings}`);
-                    
                     // Point made - Pass Line wins (pays even money), Don't Pass loses
                     if (bets['pass-line']) {
                         const netWin = bets['pass-line']; // Win 1:1
                         winnings += bets['pass-line'] * 2; // Total returned
                         message = 'Point made! Pass Line wins!';
                         addLogEntry(`🎉 POINT MADE! You hit ${point}! Pass Line wins! Net win: $${netWin}`, 'win');
-                        console.log(`[DEBUG] Pass Line win: bet=$${bets['pass-line']}, netWin=$${netWin}, total winnings=$${winnings}`);
                     } else {
                         addLogEntry(`🎯 Point made! You hit ${point}!`, 'info');
+                        message = 'Point made!';
                     }
                     // Don't Pass loses
                     if (bets["don't-pass-bar"]) {
@@ -1342,9 +1338,7 @@ function roll3DDicePhysics(onComplete) {
                         const netWin = bets[pointBetId]; // Place bets pay according to odds, simplified to 1:1 here
                         winnings += bets[pointBetId] * 2; // Total returned
                         addLogEntry(`🎰 Place bet on ${point} wins! Net win: $${netWin}`, 'win');
-                        console.log(`[DEBUG] Place bet on ${point} win: bet=$${bets[pointBetId]}, netWin=$${netWin}, total winnings=$${winnings}`);
                     }
-                    console.log(`[DEBUG] Final winnings after point made: $${winnings}`);
                     isPointPhase = false;
                     point = null;
                     // Change button text back to "Roll Dice"
@@ -1422,8 +1416,6 @@ function roll3DDicePhysics(onComplete) {
             // Calculate total bet before clearing
             const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) sum + bets[k], 0);
 
-            console.log(`[DEBUG] Point made resolution - winnings: $${winnings}, totalBet: $${totalBet}, balance before: $${balance}`);
-            
             balance += winnings;
             bets = {}; // Clear bets after resolution
             
@@ -1435,13 +1427,13 @@ function roll3DDicePhysics(onComplete) {
             if (winnings > 0) {
                 const netWin = winnings - totalBet;
                 addLogEntry(`💰 Net win: $${netWin}. Total returned: $${winnings}. New balance: $${balance}`, 'win');
-                diceResultEl.textContent += ` - ${message} Net win: $${netWin}!`;
-            } else if (message) {
+                diceResultEl.textContent += ` - ${message || 'You win!'} Net win: $${netWin}!`;
+            } else if (winnings === 0 && totalBet > 0) {
                 addLogEntry(`💸 Lost $${totalBet}. New balance: $${balance}`, 'loss');
-                diceResultEl.textContent += ` - ${message}`;
-            } else {
-                addLogEntry(`💸 Lost $${totalBet}. New balance: $${balance}`, 'loss');
-                diceResultEl.textContent += ' - House wins';
+                diceResultEl.textContent += ` - ${message || 'House wins'}`;
+            } else if (totalBet === 0) {
+                addLogEntry(`No bets placed. New balance: $${balance}`, 'info');
+                diceResultEl.textContent += ` - No bets`;
             }
         }
         
