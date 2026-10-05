@@ -2849,6 +2849,19 @@ function showJailOptionsUI() {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   if (!currentPlayer) return;
 
+  // Clear jail fallback timeout if active
+  if (window.currentJailFallbackTimeout) {
+    clearTimeout(window.currentJailFallbackTimeout);
+    window.currentJailFallbackTimeout = null;
+  }
+
+  // Stop jail video if playing
+  const jailVideo = document.getElementById('jailVideo');
+  if (jailVideo) {
+    jailVideo.pause();
+    jailVideo.currentTime = 0;
+  }
+
   document.getElementById('jailPayOverlay').style.display = 'flex';
 }
 
