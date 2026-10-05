@@ -3886,6 +3886,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if player has get out of jail cards first
     if (currentPlayer.getOutOfJailCards && currentPlayer.getOutOfJailCards > 0) {
       document.getElementById('jailPayOverlay').style.display = 'none';
+
+      // Stop jail video if playing
+      const jailVideo = document.getElementById('jailVideo');
+      if (jailVideo) {
+        jailVideo.pause();
+        jailVideo.currentTime = 0;
+      }
+
       // Use get out of jail card instead of paying
       currentPlayer.getOutOfJailCards--;
       currentPlayer.isInJail = false;
@@ -3902,6 +3910,14 @@ document.addEventListener('DOMContentLoaded', () => {
       roll3DDice();
     } else if (currentPlayer.money >= 50) {
       document.getElementById('jailPayOverlay').style.display = 'none';
+
+      // Stop jail video if playing
+      const jailVideo = document.getElementById('jailVideo');
+      if (jailVideo) {
+        jailVideo.pause();
+        jailVideo.currentTime = 0;
+      }
+
       // Player pays, gets out of jail, and rolls dice
       currentPlayer.money -= 50;
       currentPlayer.isInJail = false;
@@ -3928,7 +3944,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('jailPayOverlay').style.display = 'none';
-    
+
+    // Stop jail video if playing
+    const jailVideo = document.getElementById('jailVideo');
+    if (jailVideo) {
+      jailVideo.pause();
+      jailVideo.currentTime = 0;
+    }
+
     // Player skips turn, stays in jail
     currentPlayer.jailTurns++;
     if (currentPlayer.jailTurns >= 3) {
