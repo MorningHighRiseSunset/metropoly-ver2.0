@@ -87,8 +87,7 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
   color:var(--gold); border-radius:10px; padding:8px 12px; font-size:12px;
 }
 .help { font-size:11px; line-height:1.5; color:var(--muted); margin:0; }
-.bet-spot { transition: fill .15s ease; }
-.bet-spot:hover { fill: rgba(201,162,39,.14); }
+.bet-spot { transition: fill .15s ease; pointer-events: none; }
 .chip-mark {
   position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
   width:32px; height:32px; border-radius:50%; display:grid; place-items:center;
@@ -400,16 +399,12 @@ function addSector(svg, sector, locked){
 function drawFelt(){
   const svg=document.getElementById("felt");
   svg.replaceChildren();
-
-  // Draw simple green felt background instead of complex table image
-  const bg=svgNS("rect");
-  bg.setAttribute("x","0");
-  bg.setAttribute("y","0");
-  bg.setAttribute("width", String(VB.w));
-  bg.setAttribute("height", String(VB.h));
-  bg.setAttribute("fill", "#0c4a3e");
-  svg.appendChild(bg);
-
+  const img=svgNS("image");
+  img.setAttribute("href", TABLE_IMG);
+  img.setAttribute("x","0"); img.setAttribute("y","0");
+  img.setAttribute("width", String(VB.w)); img.setAttribute("height", String(VB.h));
+  img.setAttribute("preserveAspectRatio","xMidYMid meet");
+  svg.appendChild(img);
   const locked=state.phase!=="betting";
   PLAYER_SECTORS.forEach(s=>addSector(svg,s,locked));
   BANKER_SECTORS.forEach(s=>addSector(svg,s,locked));
