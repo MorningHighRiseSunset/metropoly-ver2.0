@@ -3406,6 +3406,7 @@ function playTileMedia(tile, isCasinoMinigame) {
     const failOver = () => {
       if (failHandled) return;
       failHandled = true;
+      console.log(`Video failed to load: ${videoUrl} (attempt ${retryAttempt + 1}/${maxRetriesPerVideo})`);
       if (retryAttempt < maxRetriesPerVideo - 1) {
         window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
         return;
@@ -3422,6 +3423,7 @@ function playTileMedia(tile, isCasinoMinigame) {
     };
 
     propertyVideo.onerror = failOver;
+    propertyVideo.onstalled = failOver; // Also handle stalled events as errors
     propertyVideo.onplaying = () => {
       propertyVideo.muted = false;
     };
