@@ -360,7 +360,21 @@ startGameBtn.addEventListener('click', () => {
 
   // Load 3D token models asynchronously to improve button responsiveness
   setTimeout(() => {
-    loadPlayerTokens();
+    // Only load human player's token initially, load AI tokens after game starts
+    const humanPlayer = gameState.players.find(p => p.isHuman);
+    if (humanPlayer) {
+      const humanIndex = gameState.players.indexOf(humanPlayer);
+      loadPlayerToken(humanPlayer, humanIndex);
+    }
+
+    // Load AI tokens after a delay to spread out the loading
+    gameState.players.forEach((player, index) => {
+      if (player.isAI) {
+        setTimeout(() => {
+          loadPlayerToken(player, index);
+        }, (index + 1) * 500); // Stagger AI token loading by 500ms each
+      }
+    });
 
     // Hide lobby and show game UI
     lobbyOverlay.style.display = 'none';
@@ -368,7 +382,7 @@ startGameBtn.addEventListener('click', () => {
 
     // Initialize UI panels
     updatePlayersList();
-    
+
     // Show carousel
     showCarousel();
   }, 10); // Small delay to allow UI to update immediately
@@ -539,7 +553,7 @@ function showGameOver(winner, playerWon) {
   document.body.appendChild(gameOverOverlay);
 }
 
-// Load 3D player tokens onto the board
+// Load 3D player tokens onto the board (only loads tokens that are actually being used)
 function loadPlayerTokens() {
   gameState.players.forEach((player, index) => {
     loadPlayerToken(player, index);
