@@ -1389,11 +1389,11 @@ function roll3DDicePhysics(onComplete) {
                     if (winnings > 0) {
                         balance += winnings;
                         addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                        updateBalance();
+                        syncBalanceToParent();
                     }
                     message = `Point is still ${point}. Roll again!`;
                     addLogEntry(`🎲 ${die1}+${die2}=${total} does not hit the point (${point}) or 7. Pass Line is still live.`, 'info');
-                    updateBalance();
-                    syncBalanceToParent();
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return;
