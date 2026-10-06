@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Lock files (keep package-lock.json but ignore others if using different package managers)
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs (if any build tools are added in the future)
+dist/
+build/
+out/
+.cache/
+
+# Vercel
+.vercel

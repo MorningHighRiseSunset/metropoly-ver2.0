@@ -1,0 +1,24 @@
+{
+  "name": "metropoly-ver2.0",
+  "version": "1.0.0",
+  "description": "Vegas Metropoly - 3D Board Game",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MorningHighRiseSunset/metropoly-ver2.0.git"
+  },
+  "keywords": [
+    "monopoly",
+    "game",
+    "3d",
+    "threejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
