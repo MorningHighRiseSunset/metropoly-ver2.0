@@ -13,6 +13,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
   <script src="dice-glb-config.js"></script>
   <script src="dice-sound.js"></script>
+  <script>
+    // Only load Vercel Insights once
+    if (!window._vercelInsightsLoaded) {
+      window._vercelInsightsLoaded = true;
+      const script = document.createElement('script');
+      script.src = 'https://cdn.vercel-insights.com/v1/script.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  </script>
 </head>
 <body>
   <!-- Lobby Overlay -->
