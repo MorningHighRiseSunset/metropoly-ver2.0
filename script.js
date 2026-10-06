@@ -3005,7 +3005,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   `;
   
   const gamePaths = {
-    'baccarat': 'Baccarat/baccarat-display.html',
+    'baccarat': 'Baccarat/index.html',
     'blackjack': 'Blackjack/blackjack.html',
     'poker': 'PokerFP/poker.html',
     'roulette': 'Roulette/index.html',
