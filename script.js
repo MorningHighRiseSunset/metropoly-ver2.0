@@ -3403,16 +3403,39 @@ function playTileMedia(tile, isCasinoMinigame) {
   function tryVideo(index, retryAttempt) {
     if (document.getElementById('propertyOverlay').style.display === 'none') return;
 
+    // Clear any pending timeout before starting new load
+    if (window.currentVideoRetryTimeout) {
+      clearTimeout(window.currentVideoRetryTimeout);
+      window.currentVideoRetryTimeout = null;
+    }
+
+    // Pause video before loading new source to prevent AbortError
+    propertyVideo.pause();
+    propertyVideo.currentTime = 0;
+
     const videoUrl = videos[index];
     propertyVideo.style.display = 'block';
-    propertyVideo.muted = true;
+    propertyVideo.muted = false; // Don't mute initially to avoid issues
     propertyVideo.volume = 1.0;
 
     let failHandled = false;
-    const failOver = () => {
+    const failOver = (error) => {
       if (failHandled) return;
       failHandled = true;
-      console.log(`Video failed to load: ${videoUrl} (attempt ${retryAttempt + 1}/${maxRetriesPerVideo})`);
+      console.log(`Video failed to load: ${videoUrl} (attempt ${retryAttempt + 1}/${maxRetriesPerVideo})`, error);
+      // For SSL errors or AbortError (interrupted by new load), skip retry and go to next video immediately
+      if (error && (error.name === 'NotSupportedError' || error.name === 'AbortError' || (error.message && error.message.includes('SSL')))) {
+        tried.add(index);
+        if (tried.size >= videos.length) {
+          console.log('All videos failed, trying image fallback');
+          showImageFallback(tile.image);
+          return;
+        }
+        const nextIndex = (index + 1) % videos.length;
+        currentVideoIndex = nextIndex;
+        tryVideo(nextIndex, 0);
+        return;
+      }
       if (retryAttempt < maxRetriesPerVideo - 1) {
         window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
         return;
@@ -3428,8 +3451,8 @@ function playTileMedia(tile, isCasinoMinigame) {
       tryVideo(nextIndex, 0);
     };
 
-    propertyVideo.onerror = failOver;
-    propertyVideo.onstalled = failOver; // Also handle stalled events as errors
+    propertyVideo.onerror = (e) => failOver(e);
+    propertyVideo.onstalled = (e) => failOver(e); // Also handle stalled events as errors
     propertyVideo.onplaying = () => {
       propertyVideo.muted = false;
     };
@@ -3445,7 +3468,7 @@ function playTileMedia(tile, isCasinoMinigame) {
       window.currentVideoRetryTimeout = null;
     }).catch(e => {
       console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
-      failOver();
+      failOver(e);
     });
   }
 
