@@ -228,10 +228,6 @@ function settle(outcome, playerBet, bankerBet, tieBet){
   if(outcome==="banker") return Math.floor(bankerBet*1.95);
   return playerBet+bankerBet+tieBet*9;
 }
-function sleep(ms){
-  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return Promise.resolve();
-  return new Promise(r=>setTimeout(r,ms));
-}
 function money(n){ return "$"+Math.round(n).toLocaleString(); }
 function chipForAmount(amount){ return [...CHIP_VALUES].reverse().find(v=>amount>=v)??5; }
 
@@ -282,78 +278,131 @@ function place(spot){
 function clearBets(){
   if(state.phase!=="betting") return;
   const returned=Object.values(state.bets).reduce((s,n)=>s+(n??0),0);
-  state.bets={}; state.bankroll+=returned; state.message="Bets cleared."; render();
+  state.bets={}; state.bankroll+=returned; state.message="Bets cleared."; document.getElementById("deal").textContent="Deal"; render();
   syncBalanceToParent();
 }
 function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.message="New eight-deck shoe."; render(); syncBalanceToParent(); }
 function addFunds(){ state.bankroll+=STARTING; persist(); state.message=`Marker for $${STARTING} accepted.`; render(); }
 
-async function deal(){
+let dealStep = 0;
+let player=[], banker=[];
+let deck;
+
+function startDeal(){
   if(state.phase!=="betting") return;
   const playerBet=totalByKind("player"), bankerBet=totalByKind("banker"), tieBet=totalByKind("tie");
   if(playerBet+bankerBet+tieBet===0){ state.message="Put a wager on the felt first."; render(); return; }
-  state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; state.message="Dealing Player's first card...";
+  state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null;
+  dealStep=0; player=[]; banker=[]; deck=state.shoe.slice();
+  state.message="Click Deal to deal Player's first card";
+  document.getElementById("deal").textContent="Deal Card";
   render();
-  let deck=state.shoe.slice();
+}
+
+function dealNextCard(){
+  if(state.phase!=="dealing") return;
   const draw=()=>{ if(deck.length<16) deck=makeShoe(); return deck.pop(); };
-  const player=[], banker=[];
-  player.push(draw()); state.playerHand=[...player]; state.shoe=deck; render(); await sleep(800);
-  state.message="Dealing Banker's first card..."; render(); await sleep(800);
-  banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; render(); await sleep(800);
-  state.message="Dealing Player's second card..."; render(); await sleep(800);
-  player.push(draw()); state.playerHand=[...player]; state.shoe=deck; render(); await sleep(800);
-  state.message="Dealing Banker's second card..."; render(); await sleep(800);
-  banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; render(); await sleep(1000);
-  let p=handTotal(player), b=handTotal(banker);
-  state.message=`Player has ${p}, Banker has ${b}. Checking for draw...`; render(); await sleep(1500);
-  if(p<8 && b<8){
-    let playerThird=null;
-    if(shouldPlayerDraw(p)){
-      state.message="Player draws a third card..."; render(); await sleep(1000);
-      const card=draw(); player.push(card); playerThird=card.value;
-      state.playerHand=[...player]; state.shoe=deck; p=handTotal(player); render(); await sleep(1200);
-    }
-    if(shouldBankerDraw(b, playerThird)){
-      state.message="Banker draws a third card..."; render(); await sleep(1000);
-      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck; b=handTotal(banker); render(); await sleep(1200);
-    }
+
+  switch(dealStep){
+    case 0:
+      player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
+      state.message="Click Deal to deal Banker's first card";
+      dealStep=1;
+      break;
+    case 1:
+      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+      state.message="Click Deal to deal Player's second card";
+      dealStep=2;
+      break;
+    case 2:
+      player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
+      state.message="Click Deal to deal Banker's second card";
+      dealStep=3;
+      break;
+    case 3:
+      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+      let p=handTotal(player), b=handTotal(banker);
+      if(p>=8 || b>=8){
+        state.message=`Player has ${p}, Banker has ${b}. Natural!`;
+        dealStep=99;
+        document.getElementById("deal").textContent="Show Result";
+      } else {
+        state.message=`Player has ${p}, Banker has ${b}. `;
+        if(shouldPlayerDraw(p)){
+          state.message+="Click Deal to deal Player's third card";
+          dealStep=4;
+        } else {
+          state.message+="Player stands. ";
+          if(shouldBankerDraw(b, null)){
+            state.message+="Click Deal to deal Banker's third card";
+            dealStep=5;
+          } else {
+            state.message+="Banker stands. Click Deal to show result";
+            dealStep=99;
+            document.getElementById("deal").textContent="Show Result";
+          }
+        }
+      }
+      break;
+    case 4:
+      const card=draw(); player.push(card); state.playerHand=[...player]; state.shoe=deck;
+      let p=handTotal(player), b=handTotal(banker);
+      if(shouldBankerDraw(b, card.value)){
+        state.message=`Player's third card: ${card.rank}. Click Deal to deal Banker's third card`;
+        dealStep=5;
+      } else {
+        state.message=`Player's third card: ${card.rank}. Banker stands. Click Deal to show result`;
+        dealStep=99;
+        document.getElementById("deal").textContent="Show Result";
+      }
+      break;
+    case 5:
+      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+      state.message="All cards dealt. Click Deal to show result";
+      dealStep=99;
+      document.getElementById("deal").textContent="Show Result";
+      break;
+    case 99:
+      const outcome=decideWinner(handTotal(player), handTotal(banker));
+      const playerBet=totalByKind("player"), bankerBet=totalByKind("banker"), tieBet=totalByKind("tie");
+      const payout=settle(outcome, playerBet, bankerBet, tieBet);
+      const originalBet = playerBet + bankerBet + tieBet;
+      const netWinnings = payout - originalBet;
+      const p=handTotal(player), b=handTotal(banker);
+      state.bankroll+=payout;
+      state.road=[...state.road, outcome].slice(-48);
+      persist();
+      state.phase="result"; state.outcome=outcome; state.shoe=deck;
+
+      // Clear bets if they lost, keep them if they won (baccarat rules)
+      if(outcome==="player" && playerBet>0){
+        // Player won - clear banker and tie bets, keep player bet
+        state.bets={};
+      } else if(outcome==="banker" && bankerBet>0){
+        // Banker won - clear player and tie bets, keep banker bet
+        state.bets={};
+      } else if(outcome==="tie" && tieBet>0){
+        // Tie won - clear all bets (tie pays 9:1, doesn't leave bet on table)
+        state.bets={};
+      } else{
+        // Lost - clear all bets
+        state.bets={};
+      }
+
+      if(outcome==="player"){
+        state.message = `🎉 PLAYER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
+      } else if(outcome==="banker"){
+        state.message = `🎉 BANKER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()} (5% commission applied)`;
+      } else {
+        state.message = `🎉 TIE! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
+      }
+
+      render();
+      syncBalanceToParent();
+      state.phase="betting"; state.message="Place your bets!"; document.getElementById("deal").textContent="Deal"; render();
+      break;
   }
-  const outcome=decideWinner(p,b);
-  const payout=settle(outcome, playerBet, bankerBet, tieBet);
-  const originalBet = playerBet + bankerBet + tieBet;
-  const netWinnings = payout - originalBet;
-  state.bankroll+=payout;
-  state.road=[...state.road, outcome].slice(-48);
-  persist();
-  state.phase="result"; state.outcome=outcome; state.shoe=deck;
-  
-  // Clear bets if they lost, keep them if they won (baccarat rules)
-  if(outcome==="player" && playerBet>0){
-    // Player won - clear banker and tie bets, keep player bet
-    state.bets={};
-  } else if(outcome==="banker" && bankerBet>0){
-    // Banker won - clear player and tie bets, keep banker bet
-    state.bets={};
-  } else if(outcome==="tie" && tieBet>0){
-    // Tie won - clear all bets (tie pays 9:1, doesn't leave bet on table)
-    state.bets={};
-  } else{
-    // Lost - clear all bets
-    state.bets={};
-  }
-  
-  if(outcome==="player"){
-    state.message = `🎉 PLAYER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
-  } else if(outcome==="banker"){
-    state.message = `🎉 BANKER WINS! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()} (5% commission applied)`;
-  } else {
-    state.message = `🎉 TIE! 🎉\nPlayer: ${p} | Banker: ${b}\nBet: $${originalBet.toLocaleString()} | Won: $${netWinnings.toLocaleString()}\nTotal returned: $${payout.toLocaleString()}`;
-  }
-  
   render();
-  syncBalanceToParent();
-  await sleep(2000);
-  state.phase="betting"; state.message="Place your bets!"; render();
 }
 
 function svgNS(name){ return document.createElementNS("http://www.w3.org/2000/svg","svg"===name?"svg":name); }
@@ -430,7 +479,7 @@ function render(){
   st.textContent=state.message;
   st.className="status"+(state.phase==="result"?" result":"");
   const dealBtn=document.getElementById("deal");
-  const locked=state.phase!=="betting";
+  const locked=state.phase!=="betting" && state.phase!=="dealing";
   dealBtn.disabled=locked; document.getElementById("clear").disabled=locked; document.getElementById("shoe").disabled=locked;
   document.getElementById("marker").hidden = state.bankroll>=5;
   renderCards(document.getElementById("playerCards"), state.playerHand);
@@ -467,7 +516,13 @@ function render(){
   drawFelt();
 }
 
-document.getElementById("deal").addEventListener("click",()=>void deal());
+document.getElementById("deal").addEventListener("click",()=>{
+  if(state.phase==="betting"){
+    startDeal();
+  } else if(state.phase==="dealing"){
+    dealNextCard();
+  }
+});
 document.getElementById("clear").addEventListener("click", clearBets);
 document.getElementById("shoe").addEventListener("click", newShoe);
 document.getElementById("marker").addEventListener("click", addFunds);
