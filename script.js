@@ -4043,9 +4043,9 @@ window.teleportToHardRock = () => {
 window.teleportToCaesars = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 29; // Caesars Palace position
-  
-  console.log('ðŸŽ° Teleporting to Caesars Palace (Position 29) - Minigame: Blackjack');
-  
+
+  console.log('ðŸŽ° Teleporting to Caesars Palace (Position 29) - Regular property (no minigame)');
+
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
   console.log(`Teleported ${gameState.players[gameState.currentPlayerIndex].name} to Caesars Palace`);
@@ -4054,12 +4054,23 @@ window.teleportToCaesars = () => {
 window.teleportToWynn = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 35; // Wynn Las Vegas position
-  
+
   console.log('ðŸŽ° Teleporting to Wynn Las Vegas (Position 35) - Minigame: Craps');
-  
+
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
   console.log(`Teleported ${gameState.players[gameState.currentPlayerIndex].name} to Wynn Las Vegas`);
+};
+
+window.teleportToCosmopolitan = () => {
+  if (!gameState.gameStarted) return console.log('Game not started');
+  const newPosition = 36; // The Cosmopolitan position
+
+  console.log('ðŸŽ° Teleporting to The Cosmopolitan (Position 36) - Minigame: Slots');
+
+  movePlayerToken(gameState.currentPlayerIndex, newPosition);
+  handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
+  console.log(`Teleported ${gameState.players[gameState.currentPlayerIndex].name} to The Cosmopolitan`);
 };
 
 // General teleport function to any position
