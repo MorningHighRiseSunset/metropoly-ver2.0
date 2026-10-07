@@ -594,6 +594,8 @@ body {
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .ai-move-player {
