@@ -360,20 +360,12 @@ startGameBtn.addEventListener('click', () => {
 
   // Load 3D token models asynchronously to improve button responsiveness
   setTimeout(() => {
-    // Only load human player's token initially, load AI tokens after game starts
-    const humanPlayer = gameState.players.find(p => p.isHuman);
-    if (humanPlayer) {
-      const humanIndex = gameState.players.indexOf(humanPlayer);
-      loadPlayerToken(humanPlayer, humanIndex);
-    }
-
-    // Load AI tokens after a delay to spread out the loading
+    // Only load the tokens that are actually in the game (human + selected AI tokens)
     gameState.players.forEach((player, index) => {
-      if (player.isAI) {
-        setTimeout(() => {
-          loadPlayerToken(player, index);
-        }, (index + 1) * 500); // Stagger AI token loading by 500ms each
-      }
+      // Stagger loading by 500ms each to spread out the load
+      setTimeout(() => {
+        loadPlayerToken(player, index);
+      }, index * 500);
     });
 
     // Hide lobby and show game UI
