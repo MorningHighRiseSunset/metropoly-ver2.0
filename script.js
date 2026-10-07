@@ -3426,14 +3426,21 @@ function playTileMedia(tile, isCasinoMinigame) {
       // For SSL errors or AbortError (interrupted by new load), skip retry and go to next video immediately
       if (error && (error.name === 'NotSupportedError' || error.name === 'AbortError' || (error.message && error.message.includes('SSL')))) {
         tried.add(index);
+        console.log(`Tried video ${index + 1}/${videos.length}, total tried: ${tried.size}`);
         if (tried.size >= videos.length) {
           console.log('All videos failed, trying image fallback');
           showImageFallback(tile.image);
           return;
         }
         const nextIndex = (index + 1) % videos.length;
-        currentVideoIndex = nextIndex;
-        tryVideo(nextIndex, 0);
+        // Skip to next index if it's already been tried
+        let nextUntried = nextIndex;
+        while (tried.has(nextUntried) && tried.size < videos.length) {
+          nextUntried = (nextUntried + 1) % videos.length;
+        }
+        currentVideoIndex = nextUntried;
+        console.log(`Trying next video at index ${nextUntried}`);
+        tryVideo(nextUntried, 0);
         return;
       }
       if (retryAttempt < maxRetriesPerVideo - 1) {
@@ -3441,14 +3448,21 @@ function playTileMedia(tile, isCasinoMinigame) {
         return;
       }
       tried.add(index);
+      console.log(`Tried video ${index + 1}/${videos.length}, total tried: ${tried.size}`);
       if (tried.size >= videos.length) {
         console.log('All videos failed, trying image fallback');
         showImageFallback(tile.image);
         return;
       }
       const nextIndex = (index + 1) % videos.length;
-      currentVideoIndex = nextIndex;
-      tryVideo(nextIndex, 0);
+      // Skip to next index if it's already been tried
+      let nextUntried = nextIndex;
+      while (tried.has(nextUntried) && tried.size < videos.length) {
+        nextUntried = (nextUntried + 1) % videos.length;
+      }
+      currentVideoIndex = nextUntried;
+      console.log(`Trying next video at index ${nextUntried}`);
+      tryVideo(nextUntried, 0);
     };
 
     propertyVideo.onerror = (e) => failOver(e);
