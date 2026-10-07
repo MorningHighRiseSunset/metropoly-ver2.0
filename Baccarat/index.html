@@ -302,6 +302,7 @@ function startDeal(){
 function dealNextCard(){
   if(state.phase!=="dealing") return;
   const draw=()=>{ if(deck.length<16) deck=makeShoe(); return deck.pop(); };
+  let p, b;
 
   switch(dealStep){
     case 0:
@@ -321,7 +322,7 @@ function dealNextCard(){
       break;
     case 3:
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
-      let p=handTotal(player), b=handTotal(banker);
+      p=handTotal(player); b=handTotal(banker);
       if(p>=8 || b>=8){
         state.message=`Player has ${p}, Banker has ${b}. Natural!`;
         dealStep=99;
@@ -346,7 +347,7 @@ function dealNextCard(){
       break;
     case 4:
       const card=draw(); player.push(card); state.playerHand=[...player]; state.shoe=deck;
-      let p=handTotal(player), b=handTotal(banker);
+      p=handTotal(player); b=handTotal(banker);
       if(shouldBankerDraw(b, card.value)){
         state.message=`Player's third card: ${card.rank}. Click Deal to deal Banker's third card`;
         dealStep=5;
@@ -368,7 +369,7 @@ function dealNextCard(){
       const payout=settle(outcome, playerBet, bankerBet, tieBet);
       const originalBet = playerBet + bankerBet + tieBet;
       const netWinnings = payout - originalBet;
-      const p=handTotal(player), b=handTotal(banker);
+      p=handTotal(player); b=handTotal(banker);
       state.bankroll+=payout;
       state.road=[...state.road, outcome].slice(-48);
       persist();
