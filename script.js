@@ -3409,13 +3409,19 @@ function playTileMedia(tile, isCasinoMinigame) {
       window.currentVideoRetryTimeout = null;
     }
 
+    // Clear any loading timeout
+    if (window.currentVideoLoadingTimeout) {
+      clearTimeout(window.currentVideoLoadingTimeout);
+      window.currentVideoLoadingTimeout = null;
+    }
+
     // Pause video before loading new source to prevent AbortError
     propertyVideo.pause();
     propertyVideo.currentTime = 0;
 
     const videoUrl = videos[index];
     propertyVideo.style.display = 'block';
-    propertyVideo.muted = false; // Don't mute initially to avoid issues
+    propertyVideo.muted = true; // Start muted to ensure autoplay works
     propertyVideo.volume = 1.0;
 
     let failHandled = false;
@@ -3468,20 +3474,36 @@ function playTileMedia(tile, isCasinoMinigame) {
     propertyVideo.onerror = (e) => failOver(e);
     propertyVideo.onstalled = (e) => failOver(e); // Also handle stalled events as errors
     propertyVideo.onplaying = () => {
-      propertyVideo.muted = false;
+      propertyVideo.muted = false; // Unmute once playing
+      console.log(`Video started playing: ${videoUrl}`);
     };
     propertyVideo.onended = function() {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
     };
 
+    // Add a timeout to detect if video never starts playing (e.g., hangs on loading)
+    window.currentVideoLoadingTimeout = setTimeout(() => {
+      if (document.getElementById('propertyOverlay').style.display === 'none') return;
+      console.log(`Video loading timeout for: ${videoUrl}`);
+      failOver(new Error('Video loading timeout'));
+    }, 8000); // 8 second timeout
+
     propertyVideo.src = videoUrl;
     propertyVideo.load();
     propertyVideo.play().then(() => {
       console.log(`Video loaded successfully: ${videoUrl}`);
       window.currentVideoRetryTimeout = null;
+      if (window.currentVideoLoadingTimeout) {
+        clearTimeout(window.currentVideoLoadingTimeout);
+        window.currentVideoLoadingTimeout = null;
+      }
     }).catch(e => {
       console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
+      if (window.currentVideoLoadingTimeout) {
+        clearTimeout(window.currentVideoLoadingTimeout);
+        window.currentVideoLoadingTimeout = null;
+      }
       failOver(e);
     });
   }
@@ -3520,6 +3542,12 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     if (window.currentVideoRetryTimeout) {
       clearTimeout(window.currentVideoRetryTimeout);
       window.currentVideoRetryTimeout = null;
+    }
+
+    // Clear any pending video loading timeout
+    if (window.currentVideoLoadingTimeout) {
+      clearTimeout(window.currentVideoLoadingTimeout);
+      window.currentVideoLoadingTimeout = null;
     }
     
     // Stop horse sound if playing
@@ -3605,19 +3633,25 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
     window.currentVideoRetryTimeout = null;
   }
 
+  // Clear any pending video loading timeout
+  if (window.currentVideoLoadingTimeout) {
+    clearTimeout(window.currentVideoLoadingTimeout);
+    window.currentVideoLoadingTimeout = null;
+  }
+
   // Stop horse sound if playing
   if (window.currentHorseSound) {
     window.currentHorseSound.pause();
     window.currentHorseSound.currentTime = 0;
     window.currentHorseSound = null;
   }
-  
+
   // Remove any image fallback
   const imageFallback = document.getElementById('propertyImageFallback');
   if (imageFallback) {
     imageFallback.remove();
   }
-  
+
   if (tile && player && player.money >= tile.price) {
     player.money -= tile.price;
     player.properties.push(tile.position);
@@ -3655,6 +3689,12 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   if (window.currentVideoRetryTimeout) {
     clearTimeout(window.currentVideoRetryTimeout);
     window.currentVideoRetryTimeout = null;
+  }
+
+  // Clear any pending video loading timeout
+  if (window.currentVideoLoadingTimeout) {
+    clearTimeout(window.currentVideoLoadingTimeout);
+    window.currentVideoLoadingTimeout = null;
   }
 
   // Stop horse sound if playing
