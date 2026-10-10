@@ -82,10 +82,6 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
   border:1px solid var(--border); background:var(--surface); color:var(--fg);
   border-radius:10px; padding:8px 12px; font-size:12px;
 }
-.marker {
-  grid-column:1 / -1; border:1px solid rgba(201,162,39,.5); background:transparent;
-  color:var(--gold); border-radius:10px; padding:8px 12px; font-size:12px;
-}
 .help { font-size:11px; line-height:1.5; color:var(--muted); margin:0; }
 .bet-spot { transition: fill .15s ease; }
 .bet-spot:hover { fill: rgba(201,162,39,.14); }
@@ -148,7 +144,6 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
         <button class="deal" id="deal">Deal</button>
         <button class="ghost" id="clear">Clear</button>
         <button class="ghost" id="shoe">New shoe</button>
-        <button class="marker" id="marker" hidden>Take $1,000 marker</button>
       </div>
       <p class="help">Place bets on Player (position 4) or Banker (position 4). Player pays even money. Banker pays 0.95 after 5% commission. Tie pays 9 for 1.</p>
     </aside>
@@ -280,7 +275,6 @@ function clearBets(){
   syncBalanceToParent();
 }
 function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.message="New eight-deck shoe."; render(); syncBalanceToParent(); }
-function addFunds(){ state.bankroll+=STARTING; persist(); state.message=`Marker for $${STARTING} accepted.`; render(); }
 
 let dealStep = 0;
 let player=[], banker=[];
@@ -475,7 +469,6 @@ function render(){
   const dealBtn=document.getElementById("deal");
   const locked=state.phase!=="betting" && state.phase!=="dealing" && state.phase!=="result";
   dealBtn.disabled=locked; document.getElementById("clear").disabled=locked; document.getElementById("shoe").disabled=locked;
-  document.getElementById("marker").hidden = state.bankroll>=5;
   renderCards(document.getElementById("playerCards"), state.playerHand);
   renderCards(document.getElementById("bankerCards"), state.bankerHand);
   const pt=document.getElementById("playerTotal"), bt=document.getElementById("bankerTotal");
@@ -529,7 +522,6 @@ document.getElementById("deal").addEventListener("click",()=>{
 });
 document.getElementById("clear").addEventListener("click", clearBets);
 document.getElementById("shoe").addEventListener("click", newShoe);
-document.getElementById("marker").addEventListener("click", addFunds);
 
 // Initialize function for main game integration
 window.initBaccaratMinigame = function(container, initialBalance, balanceCallback) {
