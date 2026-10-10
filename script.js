@@ -3472,11 +3472,6 @@ function playTileMedia(tile, isCasinoMinigame) {
     };
 
     propertyVideo.onerror = (e) => failOver(e);
-    propertyVideo.onstalled = (e) => failOver(e); // Also handle stalled events as errors
-    propertyVideo.onplaying = () => {
-      propertyVideo.muted = false; // Unmute once playing
-      console.log(`Video started playing: ${videoUrl}`);
-    };
     propertyVideo.onended = function() {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
@@ -3491,6 +3486,9 @@ function playTileMedia(tile, isCasinoMinigame) {
 
     propertyVideo.src = videoUrl;
     propertyVideo.load();
+
+    let videoHasStarted = false;
+
     propertyVideo.play().then(() => {
       console.log(`Video loaded successfully: ${videoUrl}`);
       window.currentVideoRetryTimeout = null;
@@ -3498,6 +3496,7 @@ function playTileMedia(tile, isCasinoMinigame) {
         clearTimeout(window.currentVideoLoadingTimeout);
         window.currentVideoLoadingTimeout = null;
       }
+      videoHasStarted = true;
     }).catch(e => {
       console.log(`Video play error (attempt ${retryAttempt + 1}/${maxRetriesPerVideo}):`, e);
       if (window.currentVideoLoadingTimeout) {
@@ -3506,6 +3505,28 @@ function playTileMedia(tile, isCasinoMinigame) {
       }
       failOver(e);
     });
+
+    propertyVideo.onplaying = () => {
+      propertyVideo.muted = false; // Unmute once playing
+      console.log(`Video started playing: ${videoUrl}`);
+      videoHasStarted = true;
+    };
+
+    propertyVideo.onwaiting = () => {
+      // Normal buffering event - don't trigger fallback
+      console.log(`Video buffering: ${videoUrl}`);
+    };
+
+    propertyVideo.onstalled = (e) => {
+      // Only treat stall as error if video hasn't started playing yet
+      // Once playing, stalls are normal network buffering and shouldn't trigger fallback
+      if (!videoHasStarted) {
+        console.log(`Video stalled before playing: ${videoUrl}`);
+        failOver(e);
+      } else {
+        console.log(`Video stalled during playback (normal buffering): ${videoUrl}`);
+      }
+    };
   }
 
   tryVideo(startIndex, 0);

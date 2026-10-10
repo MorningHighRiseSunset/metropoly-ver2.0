@@ -274,7 +274,7 @@ function clearBets(){
   state.bets={}; state.bankroll+=returned; state.message="Bets cleared."; document.getElementById("deal").textContent="Deal"; render();
   syncBalanceToParent();
 }
-function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.message="New eight-deck shoe."; render(); syncBalanceToParent(); }
+function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.road=[]; state.message="New eight-deck shoe."; render(); syncBalanceToParent(); }
 
 let dealStep = 0;
 let player=[], banker=[];
