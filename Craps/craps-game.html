@@ -3,6 +3,7 @@
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="../dice-sound.js"></script>
     <style>
         body {
             margin: 0;
@@ -1141,6 +1142,11 @@ function roll3DDicePhysics(onComplete) {
             isRolling = true;
             rollBtn.disabled = true;
             clearBtn.disabled = true;
+
+            // Play dice rolling sound
+            if (typeof playDiceRollSound === 'function') {
+                playDiceRollSound();
+            }
             
             // Log that dice are rolling
             const phaseText = isPointPhase ? `(Point: ${point})` : '(Come-out roll)';
