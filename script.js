@@ -1102,7 +1102,8 @@ const hotelCasinoImages = [
   'Images/santafecasino.jpg',
   'Images/themirage.jpg',
   'Images/thesphere.jpg',
-  'Images/welcome-to-caesars-palace.jpg'
+  'Images/welcome-to-caesars-palace.jpg',
+  'Images/tennis.jpg'
 ];
 
 let carouselImageList = [];
@@ -1397,7 +1398,7 @@ boardConfig = [
   { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, isCasino: true, casinoGame: 'slots', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
   { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
-  { name: 'Darling Tennis Center', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '7901 W Washington Ave, Las Vegas, NV 89128', rent: [31, 61, 181, 544, 770, 935] }
+  { name: 'T-Mobile Arena', type: 'property', color: '#4B0082', price: 165, position: 39, videos: [], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] }
 ];
 
 function create3DBoard() {
