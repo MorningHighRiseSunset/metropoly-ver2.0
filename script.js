@@ -1102,8 +1102,7 @@ const hotelCasinoImages = [
   'Images/santafecasino.jpg',
   'Images/themirage.jpg',
   'Images/thesphere.jpg',
-  'Images/welcome-to-caesars-palace.jpg',
-  'Images/tennis.jpg'
+  'Images/welcome-to-caesars-palace.jpg'
 ];
 
 let carouselImageList = [];
@@ -2505,8 +2504,12 @@ function handleLanding(player, position, canRollAgain = false) {
 const chanceCards = [
   { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
   { message: "Advance to Las Vegas Grand Prix", action: "advance_to", position: 3 },
-  { message: "Advance to Bellagio - If you pass Go, collect $200", action: "advance_to", position: 15 },
-  { message: "Advance to The Cosmopolitan - If you pass Go, collect $200", action: "advance_to", position: 36 },
+  { message: "Advance to Bellagio (Blackjack) - If you pass Go, collect $200", action: "advance_to", position: 15 },
+  { message: "Advance to The Cosmopolitan (Slots) - If you pass Go, collect $200", action: "advance_to", position: 36 },
+  { message: "Advance to Venetian (Baccarat) - If you pass Go, collect $200", action: "advance_to", position: 13 },
+  { message: "Advance to Santa Fe Hotel and Casino (Poker) - If you pass Go, collect $200", action: "advance_to", position: 18 },
+  { message: "Advance to Hard Rock Hotel (Roulette) - If you pass Go, collect $200", action: "advance_to", position: 21 },
+  { message: "Advance to Wynn Las Vegas (Craps) - If you pass Go, collect $200", action: "advance_to", position: 35 },
   { message: "Casino dividend of $50", action: "gain_money", amount: 50 },
   { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
   { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
