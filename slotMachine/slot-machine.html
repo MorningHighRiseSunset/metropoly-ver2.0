@@ -513,6 +513,13 @@
       const maxBet = Math.max(5, balance);
       betSlider.max = maxBet;
 
+      // Don't change bet during spin - it's already locked in
+      if (spinning) {
+        betSlider.disabled = true;
+        spinBtn.disabled = true;
+        return;
+      }
+
       // Ensure bet doesn't exceed max or balance
       if (bet > maxBet) {
         bet = maxBet;
@@ -582,16 +589,9 @@
     async function spin() {
       if (spinning || balance < bet) return;
 
-      // Ensure bet is valid before spinning
-      const maxBet = Math.max(5, balance);
-      if (bet > maxBet) {
-        bet = maxBet;
-        betSlider.value = bet;
-        betDisplay.textContent = bet;
-      }
-
       spinning = true;
-      balance -= bet;
+      const actualBet = bet; // Store the actual bet amount before any changes
+      balance -= actualBet;
       syncBalanceToParent(); // Sync bet deduction immediately
       lastWinEl.textContent = '0';
       winLine.classList.remove('active');
@@ -666,7 +666,7 @@
 
         if (results[0] === results[1] && results[1] === results[2]) {
           if (results[0] === '7️⃣' || results[0] === '💎') {
-            const netWin = getNetWin(payout);
+            const netWin = payout - actualBet;
             setMessage(results[0] === '7️⃣' ? `JACKPOT! +$${netWin}` : `BIG WIN! +$${netWin}`, 'jackpot');
             particleBurst(cx, cy, 28);
             setTimeout(() => particleBurst(cx, cy, 18), 200);
