@@ -707,7 +707,7 @@ function updateStartButton() {
   const totalPlayers = 1 + gameState.aiCount;
   const canStart = hasToken && totalPlayers >= 2;
 
-  console.log('updateStartButton called - hasToken:', hasToken, 'selectedToken:', gameState.selectedToken);
+  console.log('updateStartButton called - hasToken:', hasToken, 'selectedToken:', gameState.selectedToken, 'isMultiplayer:', gameState.gameMode === 'multiplayer', 'isHost:', gameState.isHost);
 
   // In multiplayer mode, check if opponent has selected token and is ready
   const isMultiplayer = gameState.gameMode === 'multiplayer';
