@@ -85,7 +85,7 @@ function setupConnection(conn) {
     conn.send({
       type: 'player_info',
       playerId: gameState.isHost ? 0 : gameState.peer.id, // Send own peer ID
-      playerName: gameState.isHost ? 'Host' : 'You',
+      playerName: gameState.isHost ? 'Host' : 'Player 2',
       token: gameState.selectedToken || null, // Don't send if not selected
       isHost: gameState.isHost
     });
@@ -126,13 +126,13 @@ function handlePeerMessage(data, conn) {
           playerName: 'Host',
           token: gameState.selectedToken
         });
+        // Update start button
+        updateStartButton();
       } else {
         // Guest receives connection acknowledgment
         console.log('Guest connected to host');
-        // Guest adds themselves to lobby (as second player)
-        if (!document.getElementById(`player-${gameState.peer.id}`)) {
-          addPlayerToLobby(gameState.peer.id, 'You (Joining)', null);
-        }
+        // Guest does NOT add themselves - they're already in the HTML as hostPlayer div
+        // They will be added by the host receiving their player_info
       }
       break;
       
@@ -140,7 +140,7 @@ function handlePeerMessage(data, conn) {
       // Guest receives host info - update the hostPlayer div
       const hostPlayerName = document.querySelector('#hostPlayer .player-name');
       if (hostPlayerName) {
-        hostPlayerName.textContent = data.playerName;
+        hostPlayerName.textContent = 'Host';
       }
       const hostTokenImg = document.getElementById('hostToken');
       const hostTokenEmoji = document.getElementById('hostTokenEmoji');
@@ -216,6 +216,15 @@ function handlePeerMessage(data, conn) {
       
     case 'token_updated':
       handleTokenUpdated(data);
+      break;
+      
+    case 'start_game':
+      // Guest receives start signal from host
+      if (!gameState.isHost) {
+        console.log('Host started the game, starting on guest side');
+        // Trigger the same start game logic
+        startGameBtn.click();
+      }
       break;
   }
 }
@@ -544,11 +553,7 @@ function checkGameIdInURL() {
     if (inviteLink) {
       inviteLink.value = window.location.href;
     }
-    // Update player name to show they're joining
-    const hostPlayerName = document.querySelector('#hostPlayer .player-name');
-    if (hostPlayerName) {
-      hostPlayerName.textContent = 'You (Joining)';
-    }
+    // Don't change hostPlayer name - it will be updated by host info
     // Hide invite section for guests
     const inviteSection = document.querySelector('.invite-section');
     if (inviteSection) {
@@ -765,32 +770,36 @@ function updateStartButton() {
   let canStartMultiplayer = false;
   
   if (isMultiplayer) {
+    // Only host can start the game in multiplayer
+    if (!gameState.isHost) {
+      canStartMultiplayer = false;
+      startGameBtn.textContent = 'Waiting for host...';
+      startGameBtn.disabled = true;
+      startGameBtn.classList.remove('enabled');
+      return;
+    }
+    
     // Check if current player has a token
     if (!hasToken) {
       canStartMultiplayer = false;
     } else {
       // For host: check if all connected guests have selected tokens
-      if (gameState.isHost) {
-        const allGuestsHaveTokens = gameState.connections.every(conn => {
-          const guestPlayerItem = document.getElementById(`player-${conn.remotePeerId}`);
-          if (!guestPlayerItem) return false;
-          const hasTokenImg = guestPlayerItem.querySelector('.player-token-img');
-          const hasTokenEmoji = guestPlayerItem.querySelector('.player-token');
-          // Has token if there's an image AND no emoji placeholder
-          return hasTokenImg && !hasTokenEmoji;
-        });
-        canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
-      } else {
-        // For guest: just need to have selected token (host will check)
-        canStartMultiplayer = true;
-      }
+      const allGuestsHaveTokens = gameState.connections.every(conn => {
+        const guestPlayerItem = document.getElementById(`player-${conn.remotePeerId}`);
+        if (!guestPlayerItem) return false;
+        const hasTokenImg = guestPlayerItem.querySelector('.player-token-img');
+        const hasTokenEmoji = guestPlayerItem.querySelector('.player-token');
+        // Has token if there's an image AND no emoji placeholder
+        return hasTokenImg && !hasTokenEmoji;
+      });
+      canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
     }
   }
 
   if (canStart || canStartMultiplayer) {
     startGameBtn.disabled = false;
     startGameBtn.classList.add('enabled');
-    startGameBtn.textContent = isMultiplayer ? 'Start Game' : 'Start Game';
+    startGameBtn.textContent = 'Start Game';
   } else {
     startGameBtn.disabled = true;
     startGameBtn.classList.remove('enabled');
@@ -801,6 +810,20 @@ function updateStartButton() {
 // Start game
 startGameBtn.addEventListener('click', () => {
   if (startGameBtn.disabled) return;
+
+  // In multiplayer mode, only host can start
+  if (gameState.gameMode === 'multiplayer' && !gameState.isHost) {
+    console.log('Guest cannot start game, waiting for host');
+    return;
+  }
+
+  // In multiplayer mode, broadcast start to all guests
+  if (gameState.gameMode === 'multiplayer' && gameState.isHost) {
+    broadcastToAll({
+      type: 'start_game',
+      players: [] // Will be populated with all player data
+    });
+  }
 
   // Initialize players
   let playerData = {
