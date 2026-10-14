@@ -4,6 +4,7 @@ const gameState = {
   selectedModel: null,
   gameMode: 'ai', // 'multiplayer' or 'ai'
   gameId: null, // Store game ID from URL
+  isHost: true, // True if this player created the game, false if joining
   aiCount: 0,
   aiSelectedTokens: [], // Store AI token selections from lobby
   players: [],
@@ -158,10 +159,16 @@ function checkGameIdInURL() {
   if (gameId) {
     gameState.gameId = gameId;
     gameState.gameMode = 'multiplayer';
-    console.log(`Joining game: ${gameId}`);
+    gameState.isHost = false; // This player is joining, not hosting
+    console.log(`Joining game: ${gameId} as guest`);
     // Update invite link to show the game ID
     if (inviteLink) {
       inviteLink.value = window.location.href;
+    }
+    // Update player name to show they're joining
+    const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+    if (hostPlayerName) {
+      hostPlayerName.textContent = 'You (Joining)';
     }
     // Show visual indicator in lobby
     const aiSection = document.getElementById('aiSection');
@@ -173,17 +180,24 @@ function checkGameIdInURL() {
     // NOTE: Multiplayer requires backend/WebSocket server for real-time connection
     // Currently this only sets the game ID and mode, but doesn't actually connect players
     // TODO: Implement WebSocket server and real-time sync for actual multiplayer
+  } else {
+    // No game ID in URL, this is a new game - host mode
+    gameState.isHost = true;
+    // Generate a game ID for the host
+    const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    gameState.gameId = newGameId;
+    console.log(`Creating new game: ${newGameId} as host`);
+    // Update invite link with the new game ID
+    if (inviteLink) {
+      inviteLink.value = generateInviteLink();
+    }
   }
 }
 
 // Generate invite link
 function generateInviteLink() {
   const baseUrl = window.location.origin + window.location.pathname;
-  const gameId = gameState.gameId || Math.random().toString(36).substring(2, 8).toUpperCase();
-  if (!gameState.gameId) {
-    gameState.gameId = gameId;
-  }
-  return `${baseUrl}?game=${gameId}`;
+  return `${baseUrl}?game=${gameState.gameId}`;
 }
 
 // Initialize invite link if element exists
