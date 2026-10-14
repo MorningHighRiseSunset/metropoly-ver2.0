@@ -131,8 +131,10 @@ function handlePeerMessage(data, conn) {
       } else {
         // Guest receives connection acknowledgment
         console.log('Guest connected to host');
-        // Guest does NOT add themselves - they're already in the HTML as hostPlayer div
-        // They will be added by the host receiving their player_info
+        // Guest adds themselves to their own lobby display
+        if (!document.getElementById(`player-${gameState.peer.id}`)) {
+          addPlayerToLobby(gameState.peer.id, 'You', null);
+        }
       }
       break;
       
@@ -655,15 +657,17 @@ tokenOptions.forEach(option => {
     }
 
     // If in multiplayer mode and token is selected, broadcast to peers
-    if (gameState.gameMode === 'multiplayer' && gameState.connections.length > 0) {
+    if (gameState.gameMode === 'multiplayer') {
       // Only broadcast if we're the host (guests don't need to broadcast their token to host)
       if (gameState.isHost) {
-        broadcastToAll({
-          type: 'token_updated',
-          playerId: 0,
-          token: gameState.selectedToken
-        });
-        console.log('Host broadcasted token update to peers');
+        if (gameState.connections.length > 0) {
+          broadcastToAll({
+            type: 'token_updated',
+            playerId: 0,
+            token: gameState.selectedToken
+          });
+          console.log('Host broadcasted token update to peers');
+        }
         // Update start button state
         updateStartButton();
       } else {
@@ -676,13 +680,13 @@ tokenOptions.forEach(option => {
             token: gameState.selectedToken
           });
           console.log('Guest sent token selection to host with ID:', myPeerId);
-          // Update start button state for guest
-          updateStartButton();
         }
+        // Update start button state for guest
+        updateStartButton();
       }
+    } else {
+      updateStartButton();
     }
-
-    updateStartButton();
   });
 });
 
