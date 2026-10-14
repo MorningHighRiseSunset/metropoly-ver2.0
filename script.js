@@ -210,8 +210,10 @@ function handlePeerMessage(data, conn) {
               console.log('Replaced emoji with token image');
             }
             console.log(`Updated guest ${data.playerId} token to ${data.token}`);
+            console.log('About to call updateStartButton');
             // Update start button state
             updateStartButton();
+            console.log('Called updateStartButton');
           } else {
             console.error(`Could not find player item for ID: ${data.playerId}`);
           }
@@ -816,12 +818,18 @@ function updateStartButton() {
       // For host: check if all connected guests have selected tokens using connection flags
       console.log('Checking guest tokens, connections:', gameState.connections.length);
       console.log('Connections array:', gameState.connections.map(c => ({ id: c.remotePeerId, hasToken: c.hasToken })));
-      const allGuestsHaveTokens = gameState.connections.every(conn => {
-        console.log('Guest connection hasToken:', conn.hasToken, 'ID:', conn.remotePeerId);
-        return conn.hasToken === true;
+      
+      // Check each connection individually
+      let allHaveTokens = true;
+      gameState.connections.forEach((conn, index) => {
+        console.log(`Connection ${index}: ID=${conn.remotePeerId}, hasToken=${conn.hasToken}, type=${typeof conn.hasToken}`);
+        if (conn.hasToken !== true) {
+          allHaveTokens = false;
+        }
       });
-      console.log('All guests have tokens:', allGuestsHaveTokens);
-      canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
+      
+      console.log('All guests have tokens:', allHaveTokens);
+      canStartMultiplayer = allHaveTokens && gameState.connections.length > 0;
     }
   }
 
