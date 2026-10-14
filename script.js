@@ -638,6 +638,7 @@ tokenOptions.forEach(option => {
     } else {
       // Guest updates their own display (find their player item)
       const myPlayerItem = document.getElementById(`player-${gameState.peer.id}`);
+      console.log('Guest updating own display, player item:', myPlayerItem, 'peer ID:', gameState.peer.id);
       if (myPlayerItem) {
         let tokenImg = myPlayerItem.querySelector('.player-token-img');
         let tokenEmoji = myPlayerItem.querySelector('.player-token');
@@ -645,6 +646,7 @@ tokenOptions.forEach(option => {
         if (tokenImg) {
           tokenImg.src = selectedImg;
           tokenImg.style.display = 'block';
+          console.log('Updated existing token image');
         } else if (tokenEmoji) {
           tokenEmoji.remove();
           const newImg = document.createElement('img');
@@ -652,7 +654,10 @@ tokenOptions.forEach(option => {
           newImg.src = selectedImg;
           newImg.alt = gameState.selectedToken;
           myPlayerItem.insertBefore(newImg, myPlayerItem.querySelector('.player-name'));
+          console.log('Replaced emoji with token image');
         }
+      } else {
+        console.error('Could not find guest player item for ID:', gameState.peer.id);
       }
     }
 
@@ -777,7 +782,11 @@ function updateStartButton() {
     // Only host can start the game in multiplayer
     if (!gameState.isHost) {
       canStartMultiplayer = false;
-      startGameBtn.textContent = 'Waiting for host...';
+      if (hasToken) {
+        startGameBtn.textContent = 'Ready (Waiting for host...)';
+      } else {
+        startGameBtn.textContent = 'Select a token';
+      }
       startGameBtn.disabled = true;
       startGameBtn.classList.remove('enabled');
       return;
