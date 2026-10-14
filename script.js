@@ -113,6 +113,10 @@ function handleNetworkMessage(data) {
     case 'GAME_STATE':
       // Guest receives initial game state from host
       console.log('Received game state from host');
+      // Store host's token
+      if (data.hostToken) {
+        gameState.opponentToken = data.hostToken;
+      }
       // Reset player count to 1 (host is already in DOM)
       const playerCount = document.getElementById('playerCount');
       playerCount.textContent = '1';
@@ -165,10 +169,55 @@ function handleNetworkMessage(data) {
     case 'START_GAME':
       // Start the game
       console.log('Starting game');
-      // For guest, bypass the button click and directly start the game
+      // For guest, initialize game with their player and host as opponent
       if (!gameState.isHost) {
-        startGameBtn.disabled = false; // Enable the button temporarily
-        startGameBtn.click();
+        const playerData = {
+          name: 'You',
+          token: gameState.selectedToken,
+          model: gameState.selectedModel,
+          isHuman: true,
+          isAI: false,
+          position: 0,
+          money: 2500,
+          isInJail: false,
+          jailTurns: 0,
+          properties: [],
+          getOutOfJailCards: 0
+        };
+
+        // Add walk model for female character
+        if (gameState.selectedToken === 'WhiteGirlIdle') {
+          playerData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+        }
+
+        gameState.players = [playerData];
+
+        // Add host as opponent
+        if (gameState.opponentToken) {
+          const hostData = {
+            name: 'Host',
+            token: gameState.opponentToken,
+            model: getTokenModel(gameState.opponentToken),
+            isHuman: true,
+            isAI: false,
+            position: 0,
+            money: 2500,
+            isInJail: false,
+            jailTurns: 0,
+            properties: [],
+            getOutOfJailCards: 0
+          };
+
+          if (gameState.opponentToken === 'WhiteGirlIdle') {
+            hostData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+          }
+
+          gameState.players.push(hostData);
+          console.log('Added host as opponent:', hostData);
+        }
+
+        gameState.gameStarted = true;
+        initializeGame();
       }
       break;
       
@@ -189,6 +238,7 @@ function sendGameState() {
   
   gameState.conn.send({
     type: 'GAME_STATE',
+    hostToken: gameState.selectedToken,
     players: [
       { id: 0, name: 'Host', token: gameState.selectedToken }
     ]
@@ -775,6 +825,37 @@ function updateStartButton() {
   }
 }
 
+// Initialize game logic (shared between host and guest)
+function initializeGame() {
+  gameState.gameStarted = true;
+
+  // Start animation loop when game starts
+  animateThreeJS();
+
+  // Create the 3D board
+  create3DBoard();
+
+  // Load 3D token models asynchronously to improve button responsiveness
+  setTimeout(() => {
+    // Only load the tokens that are actually in the game (human + selected AI tokens)
+    gameState.players.forEach((player, index) => {
+      // Stagger loading by 500ms each to spread out the load
+      setTimeout(() => {
+        loadTokenModel(player, index);
+      }, index * 500);
+    });
+
+    // Update the UI after tokens are loaded
+    setTimeout(() => {
+      hideLobby();
+      updatePlayersList();
+
+      // Show carousel
+      showCarousel();
+    }, 10); // Small delay to allow UI to update immediately
+  }, 100);
+}
+
 // Start game
 startGameBtn.addEventListener('click', () => {
   if (startGameBtn.disabled) return;
@@ -900,32 +981,8 @@ startGameBtn.addEventListener('click', () => {
 
   gameState.gameStarted = true;
 
-  // Start animation loop when game starts
-  animateThreeJS();
-
-  // Create the 3D board
-  create3DBoard();
-
-  // Load 3D token models asynchronously to improve button responsiveness
-  setTimeout(() => {
-    // Only load the tokens that are actually in the game (human + selected AI tokens)
-    gameState.players.forEach((player, index) => {
-      // Stagger loading by 500ms each to spread out the load
-      setTimeout(() => {
-        loadPlayerToken(player, index);
-      }, index * 500);
-    });
-
-    // Hide lobby and show game UI
-    lobbyOverlay.style.display = 'none';
-    gameUI.style.display = 'flex';
-
-    // Initialize UI panels
-    updatePlayersList();
-
-    // Show carousel
-    showCarousel();
-  }, 10); // Small delay to allow UI to update immediately
+  // Call the shared initialization function
+  initializeGame();
 });
 
 // Update players list in UI
