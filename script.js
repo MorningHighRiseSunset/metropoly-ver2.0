@@ -163,7 +163,11 @@ function handleNetworkMessage(data) {
     case 'START_GAME':
       // Start the game
       console.log('Starting game');
-      startGameBtn.click(); // Trigger the start game button click
+      // For guest, bypass the button click and directly start the game
+      if (!gameState.isHost) {
+        startGameBtn.disabled = false; // Enable the button temporarily
+        startGameBtn.click();
+      }
       break;
       
     case 'PLAYER_ACTION':
