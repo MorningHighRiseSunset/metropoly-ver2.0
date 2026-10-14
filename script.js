@@ -4102,6 +4102,8 @@ function playTileMedia(tile, isCasinoMinigame) {
       }
     };
 
+  } // End of tryVideo function
+
   tryVideo(startIndex, 0);
 }
 
