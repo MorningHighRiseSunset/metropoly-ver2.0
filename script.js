@@ -517,6 +517,12 @@ function checkGameIdInURL() {
       aiControls.style.display = 'none';
     }
     
+    // Update hostPlayer name to "Host" for guests
+    const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+    if (hostPlayerName) {
+      hostPlayerName.textContent = 'Host';
+    }
+    
     // Update UI to show joining
     const connectionStatus = document.getElementById('connectionStatus');
     if (connectionStatus) {
