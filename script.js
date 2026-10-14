@@ -52,6 +52,8 @@ function connectPeer() {
       
       connection.on('open', () => {
         document.getElementById('connectionStatus').textContent = 'Opponent connected!';
+        // Add guest to host's lobby
+        addPlayerToLobby(connection.peer, 'Player 2', null);
         // Send game state to guest (host's token info)
         sendGameState();
       });
@@ -746,8 +748,11 @@ startGameBtn.addEventListener('click', () => {
 
   // In multiplayer mode, only host can start
   if (gameState.gameMode === 'multiplayer' && !gameState.isHost) {
-    console.log('Guest clicked Ready - this is just visual, waiting for host to start');
-    // Guest pressing "Ready" is just a visual indicator, they can't actually start
+    console.log('Guest clicked Ready - visual indicator only');
+    // Change button text to show ready state
+    startGameBtn.textContent = 'Waiting for host...';
+    startGameBtn.disabled = true;
+    startGameBtn.classList.remove('enabled');
     return;
   }
 
