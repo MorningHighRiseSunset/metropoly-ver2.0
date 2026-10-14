@@ -80,6 +80,7 @@ function setupConnection(conn) {
     // For host: conn.peer is the guest's ID
     // For guest: conn.peer is the host's ID
     conn.remotePeerId = conn.peer;
+    conn.hasToken = false; // Track if this connection has selected a token
     
     // Send player info (without token initially)
     conn.send({
@@ -171,6 +172,10 @@ function handlePeerMessage(data, conn) {
         // Update the guest's token in the lobby using the connection
         const guestConn = gameState.connections.find(c => c.remotePeerId === data.playerId);
         if (guestConn) {
+          // Mark connection as having token
+          guestConn.hasToken = true;
+          console.log('Marked connection as having token');
+          
           // Find the player item by peer ID
           const playerItem = document.getElementById(`player-${data.playerId}`);
           console.log('Player item found:', !!playerItem);
@@ -205,8 +210,8 @@ function handlePeerMessage(data, conn) {
               console.log('Replaced emoji with token image');
             }
             console.log(`Updated guest ${data.playerId} token to ${data.token}`);
-            // Update start button state with small delay to ensure DOM is updated
-            setTimeout(() => updateStartButton(), 50);
+            // Update start button state
+            updateStartButton();
           } else {
             console.error(`Could not find player item for ID: ${data.playerId}`);
           }
@@ -808,20 +813,11 @@ function updateStartButton() {
       canStartMultiplayer = false;
     } else {
       console.log('Host has selected a token, checking guests...');
-      // For host: check if all connected guests have selected tokens
+      // For host: check if all connected guests have selected tokens using connection flags
       console.log('Checking guest tokens, connections:', gameState.connections.length);
       const allGuestsHaveTokens = gameState.connections.every(conn => {
-        const guestPlayerItem = document.getElementById(`player-${conn.remotePeerId}`);
-        console.log('Guest player item:', guestPlayerItem, 'ID:', conn.remotePeerId);
-        if (!guestPlayerItem) {
-          console.log('Guest player item not found');
-          return false;
-        }
-        const hasTokenImg = guestPlayerItem.querySelector('.player-token-img');
-        const hasTokenEmoji = guestPlayerItem.querySelector('.player-token');
-        console.log('Has token img:', !!hasTokenImg, 'Has emoji:', !!hasTokenEmoji);
-        // Has token if there's an image AND no emoji placeholder
-        return hasTokenImg && !hasTokenEmoji;
+        console.log('Guest connection hasToken:', conn.hasToken, 'ID:', conn.remotePeerId);
+        return conn.hasToken === true;
       });
       console.log('All guests have tokens:', allGuestsHaveTokens);
       canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
