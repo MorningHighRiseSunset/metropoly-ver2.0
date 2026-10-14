@@ -16,7 +16,8 @@ const gameState = {
   isHost: true, // True if host, false if guest
   myPeerId: null, // My peer ID
   opponentPeerId: null, // Opponent's peer ID
-  opponentReady: false // Track if opponent is ready
+  opponentReady: false, // Track if opponent is ready
+  opponentToken: null // Track opponent's selected token
 };
 
 // Turn completion flag to prevent multiple rolls
@@ -149,6 +150,7 @@ function handleNetworkMessage(data) {
     case 'TOKEN_SELECTED':
       // Player received opponent's token selection
       console.log('Opponent selected token:', data.token);
+      gameState.opponentToken = data.token; // Store opponent's token
       updateOpponentToken(data.token);
       updateStartButton();
       break;
@@ -817,6 +819,31 @@ startGameBtn.addEventListener('click', () => {
   }
 
   gameState.players = [playerData];
+
+  // Add opponent player in multiplayer mode
+  if (gameState.gameMode === 'multiplayer' && gameState.conn && gameState.opponentToken) {
+    const opponentData = {
+      name: 'Player 2',
+      token: gameState.opponentToken,
+      model: getTokenModel(gameState.opponentToken),
+      isHuman: true,
+      isAI: false,
+      position: 0,
+      money: 2500,
+      isInJail: false,
+      jailTurns: 0,
+      properties: [],
+      getOutOfJailCards: 0
+    };
+    
+    // Add walk model for female character
+    if (gameState.opponentToken === 'WhiteGirlIdle') {
+      opponentData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+    }
+    
+    gameState.players.push(opponentData);
+    console.log('Added opponent player:', opponentData);
+  }
 
   // Add AI players if in AI mode
   if (gameState.aiCount > 0) {
@@ -4835,5 +4862,21 @@ window.teleportTo = (position) => {
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
   console.log(`Teleported ${gameState.players[gameState.currentPlayerIndex].name} to position ${newPosition}`);
 };
+
+// ===== HELPER FUNCTIONS =====
+
+function getTokenModel(token) {
+  const modelMap = {
+    'RollsRoyce': 'Models/RollsRoyce/rollsRoyceCarAnim.glb',
+    'Helicopter': 'Models/Helicopter/helicopter.glb',
+    'TopHat': 'Models/TopHat/tophat.glb',
+    'Shoe': 'Models/Shoe/shoe.glb',
+    'Cheeseburger': 'Models/Cheeseburger/cheeseburger.glb',
+    'CoffeeCup': 'Models/CoffeeCup/coffee.gltf',
+    'Football': 'Models/Football/football.glb',
+    'WhiteGirlIdle': 'Models/WhiteGirlIdle/Idle.fbx'
+  };
+  return modelMap[token] || null;
+}
 
 // ===== INITIALIZE =====
