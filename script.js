@@ -1291,11 +1291,6 @@ function updatePlayerMoney() {
 
 // Check if game should end (someone reached 10k or went bankrupt)
 function checkGameEnd() {
-  // Don't check game end while casino is open (player might have all-in bet on table)
-  if (document.querySelector('.casino-overlay')) {
-    return;
-  }
-
   const winningAmount = 10000;
 
   for (const player of gameState.players) {
@@ -3947,7 +3942,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
         currentPlayer.money = newBalance;
         updatePlayerMoney();
         updatePlayersList();
-        // checkGameEnd() removed - will check when casino closes
+        checkGameEnd(); // Check for game end immediately when balance changes
       };
       
       // Initialize the minigame with player's balance
