@@ -1386,7 +1386,7 @@ boardConfig = [
   { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], model: 'Models/Ferris Wheel/countyfairferrisWheel.glb', address: '', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
-  { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4'], image: 'Images/LasVegasSphere.jpg', address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], image: 'Images/LasVegasSphere.jpg', address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
   { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
   { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
@@ -3472,31 +3472,29 @@ function playTileMedia(tile, isCasinoMinigame) {
     const failOver = (error) => {
       if (failHandled) return;
       failHandled = true;
-      console.log(`Video failed to load: ${videoUrl} (attempt ${retryAttempt + 1}/${maxRetriesPerVideo})`, error);
-      // For SSL errors or AbortError (interrupted by new load), skip retry and go to next video immediately
-      if (error && (error.name === 'NotSupportedError' || error.name === 'AbortError' || (error.message && error.message.includes('SSL')))) {
-        tried.add(index);
-        console.log(`Tried video ${index + 1}/${videos.length}, total tried: ${tried.size}`);
-        if (tried.size >= videos.length) {
-          console.log('All videos failed, trying image fallback');
-          showImageFallback(tile.image);
-          return;
-        }
-        const nextIndex = (index + 1) % videos.length;
-        // Skip to next index if it's already been tried
-        let nextUntried = nextIndex;
-        while (tried.has(nextUntried) && tried.size < videos.length) {
-          nextUntried = (nextUntried + 1) % videos.length;
-        }
-        currentVideoIndex = nextUntried;
-        console.log(`Trying next video at index ${nextUntried}`);
-        tryVideo(nextUntried, 0);
+      console.log(`Video failed to load: ${videoUrl}`, error);
+
+      // Mark this video as tried and move to next immediately
+      tried.add(index);
+      console.log(`Marked video ${index + 1}/${videos.length} as failed, total tried: ${tried.size}`);
+
+      if (tried.size >= videos.length) {
+        console.log('All videos failed, trying image fallback');
+        showImageFallback(tile.image);
         return;
       }
-      if (retryAttempt < maxRetriesPerVideo - 1) {
-        window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 1000);
-        return;
+
+      const nextIndex = (index + 1) % videos.length;
+      // Skip to next index if it's already been tried
+      let nextUntried = nextIndex;
+      while (tried.has(nextUntried) && tried.size < videos.length) {
+        nextUntried = (nextUntried + 1) % videos.length;
       }
+      currentVideoIndex = nextUntried;
+      console.log(`Trying next video at index ${nextUntried}`);
+      tryVideo(nextUntried, 0);
+      return;
+    };
       tried.add(index);
       console.log(`Tried video ${index + 1}/${videos.length}, total tried: ${tried.size}`);
       if (tried.size >= videos.length) {
@@ -3515,7 +3513,11 @@ function playTileMedia(tile, isCasinoMinigame) {
       tryVideo(nextUntried, 0);
     };
 
-    propertyVideo.onerror = (e) => failOver(e);
+    propertyVideo.onerror = (e) => {
+      console.log(`Video error for ${videoUrl}:`, e);
+      // For any error, mark as tried and skip to next video immediately
+      failOver(new Error('Video load error - skipping to next'));
+    };
     propertyVideo.onended = function() {
       propertyVideo.pause();
       propertyVideo.currentTime = 0;
