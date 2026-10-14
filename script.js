@@ -52,9 +52,7 @@ function connectPeer() {
       
       connection.on('open', () => {
         document.getElementById('connectionStatus').textContent = 'Opponent connected!';
-        // Add host to lobby
-        addPlayerToLobby(0, 'Host', gameState.selectedToken);
-        // Send game state to guest
+        // Send game state to guest (host's token info)
         sendGameState();
       });
     });
@@ -78,8 +76,6 @@ function connectPeer() {
       
       gameState.conn.on('open', () => {
         document.getElementById('connectionStatus').textContent = 'Connected to host!';
-        // Guest adds themselves to lobby when connection opens
-        addPlayerToLobby(gameState.myPeerId, 'You', null);
       });
     });
     
@@ -113,11 +109,32 @@ function handleNetworkMessage(data) {
     case 'GAME_STATE':
       // Guest receives initial game state from host
       console.log('Received game state from host');
-      // Add host to lobby
+      // Reset player count to 1 (host is already in DOM)
+      const playerCount = document.getElementById('playerCount');
+      playerCount.textContent = '1';
+      // Update host's token in the existing hostPlayer div
       if (data.players && data.players.length > 0) {
         data.players.forEach(player => {
           if (player.id === 0) {
-            addPlayerToLobby(0, 'Host', player.token);
+            // Update host token in hostPlayer div
+            const hostTokenImg = document.getElementById('hostToken');
+            const hostTokenEmoji = document.getElementById('hostTokenEmoji');
+            if (hostTokenImg && player.token) {
+              const tokenImageMap = {
+                'RollsRoyce': 'rolls_royce',
+                'Helicopter': 'helicopter',
+                'TopHat': 'top_hat',
+                'Shoe': 'shoe',
+                'Cheeseburger': 'burger',
+                'CoffeeCup': 'coffee',
+                'Football': 'football',
+                'WhiteGirlIdle': 'whitegirlmodel'
+              };
+              const tokenImage = tokenImageMap[player.token] || 'burger';
+              hostTokenImg.src = `tokenimages/${tokenImage}.png`;
+              hostTokenImg.style.display = 'block';
+              hostTokenEmoji.style.display = 'none';
+            }
           }
         });
       }
@@ -234,6 +251,12 @@ function addPlayerToLobby(playerId, playerName, token) {
     'WhiteGirlIdle': 'whitegirlmodel'
   };
   
+  // Don't add if it's the host (ID 0) - host is already in DOM as #hostPlayer
+  if (playerId === 0) {
+    console.log('Skipping host (ID 0) - already in DOM');
+    return;
+  }
+  
   // Use the provided ID
   const id = playerId;
   
@@ -272,56 +295,6 @@ function addPlayerToLobby(playerId, playerName, token) {
   console.log(`Added player to lobby: ${playerName} with token ${token || 'not selected'} (ID: ${id})`);
 }
 
-function addPlayerToLobby(playerId, playerName, token) {
-  const playerList = document.getElementById('playerList');
-  const tokenImageMap = {
-    'RollsRoyce': 'rolls_royce',
-    'Helicopter': 'helicopter',
-    'TopHat': 'top_hat',
-    'Shoe': 'shoe',
-    'Cheeseburger': 'burger',
-    'CoffeeCup': 'coffee',
-    'Football': 'football',
-    'WhiteGirlIdle': 'whitegirlmodel'
-  };
-  
-  // Use the provided ID
-  const id = playerId;
-  
-  // Check if player already exists
-  const existingPlayer = document.getElementById(`player-${id}`);
-  if (existingPlayer) {
-    existingPlayer.remove();
-  }
-  
-  const playerItem = document.createElement('div');
-  playerItem.className = 'player-item';
-  playerItem.id = `player-${id}`;
-  
-  // Only show token image if token is selected
-  if (token) {
-    const tokenImage = tokenImageMap[token] || 'burger';
-    playerItem.innerHTML = `
-      <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
-      <span class="player-name">${playerName}</span>
-    `;
-  } else {
-    // Show placeholder if no token selected
-    playerItem.innerHTML = `
-      <span class="player-token">❓</span>
-      <span class="player-name">${playerName}</span>
-    `;
-  }
-  
-  playerList.appendChild(playerItem);
-  
-  // Update player count
-  const playerCount = document.getElementById('playerCount');
-  const currentCount = parseInt(playerCount.textContent);
-  playerCount.textContent = currentCount + 1;
-  
-  console.log(`Added player to lobby: ${playerName} with token ${token || 'not selected'} (ID: ${id})`);
-}
 function removePlayerFromLobby(playerId) {
   const playerItem = document.getElementById(`player-${playerId}`);
   if (playerItem) {
@@ -599,11 +572,33 @@ tokenOptions.forEach(option => {
     const selectedImg = option.querySelector('img').src;
 
     // Update token display
-    const hostTokenImg = document.getElementById('hostToken');
-    const hostTokenEmoji = document.getElementById('hostTokenEmoji');
-    hostTokenImg.src = selectedImg;
-    hostTokenImg.style.display = 'block';
-    hostTokenEmoji.style.display = 'none';
+    if (gameState.isHost) {
+      // Host updates their own display (hostToken)
+      const hostTokenImg = document.getElementById('hostToken');
+      const hostTokenEmoji = document.getElementById('hostTokenEmoji');
+      hostTokenImg.src = selectedImg;
+      hostTokenImg.style.display = 'block';
+      hostTokenEmoji.style.display = 'none';
+    } else {
+      // Guest updates their own player item
+      const myPlayerItem = document.getElementById(`player-${gameState.myPeerId}`);
+      if (myPlayerItem) {
+        let tokenImg = myPlayerItem.querySelector('.player-token-img');
+        let tokenEmoji = myPlayerItem.querySelector('.player-token');
+        
+        if (tokenImg) {
+          tokenImg.src = selectedImg;
+          tokenImg.style.display = 'block';
+        } else if (tokenEmoji) {
+          tokenEmoji.remove();
+          const newImg = document.createElement('img');
+          newImg.className = 'player-token-img';
+          newImg.src = selectedImg;
+          newImg.alt = gameState.selectedToken;
+          myPlayerItem.insertBefore(newImg, myPlayerItem.querySelector('.player-name'));
+        }
+      }
+    }
 
     // If in multiplayer mode and token is selected, send to opponent
     if (gameState.gameMode === 'multiplayer' && gameState.conn) {
@@ -751,7 +746,8 @@ startGameBtn.addEventListener('click', () => {
 
   // In multiplayer mode, only host can start
   if (gameState.gameMode === 'multiplayer' && !gameState.isHost) {
-    console.log('Guest cannot start game, waiting for host');
+    console.log('Guest clicked Ready - this is just visual, waiting for host to start');
+    // Guest pressing "Ready" is just a visual indicator, they can't actually start
     return;
   }
 
