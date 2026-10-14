@@ -584,6 +584,8 @@ tokenOptions.forEach(option => {
     option.classList.add('selected');
     gameState.selectedToken = option.dataset.token;
     gameState.selectedModel = option.dataset.model;
+    
+    console.log('Token selected:', gameState.selectedToken, 'isHost:', gameState.isHost);
 
     const selectedImg = option.querySelector('img').src;
 
