@@ -163,7 +163,7 @@ function handleNetworkMessage(data) {
     case 'START_GAME':
       // Start the game
       console.log('Starting game');
-      startGame();
+      startGameBtn.click(); // Trigger the start game button click
       break;
       
     case 'PLAYER_ACTION':
@@ -4011,23 +4011,6 @@ function playTileMedia(tile, isCasinoMinigame) {
       console.log(`Trying next video at index ${nextUntried}`);
       tryVideo(nextUntried, 0);
       return;
-    };
-      tried.add(index);
-      console.log(`Tried video ${index + 1}/${videos.length}, total tried: ${tried.size}`);
-      if (tried.size >= videos.length) {
-        console.log('All videos failed, trying image fallback');
-        showImageFallback(tile.image);
-        return;
-      }
-      const nextIndex = (index + 1) % videos.length;
-      // Skip to next index if it's already been tried
-      let nextUntried = nextIndex;
-      while (tried.has(nextUntried) && tried.size < videos.length) {
-        nextUntried = (nextUntried + 1) % videos.length;
-      }
-      currentVideoIndex = nextUntried;
-      console.log(`Trying next video at index ${nextUntried}`);
-      tryVideo(nextUntried, 0);
     };
 
     propertyVideo.onerror = (e) => {
