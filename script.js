@@ -242,8 +242,71 @@ function handleNetworkMessage(data) {
 }
 
 function handlePlayerAction(data) {
-  // TODO: Handle player actions (roll, move, buy, pay rent, etc.)
   console.log('Received player action:', data);
+  
+  switch (data.action) {
+    case 'DICE_ROLL':
+      // Opponent rolled dice
+      handleOpponentDiceRoll(data);
+      break;
+    case 'PLAYER_MOVE':
+      // Opponent moved
+      handleOpponentMove(data);
+      break;
+    case 'PROPERTY_PURCHASE':
+      // Opponent bought property
+      handleOpponentPropertyPurchase(data);
+      break;
+    case 'MONEY_UPDATE':
+      // Opponent's money changed
+      handleOpponentMoneyUpdate(data);
+      break;
+    case 'JAIL_STATUS':
+      // Opponent's jail status changed
+      handleOpponentJailStatus(data);
+      break;
+  }
+}
+
+function handleOpponentDiceRoll(data) {
+  console.log('Opponent rolled:', data.dice1, data.dice2);
+  // Update dice display
+  // TODO: Implement dice animation for opponent
+}
+
+function handleOpponentMove(data) {
+  console.log('Opponent moved to position:', data.position);
+  // Move opponent's token on board
+  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  if (opponentIndex !== -1) {
+    movePlayerToken(opponentIndex, data.position);
+  }
+}
+
+function handleOpponentPropertyPurchase(data) {
+  console.log('Opponent bought property:', data.propertyName);
+  // Update property ownership
+  // TODO: Implement property ownership sync
+}
+
+function handleOpponentMoneyUpdate(data) {
+  console.log('Opponent money changed:', data.money);
+  // Update opponent's money display
+  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  if (opponentIndex !== -1) {
+    gameState.players[opponentIndex].money = data.money;
+    updatePlayerMoney();
+  }
+}
+
+function handleOpponentJailStatus(data) {
+  console.log('Opponent jail status changed:', data.isInJail);
+  // Update opponent's jail status
+  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  if (opponentIndex !== -1) {
+    gameState.players[opponentIndex].isInJail = data.isInJail;
+    gameState.players[opponentIndex].jailTurns = data.jailTurns || 0;
+  }
 }
 
 function sendGameState() {
