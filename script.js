@@ -173,6 +173,7 @@ function handlePeerMessage(data, conn) {
         if (guestConn) {
           // Find the player item by peer ID
           const playerItem = document.getElementById(`player-${data.playerId}`);
+          console.log('Player item found:', !!playerItem);
           if (playerItem) {
             const tokenImageMap = {
               'RollsRoyce': 'rolls_royce',
@@ -188,10 +189,12 @@ function handlePeerMessage(data, conn) {
             
             let tokenImg = playerItem.querySelector('.player-token-img');
             let tokenEmoji = playerItem.querySelector('.player-token');
+            console.log('Has token img:', !!tokenImg, 'Has emoji:', !!tokenEmoji);
             
             if (tokenImg) {
               tokenImg.src = `tokenimages/${tokenImage}.png`;
               tokenImg.style.display = 'block';
+              console.log('Updated existing token image');
             } else if (tokenEmoji) {
               tokenEmoji.remove();
               const newImg = document.createElement('img');
@@ -199,6 +202,7 @@ function handlePeerMessage(data, conn) {
               newImg.src = `tokenimages/${tokenImage}.png`;
               newImg.alt = data.token;
               playerItem.insertBefore(newImg, playerItem.querySelector('.player-name'));
+              console.log('Replaced emoji with token image');
             }
             console.log(`Updated guest ${data.playerId} token to ${data.token}`);
             // Update start button state
@@ -305,10 +309,12 @@ function addPlayerToLobby(playerId, playerName, token) {
   
   // Use the provided ID (should be peer ID for guests)
   const id = playerId;
+  console.log(`Adding player to lobby: ID=${id}, Name=${playerName}, Token=${token}`);
   
   // Check if player already exists
   const existingPlayer = document.getElementById(`player-${id}`);
   if (existingPlayer) {
+    console.log('Removing existing player');
     existingPlayer.remove();
   }
   
@@ -323,21 +329,25 @@ function addPlayerToLobby(playerId, playerName, token) {
       <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
       <span class="player-name">${playerName}</span>
     `;
+    console.log('Created player item with token image');
   } else {
     // Show placeholder if no token selected
     playerItem.innerHTML = `
       <span class="player-token">❓</span>
       <span class="player-name">${playerName}</span>
     `;
+    console.log('Created player item with emoji placeholder');
   }
   
   playerList.appendChild(playerItem);
+  console.log('Player item appended to playerList');
   
   // Update player count (only increment if not the guest themselves and not host)
   if (playerId !== 'self' && playerId !== 0) {
     const playerCount = document.getElementById('playerCount');
     const currentCount = parseInt(playerCount.textContent);
     playerCount.textContent = currentCount + 1;
+    console.log('Updated player count to:', currentCount + 1);
   }
   
   console.log(`Added player to lobby: ${playerName} with token ${token || 'not selected'} (ID: ${id})`);
@@ -797,14 +807,21 @@ function updateStartButton() {
       canStartMultiplayer = false;
     } else {
       // For host: check if all connected guests have selected tokens
+      console.log('Checking guest tokens, connections:', gameState.connections.length);
       const allGuestsHaveTokens = gameState.connections.every(conn => {
         const guestPlayerItem = document.getElementById(`player-${conn.remotePeerId}`);
-        if (!guestPlayerItem) return false;
+        console.log('Guest player item:', guestPlayerItem, 'ID:', conn.remotePeerId);
+        if (!guestPlayerItem) {
+          console.log('Guest player item not found');
+          return false;
+        }
         const hasTokenImg = guestPlayerItem.querySelector('.player-token-img');
         const hasTokenEmoji = guestPlayerItem.querySelector('.player-token');
+        console.log('Has token img:', !!hasTokenImg, 'Has emoji:', !!hasTokenEmoji);
         // Has token if there's an image AND no emoji placeholder
         return hasTokenImg && !hasTokenEmoji;
       });
+      console.log('All guests have tokens:', allGuestsHaveTokens);
       canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
     }
   }
