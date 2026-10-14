@@ -815,6 +815,7 @@ function updateStartButton() {
       console.log('Host has selected a token, checking guests...');
       // For host: check if all connected guests have selected tokens using connection flags
       console.log('Checking guest tokens, connections:', gameState.connections.length);
+      console.log('Connections array:', gameState.connections.map(c => ({ id: c.remotePeerId, hasToken: c.hasToken })));
       const allGuestsHaveTokens = gameState.connections.every(conn => {
         console.log('Guest connection hasToken:', conn.hasToken, 'ID:', conn.remotePeerId);
         return conn.hasToken === true;
