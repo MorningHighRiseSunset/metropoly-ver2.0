@@ -726,6 +726,7 @@ function updateStartButton() {
     
     // For host: check if opponent has selected token and is ready, or if has AI
     if (!hasToken) {
+      console.log('Host has not selected token');
       canStartMultiplayer = false;
     } else {
       const hasOpponent = gameState.conn !== null;
@@ -738,6 +739,8 @@ function updateStartButton() {
       // Check if opponent is ready
       const opponentIsReady = gameState.opponentReady;
       
+      console.log('Host check - hasOpponent:', hasOpponent, 'opponentHasToken:', !!opponentHasToken, 'opponentIsReady:', opponentIsReady, 'hasAI:', hasAI);
+      
       if (hasOpponent && opponentHasToken && opponentIsReady) {
         canStartMultiplayer = true;
       } else if (hasAI) {
@@ -748,6 +751,8 @@ function updateStartButton() {
     }
   }
 
+  console.log('Final canStartMultiplayer:', canStartMultiplayer);
+  
   if (canStart || canStartMultiplayer) {
     startGameBtn.disabled = false;
     startGameBtn.classList.add('enabled');
