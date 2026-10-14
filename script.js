@@ -297,6 +297,7 @@ function handleOpponentDiceRoll(data) {
 
 function handleOpponentMove(data) {
   console.log('Opponent moved to position:', data.position);
+  console.log('Current players:', gameState.players.map(p => ({name: p.name, position: p.position})));
   
   // Find the opponent player index
   const opponentIndex = gameState.players.findIndex(p => {
@@ -309,18 +310,23 @@ function handleOpponentMove(data) {
     }
   });
   
+  console.log('Found opponent at index:', opponentIndex);
+  
   if (opponentIndex !== -1) {
     const opponent = gameState.players[opponentIndex];
     const oldPosition = opponent.position;
+    
+    console.log(`Opponent ${opponent.name} moving from ${oldPosition} to ${data.position}`);
     
     // Add to opponent moves panel
     const opponentName = gameState.isHost ? 'Player 2' : 'Host';
     addOpponentMove(opponentName, `Moved to position ${data.position}`);
     
-    // Update opponent's position
+    // Update opponent's position FIRST
     opponent.position = data.position;
     
     // Animate the movement
+    console.log('Starting opponent animation...');
     switchAnimation(opponentIndex, 'walk');
     animatePlayerMovement(opponentIndex, oldPosition, data.position, () => {
       switchAnimation(opponentIndex, 'idle');
@@ -328,6 +334,7 @@ function handleOpponentMove(data) {
     }, false);
   } else {
     console.error('Could not find opponent player');
+    console.error('Available players:', gameState.players.map(p => p.name));
   }
 }
 
@@ -1025,10 +1032,24 @@ function updateCurrentPlayerUI() {
   
   // Update roll dice button visibility
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  if (currentPlayer && currentPlayer.isHuman) {
-    rollDiceBtn.style.display = 'block';
+  
+  // In multiplayer mode, only show button if it's the local player's turn
+  if (gameState.gameMode === 'multiplayer') {
+    const localPlayerIndex = gameState.isHost ? 0 : 1;
+    if (gameState.currentPlayerIndex === localPlayerIndex && currentPlayer && currentPlayer.isHuman) {
+      rollDiceBtn.style.display = 'block';
+      rollDiceBtn.disabled = false;
+    } else {
+      rollDiceBtn.style.display = 'none';
+    }
   } else {
-    rollDiceBtn.style.display = 'none';
+    // Single player/AI mode
+    if (currentPlayer && currentPlayer.isHuman) {
+      rollDiceBtn.style.display = 'block';
+      rollDiceBtn.disabled = false;
+    } else {
+      rollDiceBtn.style.display = 'none';
+    }
   }
 }
 
@@ -5002,7 +5023,9 @@ if (sendChatBtn && chatInput) {
   });
 }
 
-// Video chat buttons (placeholder)
+// Video chat buttons (placeholder - not yet implemented)
+// Video chat requires WebRTC peer-to-peer video connection via PeerJS
+// This is a complex feature that needs separate implementation
 const startVideoCall = document.getElementById('startVideoCall');
 const endVideoCall = document.getElementById('endVideoCall');
 const connectionStatus = document.getElementById('connectionStatus');
@@ -5010,16 +5033,14 @@ const connectionStatus = document.getElementById('connectionStatus');
 if (startVideoCall) {
   startVideoCall.addEventListener('click', () => {
     if (connectionStatus) {
-      connectionStatus.textContent = 'Connecting...';
+      connectionStatus.textContent = 'Video chat not yet implemented';
     }
-    // Placeholder for actual WebRTC implementation
-    setTimeout(() => {
-      if (connectionStatus) {
-        connectionStatus.textContent = 'Connected';
-      }
-      if (startVideoCall) startVideoCall.style.display = 'none';
-      if (endVideoCall) endVideoCall.style.display = 'block';
-    }, 2000);
+    // TODO: Implement WebRTC video call using PeerJS
+    // This requires:
+    // 1. getUserMedia() to access camera/microphone
+    // 2. PeerJS call() method to establish video connection
+    // 3. Video element binding for local/remote streams
+    alert('Video chat feature coming soon! This requires WebRTC implementation via PeerJS.');
   });
 }
 
