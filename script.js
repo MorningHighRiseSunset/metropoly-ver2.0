@@ -269,9 +269,26 @@ function handlePlayerAction(data) {
 }
 
 function handleOpponentDiceRoll(data) {
-  console.log('Opponent rolled:', data.dice1, data.dice2);
-  // Update dice display
-  // TODO: Implement dice animation for opponent
+  console.log('Opponent rolled:', data.dice1, data.dice2, 'Total:', data.total);
+  
+  // Display opponent's dice roll
+  // Show dice animation with the opponent's results
+  if (diceLoaded && !isRolling) {
+    diceModel1.visible = true;
+    diceModel2.visible = true;
+    
+    // Set dice positions
+    diceBody1.position.set(-0.1, 5, 0);
+    diceBody2.position.set(0.1, 5, 0);
+    
+    // Set dice results to match opponent's roll
+    // TODO: Need to actually rotate dice to show the correct numbers
+    // For now, just show them and hide after delay
+    setTimeout(() => {
+      diceModel1.visible = false;
+      diceModel2.visible = false;
+    }, 2000);
+  }
 }
 
 function handleOpponentMove(data) {
@@ -2796,6 +2813,18 @@ function roll3DDice() {
 
         console.log('Dice results:', diceResult1, diceResult2, 'Total:', totalDice);
 
+        // In multiplayer mode, send dice roll to opponent
+        if (gameState.gameMode === 'multiplayer' && gameState.conn) {
+          gameState.conn.send({
+            type: 'PLAYER_ACTION',
+            action: 'DICE_ROLL',
+            dice1: diceResult1,
+            dice2: diceResult2,
+            total: totalDice,
+            playerIndex: rollingPlayerIndex
+          });
+        }
+
         // Calculate target position
         let newPosition = (currentPlayer.position + totalDice) % 40;
         console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
@@ -2805,6 +2834,16 @@ function roll3DDice() {
           console.log(`${currentPlayer.name} passed GO, collecting $200`);
           currentPlayer.money += 200;
           updatePlayerMoney();
+          
+          // In multiplayer mode, send money update to opponent
+          if (gameState.gameMode === 'multiplayer' && gameState.conn) {
+            gameState.conn.send({
+              type: 'PLAYER_ACTION',
+              action: 'MONEY_UPDATE',
+              money: currentPlayer.money,
+              playerIndex: rollingPlayerIndex
+            });
+          }
         }
         
         // Check for Go To Jail (position 30)
@@ -2816,6 +2855,19 @@ function roll3DDice() {
             currentPlayer.isInJail = true;
             currentPlayer.jailTurns = 0;
             switchAnimation(rollingPlayerIndex, 'idle');
+            
+            // In multiplayer mode, send jail status and position to opponent
+            if (gameState.gameMode === 'multiplayer' && gameState.conn) {
+              gameState.conn.send({
+                type: 'PLAYER_ACTION',
+                action: 'JAIL_STATUS',
+                isInJail: true,
+                jailTurns: 0,
+                position: 10,
+                playerIndex: rollingPlayerIndex
+              });
+            }
+            
             showJailUI('Go directly to Jail!', () => {
               endTurn();
             });
@@ -2826,6 +2878,17 @@ function roll3DDice() {
           animatePlayerMovement(rollingPlayerIndex, currentPlayer.position, newPosition, () => {
             currentPlayer.position = newPosition;
             console.log(`${currentPlayer.name} completed movement to position ${newPosition}`);
+            
+            // In multiplayer mode, send movement to opponent
+            if (gameState.gameMode === 'multiplayer' && gameState.conn) {
+              gameState.conn.send({
+                type: 'PLAYER_ACTION',
+                action: 'PLAYER_MOVE',
+                position: newPosition,
+                playerIndex: rollingPlayerIndex
+              });
+            }
+            
             handleLanding(currentPlayer, newPosition, false);
           }, false);
         }
