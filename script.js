@@ -3601,7 +3601,6 @@ function playTileMedia(tile, isCasinoMinigame) {
         window.currentVideoLoadingTimeout = null;
       }
     };
-  }
 
   tryVideo(startIndex, 0);
 }
