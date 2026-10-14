@@ -841,18 +841,19 @@ function initializeGame() {
     gameState.players.forEach((player, index) => {
       // Stagger loading by 500ms each to spread out the load
       setTimeout(() => {
-        loadTokenModel(player, index);
+        loadPlayerToken(player, index);
       }, index * 500);
     });
 
-    // Update the UI after tokens are loaded
-    setTimeout(() => {
-      hideLobby();
-      updatePlayersList();
+    // Hide lobby and show game UI
+    lobbyOverlay.style.display = 'none';
+    gameUI.style.display = 'flex';
 
-      // Show carousel
-      showCarousel();
-    }, 10); // Small delay to allow UI to update immediately
+    // Initialize UI panels
+    updatePlayersList();
+
+    // Show carousel
+    showCarousel();
   }, 100);
 }
 
