@@ -21,8 +21,8 @@ window.aiRollScheduled = false;
 window.diceProcessed = false;
 
 // ===== PUSHER CONNECTION =====
-const PUSHER_KEY = 'boardgames1065-staging';
-const PUSHER_CLUSTER = 'us2'; // Default cluster, update if needed
+const PUSHER_KEY = '71ffa87762d89ffedf0f';
+const PUSHER_CLUSTER = 'us3';
 
 function connectPusher() {
   if (gameState.gameMode !== 'multiplayer') return;
