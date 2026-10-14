@@ -17,7 +17,8 @@ const gameState = {
   myPeerId: null, // My peer ID
   opponentPeerId: null, // Opponent's peer ID
   opponentReady: false, // Track if opponent is ready
-  opponentToken: null // Track opponent's selected token
+  opponentToken: null, // Track opponent's selected token
+  opponentModel: null // Track opponent's selected model
 };
 
 // Turn completion flag to prevent multiple rolls
@@ -113,9 +114,12 @@ function handleNetworkMessage(data) {
     case 'GAME_STATE':
       // Guest receives initial game state from host
       console.log('Received game state from host');
-      // Store host's token
+      // Store host's token and model
       if (data.hostToken) {
         gameState.opponentToken = data.hostToken;
+      }
+      if (data.hostModel) {
+        gameState.opponentModel = data.hostModel;
       }
       // Reset player count to 1 (host is already in DOM)
       const playerCount = document.getElementById('playerCount');
@@ -176,7 +180,7 @@ function handleNetworkMessage(data) {
           const hostData = {
             name: 'Host',
             token: gameState.opponentToken,
-            model: getTokenModel(gameState.opponentToken),
+            model: gameState.opponentModel || getTokenModel(gameState.opponentToken),
             isHuman: true,
             isAI: false,
             position: 0,
@@ -227,6 +231,13 @@ function handleNetworkMessage(data) {
       // Handle opponent's action
       handlePlayerAction(data);
       break;
+      
+    case 'TURN_CHANGE':
+      // Host/guest sends turn change notification
+      console.log('Turn changed to player:', data.playerIndex);
+      gameState.currentPlayerIndex = data.playerIndex;
+      updateCurrentPlayerUI();
+      break;
   }
 }
 
@@ -241,6 +252,7 @@ function sendGameState() {
   gameState.conn.send({
     type: 'GAME_STATE',
     hostToken: gameState.selectedToken,
+    hostModel: gameState.selectedModel,
     players: [
       { id: 0, name: 'Host', token: gameState.selectedToken }
     ]
@@ -857,6 +869,20 @@ function initializeGame() {
     // Show carousel
     showCarousel();
   }, 100);
+}
+
+// Update current player UI
+function updateCurrentPlayerUI() {
+  updatePlayersList();
+  updatePlayerMoney();
+  
+  // Update roll dice button visibility
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  if (currentPlayer && currentPlayer.isHuman) {
+    rollDiceBtn.style.display = 'block';
+  } else {
+    rollDiceBtn.style.display = 'none';
+  }
 }
 
 // Start game
@@ -4533,6 +4559,14 @@ function endTurn() {
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 
+  // In multiplayer mode, send turn change to opponent
+  if (gameState.gameMode === 'multiplayer' && gameState.conn) {
+    gameState.conn.send({
+      type: 'TURN_CHANGE',
+      playerIndex: gameState.currentPlayerIndex
+    });
+  }
+
   // Update UI for new player
   updatePlayersList();
   updatePlayerMoney();
@@ -4934,7 +4968,7 @@ function getTokenModel(token) {
     'Cheeseburger': 'Models/Cheeseburger/cheeseburger.glb',
     'CoffeeCup': 'Models/CoffeeCup/coffee.gltf',
     'Football': 'Models/Football/football.glb',
-    'WhiteGirlIdle': 'Models/WhiteGirlIdle/Idle.fbx'
+    'WhiteGirlIdle': 'Models/WhiteGirlIdle/Standing Idle.fbx'
   };
   return modelMap[token] || null;
 }
