@@ -804,8 +804,10 @@ function updateStartButton() {
     
     // Check if current player has a token
     if (!hasToken) {
+      console.log('Host has not selected a token yet');
       canStartMultiplayer = false;
     } else {
+      console.log('Host has selected a token, checking guests...');
       // For host: check if all connected guests have selected tokens
       console.log('Checking guest tokens, connections:', gameState.connections.length);
       const allGuestsHaveTokens = gameState.connections.every(conn => {
