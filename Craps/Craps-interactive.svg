@@ -21,8 +21,10 @@
 <rect id="big-6-8" class="betting-area" x="113" y="374" width="55" height="51" fill="gold" fill-opacity="0"/>
 <rect id="7-cs" class="betting-area" x="503" y="153" width="45" height="291" fill="gold" fill-opacity="0"/>
 <rect id="7-es" class="betting-area" x="550" y="156" width="45" height="291" fill="gold" fill-opacity="0"/>
-<rect id="10-to-1" class="betting-area" x="601" y="126" width="193" height="70" fill="gold" fill-opacity="0"/>
-<rect id="8-to-1" class="betting-area" x="601" y="201" width="193" height="70" fill="gold" fill-opacity="0"/>
+<rect id="hard-4" class="betting-area" x="601" y="126" width="96" height="70" fill="gold" fill-opacity="0"/>
+<rect id="hard-10" class="betting-area" x="697" y="126" width="97" height="70" fill="gold" fill-opacity="0"/>
+<rect id="hard-6" class="betting-area" x="601" y="201" width="96" height="70" fill="gold" fill-opacity="0"/>
+<rect id="hard-8" class="betting-area" x="697" y="201" width="97" height="70" fill="gold" fill-opacity="0"/>
 <rect id="30-to-1" class="betting-area" x="603" y="275" width="193" height="70" fill="gold" fill-opacity="0"/>
 <rect id="15-to-1" class="betting-area" x="603" y="351" width="193" height="70" fill="gold" fill-opacity="0"/>
 <rect id="any-craps-7-to-1" class="betting-area" x="607" y="437" width="179" height="39" fill="gold" fill-opacity="0"/>
