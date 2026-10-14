@@ -155,43 +155,50 @@ function initPusher() {
         // Sync connected players
         gameState.connectedPlayers = data.players || [];
         
-        // Clear existing players except host player
+        // Clear existing players (including hostPlayer div)
         const playerList = document.getElementById('playerList');
-        const existingPlayers = playerList.querySelectorAll('.player-item:not(#hostPlayer)');
-        existingPlayers.forEach(p => p.remove());
+        playerList.innerHTML = '';
         
-        // Add all players from state
+        // Add host player separately
+        const hostPlayer = data.players.find(p => p.isHost);
+        if (hostPlayer) {
+          const tokenImageMap = {
+            'RollsRoyce': 'rolls_royce',
+            'Helicopter': 'helicopter',
+            'TopHat': 'top_hat',
+            'Shoe': 'shoe',
+            'Cheeseburger': 'burger',
+            'CoffeeCup': 'coffee',
+            'Football': 'football',
+            'WhiteGirlIdle': 'whitegirlmodel'
+          };
+          const tokenImage = tokenImageMap[hostPlayer.token] || 'burger';
+          
+          const hostItem = document.createElement('div');
+          hostItem.className = 'player-item';
+          hostItem.id = 'hostPlayer';
+          hostItem.innerHTML = `
+            <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${hostPlayer.token}">
+            <span class="player-name">${hostPlayer.name}</span>
+          `;
+          playerList.appendChild(hostItem);
+          console.log(`Added host to lobby: ${hostPlayer.name} with token ${hostPlayer.token}`);
+        }
+        
+        // Add other players (not the host, not the guest)
         data.players.forEach(player => {
-          if (player.isHost) {
-            // Update host player info
-            const hostPlayerName = document.querySelector('#hostPlayer .player-name');
-            if (hostPlayerName) {
-              hostPlayerName.textContent = player.name;
-            }
-            const hostTokenImg = document.getElementById('hostToken');
-            if (hostTokenImg && player.token) {
-              const tokenImageMap = {
-                'RollsRoyce': 'rolls_royce',
-                'Helicopter': 'helicopter',
-                'TopHat': 'top_hat',
-                'Shoe': 'shoe',
-                'Cheeseburger': 'burger',
-                'CoffeeCup': 'coffee',
-                'Football': 'football',
-                'WhiteGirlIdle': 'whitegirlmodel'
-              };
-              const tokenImage = tokenImageMap[player.token] || 'burger';
-              hostTokenImg.src = `tokenimages/${tokenImage}.png`;
-              hostTokenImg.style.display = 'block';
-            }
-          } else {
+          if (!player.isHost) {
             addPlayerToLobby(player.id, player.name, player.token);
           }
         });
         
+        // Add the guest themselves
+        addPlayerToLobby('self', 'You (Joining)', gameState.selectedToken);
+        
         // Update player count
         const playerCount = document.getElementById('playerCount');
-        playerCount.textContent = data.players.length;
+        playerCount.textContent = data.players.length + 1; // +1 for the guest themselves
+        console.log(`Total players: ${data.players.length + 1} (host + ${data.players.length - 1} others + guest)`);
       }
     });
     
@@ -340,10 +347,12 @@ function addPlayerToLobby(playerId, playerName, token) {
   `;
   playerList.appendChild(playerItem);
   
-  // Update player count
-  const playerCount = document.getElementById('playerCount');
-  const currentCount = parseInt(playerCount.textContent);
-  playerCount.textContent = currentCount + 1;
+  // Update player count (only increment if not the guest themselves)
+  if (playerId !== 'self') {
+    const playerCount = document.getElementById('playerCount');
+    const currentCount = parseInt(playerCount.textContent);
+    playerCount.textContent = currentCount + 1;
+  }
   
   console.log(`Added player to lobby: ${playerName} with token ${token} (ID: ${id})`);
 }
@@ -600,6 +609,21 @@ function checkGameIdInURL() {
     const hostPlayerName = document.querySelector('#hostPlayer .player-name');
     if (hostPlayerName) {
       hostPlayerName.textContent = 'You (Joining)';
+    }
+    // Hide invite section for guests
+    const inviteSection = document.querySelector('.invite-section');
+    if (inviteSection) {
+      inviteSection.style.display = 'none';
+    }
+    // Hide AI controls for guests
+    const aiControls = document.querySelector('.ai-controls');
+    if (aiControls) {
+      aiControls.style.display = 'none';
+    }
+    // Reset player count to 0 (will be updated when host responds)
+    const playerCount = document.getElementById('playerCount');
+    if (playerCount) {
+      playerCount.textContent = '0';
     }
     // Show visual indicator in lobby
     const aiSection = document.getElementById('aiSection');
