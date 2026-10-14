@@ -76,18 +76,20 @@ function initPusher() {
       }
       
       if (gameState.isHost) {
-        // Host announces game creation with their info
-        if (gameState.selectedToken) {
-          channel.trigger('client-game_created', {
-            gameId: gameState.gameId,
-            playerId: 0,
-            playerName: 'Host',
-            token: gameState.selectedToken,
-            isHost: true
-          });
-          console.log('Host announced game creation with token:', gameState.selectedToken);
-        } else {
-          console.log('Host has not selected token yet, will announce when selected');
+        // Host announces game creation with their info (even without token)
+        channel.trigger('client-game_created', {
+          gameId: gameState.gameId,
+          playerId: 0,
+          playerName: 'Host',
+          token: gameState.selectedToken || null,
+          isHost: true
+        });
+        console.log('Host announced game creation, token:', gameState.selectedToken || 'not selected yet');
+        
+        // Update host player name in lobby if not already done
+        const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+        if (hostPlayerName && hostPlayerName.textContent === 'You (Host)') {
+          hostPlayerName.textContent = 'Host';
         }
       } else {
         // Guest announces joining
@@ -213,7 +215,7 @@ function handlePlayerJoined(data) {
   // Track connected player
   if (!gameState.connectedPlayers.find(p => p.id === data.playerId)) {
     gameState.connectedPlayers.push({
-      id: data.playerId,
+      id: data.playerId || Date.now(),
       name: data.playerName,
       token: data.token,
       isHost: data.isHost || false
@@ -221,7 +223,8 @@ function handlePlayerJoined(data) {
   }
   
   // If this is the host receiving a guest's join event
-  if (gameState.isHost && data.playerName !== 'Host') {
+  if (gameState.isHost && !data.isHost) {
+    console.log(`Host received join from guest: ${data.playerName}`);
     addPlayerToLobby(data.playerId || Date.now(), data.playerName, data.token);
     // Host responds with current players list
     const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
@@ -229,6 +232,7 @@ function handlePlayerJoined(data) {
       gameId: gameState.gameId,
       players: gameState.connectedPlayers
     });
+    console.log(`Host sent current state with ${gameState.connectedPlayers.length} players`);
   }
   
   // If this is a guest receiving another guest's join event
@@ -347,8 +351,8 @@ function addPlayerToLobby(playerId, playerName, token) {
   `;
   playerList.appendChild(playerItem);
   
-  // Update player count (only increment if not the guest themselves)
-  if (playerId !== 'self') {
+  // Update player count (only increment if not the guest themselves and not host)
+  if (playerId !== 'self' && playerId !== 0) {
     const playerCount = document.getElementById('playerCount');
     const currentCount = parseInt(playerCount.textContent);
     playerCount.textContent = currentCount + 1;
