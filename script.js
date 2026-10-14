@@ -1386,7 +1386,7 @@ boardConfig = [
   { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, position: 24, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], model: 'Models/Ferris Wheel/countyfairferrisWheel.glb', address: '', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
-  { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4'], image: 'Images/LasVegasSphere.jpg', address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
   { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
   { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
@@ -2381,7 +2381,7 @@ function handleLanding(player, position, canRollAgain = false) {
       } else {
         rent = Math.floor(tile.price * 0.1);
       }
-      
+
       // If it's a casino property and not disabled, launch game first, then pay rent
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino && !player.isAI) {
         // console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
@@ -2389,18 +2389,19 @@ function handleLanding(player, position, canRollAgain = false) {
         // After game closes, pay rent (handled in closeCasinoBtn)
       } else {
         // console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
-        player.money -= rent;
-        owner.money += rent;
-        console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
-        
-        if (player.isAI) {
+        if (!player.isAI) {
+          // Show rent payment UI for human player
+          showRentPaymentUI(tile, owner, rent, canRollAgain);
+        } else {
+          player.money -= rent;
+          owner.money += rent;
+          console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
           addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
+          updatePlayerMoney();
+          updatePlayersList();
+          checkGameEnd();
+          endTurn();
         }
-        
-        updatePlayerMoney();
-        updatePlayersList();
-        checkGameEnd();
-        endTurn();
       }
     } else {
       // Player owns the property - show UI
@@ -3678,6 +3679,94 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     }
   };
   
+  document.getElementById('propertyOverlay').style.display = 'flex';
+}
+
+// Show rent payment UI
+function showRentPaymentUI(tile, owner, rent, canRollAgain = false) {
+  document.getElementById('propertyTitle').textContent = tile.name;
+  document.getElementById('propertyAddress').textContent = tile.address || '';
+  document.getElementById('propertyPrice').textContent = `Rent: $${rent}`;
+  document.getElementById('propertyRentValue').textContent = `Owned by ${owner.name}`;
+
+  const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
+  document.getElementById('propertyOverlay').style.display = 'flex';
+  playTileMedia(tile, isCasinoMinigame);
+
+  // Change button to Pay Rent
+  document.getElementById('propertyBuyBtn').style.display = 'none';
+  document.getElementById('propertyPassBtn').textContent = 'Pay Rent';
+
+  // Store canRollAgain state for button handler
+  window.currentCanRollAgain = canRollAgain;
+
+  document.getElementById('propertyPassBtn').onclick = () => {
+    // Pay rent
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    currentPlayer.money -= rent;
+    owner.money += rent;
+    console.log(`${currentPlayer.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
+
+    // Clean up video and image
+    const propertyVideo = document.getElementById('propertyVideo');
+    propertyVideo.pause();
+    propertyVideo.currentTime = 0;
+    propertyVideo.src = '';
+    propertyVideo.load();
+    propertyVideo.style.display = 'block';
+
+    // Clear any pending video retry timeouts
+    if (window.currentVideoRetryTimeout) {
+      clearTimeout(window.currentVideoRetryTimeout);
+      window.currentVideoRetryTimeout = null;
+    }
+
+    // Clear any pending video loading timeout
+    if (window.currentVideoLoadingTimeout) {
+      clearTimeout(window.currentVideoLoadingTimeout);
+      window.currentVideoLoadingTimeout = null;
+    }
+
+    // Clear any pending video stall timeout
+    if (window.currentVideoStallTimeout) {
+      clearTimeout(window.currentVideoStallTimeout);
+      window.currentVideoStallTimeout = null;
+    }
+
+    // Stop horse sound if playing
+    if (window.currentHorseSound) {
+      window.currentHorseSound.pause();
+      window.currentHorseSound.currentTime = 0;
+      window.currentHorseSound = null;
+    }
+
+    // Remove any image fallback
+    const imageFallback = document.getElementById('propertyImageFallback');
+    if (imageFallback) {
+      imageFallback.remove();
+    }
+
+    document.getElementById('propertyOverlay').style.display = 'none';
+    // Reset buttons
+    document.getElementById('propertyBuyBtn').style.display = 'inline-block';
+    document.getElementById('propertyPassBtn').textContent = 'Pass';
+    document.getElementById('propertyPassBtn').onclick = null;
+
+    updatePlayerMoney();
+    updatePlayersList();
+    checkGameEnd();
+
+    // Only end turn if player can't roll again (no doubles)
+    if (!window.currentCanRollAgain) {
+      endTurn();
+    } else {
+      // Re-enable roll button for player to roll again
+      if (rollDiceBtn) {
+        rollDiceBtn.disabled = false;
+      }
+    }
+  };
+
   document.getElementById('propertyOverlay').style.display = 'flex';
 }
 
