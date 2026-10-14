@@ -796,16 +796,17 @@ function updateStartButton() {
   let canStartMultiplayer = false;
   
   if (isMultiplayer) {
-    // Only host can start the game in multiplayer
+    // For guest: enable button when token selected (to ready up)
     if (!gameState.isHost) {
-      canStartMultiplayer = false;
       if (hasToken) {
-        startGameBtn.textContent = 'Ready (Waiting for host...)';
+        startGameBtn.textContent = 'Ready';
+        startGameBtn.disabled = false;
+        startGameBtn.classList.add('enabled');
       } else {
         startGameBtn.textContent = 'Select a token';
+        startGameBtn.disabled = true;
+        startGameBtn.classList.remove('enabled');
       }
-      startGameBtn.disabled = true;
-      startGameBtn.classList.remove('enabled');
       return;
     }
     
