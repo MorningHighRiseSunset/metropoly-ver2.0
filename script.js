@@ -205,8 +205,8 @@ function handlePeerMessage(data, conn) {
               console.log('Replaced emoji with token image');
             }
             console.log(`Updated guest ${data.playerId} token to ${data.token}`);
-            // Update start button state
-            updateStartButton();
+            // Update start button state with small delay to ensure DOM is updated
+            setTimeout(() => updateStartButton(), 50);
           } else {
             console.error(`Could not find player item for ID: ${data.playerId}`);
           }
@@ -832,10 +832,12 @@ function updateStartButton() {
     startGameBtn.disabled = false;
     startGameBtn.classList.add('enabled');
     startGameBtn.textContent = 'Start Game';
+    console.log('Start button ENABLED');
   } else {
     startGameBtn.disabled = true;
     startGameBtn.classList.remove('enabled');
     startGameBtn.textContent = isMultiplayer ? 'Waiting for players...' : 'Start Game';
+    console.log('Start button DISABLED - hasToken:', hasToken, 'connections:', gameState.connections.length, 'canStartMultiplayer:', canStartMultiplayer);
   }
 }
 
