@@ -11,7 +11,7 @@ const gameState = {
   gameStarted: false,
   currentPlayerIndex: 0,
   playerTokens: [], // 3D token models on the board
-  ws: null, // WebSocket connection
+  pusher: null, // Pusher connection
   playerId: null // Player's ID in the game
 };
 
@@ -20,53 +20,117 @@ window.turnCompleting = false;
 window.aiRollScheduled = false;
 window.diceProcessed = false;
 
-// ===== WEBSOCKET CONNECTION =====
-const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'ws://localhost:8080'
-  : `wss://${window.location.hostname}/ws`;
+// ===== PUSHER CONNECTION =====
+const PUSHER_KEY = 'boardgames1065-staging';
+const PUSHER_CLUSTER = 'us2'; // Default cluster, update if needed
 
-function connectWebSocket() {
+function connectPusher() {
   if (gameState.gameMode !== 'multiplayer') return;
   
   try {
-    gameState.ws = new WebSocket(WS_URL);
+    // Load Pusher script dynamically
+    const script = document.createElement('script');
+    script.src = 'https://js.pusher.com/8.0.2/pusher.min.js';
+    script.onload = () => {
+      initPusher();
+    };
+    script.onerror = () => {
+      console.error('Failed to load Pusher script');
+    };
+    document.head.appendChild(script);
+  } catch (e) {
+    console.error('Failed to load Pusher:', e);
+  }
+}
+
+function initPusher() {
+  try {
+    const pusher = new Pusher(PUSHER_KEY, {
+      cluster: PUSHER_CLUSTER
+    });
     
-    gameState.ws.onopen = () => {
-      console.log('WebSocket connected');
+    gameState.pusher = pusher;
+    
+    // Subscribe to game channel
+    const channelName = `game-${gameState.gameId}`;
+    const channel = pusher.subscribe(channelName);
+    
+    channel.bind('pusher:subscription_succeeded', () => {
+      console.log(`Subscribed to game channel: ${channelName}`);
+      
+      // Update UI to show connected
+      const aiSection = document.getElementById('aiSection');
+      if (aiSection) {
+        aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
+        <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
+        <p style="color: #4caf50; font-size: 0.8rem;">✓ Connected to Pusher</p>`;
+      }
       
       if (gameState.isHost) {
-        // Create game
-        gameState.ws.send(JSON.stringify({
-          type: 'create_game',
+        // Host announces game creation
+        channel.trigger('client-game_created', {
+          gameId: gameState.gameId,
+          playerId: 0,
           playerName: 'Host',
           token: gameState.selectedToken
-        }));
+        });
       } else {
-        // Join game
-        gameState.ws.send(JSON.stringify({
-          type: 'join_game',
+        // Guest announces joining
+        channel.trigger('client-player_joined', {
           gameId: gameState.gameId,
           playerName: 'You',
           token: gameState.selectedToken
-        }));
+        });
       }
-    };
+    });
     
-    gameState.ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      handleWebSocketMessage(data);
-    };
+    channel.bind('pusher:subscription_error', (err) => {
+      console.error('Pusher subscription error:', err);
+    });
     
-    gameState.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+    // Listen for events from other players
+    channel.bind('client-player_joined', (data) => {
+      handlePlayerJoined(data);
+    });
     
-    gameState.ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      gameState.ws = null;
-    };
+    channel.bind('client-player_left', (data) => {
+      handlePlayerLeft(data);
+    });
+    
+    channel.bind('client-player_action', (data) => {
+      handlePlayerAction(data);
+    });
+    
+    channel.bind('client-game_update', (data) => {
+      handleGameUpdate(data);
+    });
+    
+    channel.bind('client-game_created', (data) => {
+      handleGameCreated(data);
+    });
+    
   } catch (e) {
-    console.error('Failed to connect WebSocket:', e);
+    console.error('Failed to initialize Pusher:', e);
+  }
+}
+
+function handlePlayerJoined(data) {
+  console.log(`Player joined: ${data.playerName}`);
+  if (data.playerName !== 'You') {
+    addPlayerToLobby(data.playerId || Date.now(), data.playerName, data.token);
+  }
+}
+
+function handlePlayerLeft(data) {
+  console.log(`Player left: ${data.playerId}`);
+  removePlayerFromLobby(data.playerId);
+}
+
+function handleGameCreated(data) {
+  console.log(`Game created by host: ${data.gameId}`);
+  if (!gameState.isHost) {
+    // Sync with host's game state
+    addPlayerToLobby(0, data.playerName, data.token);
   }
 }
 
@@ -128,9 +192,12 @@ function addPlayerToLobby(playerId, playerName, token) {
   
   const tokenImage = tokenImageMap[token] || 'burger';
   
+  // Generate ID if not provided
+  const id = playerId || `player-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+  
   const playerItem = document.createElement('div');
   playerItem.className = 'player-item';
-  playerItem.id = `player-${playerId}`;
+  playerItem.id = `player-${id}`;
   playerItem.innerHTML = `
     <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
     <span class="player-name">${playerName}</span>
@@ -190,22 +257,24 @@ function updatePlayerListFromServer(players) {
 }
 
 function sendPlayerAction(action, data) {
-  if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) return;
+  if (!gameState.pusher) return;
   
-  gameState.ws.send(JSON.stringify({
-    type: 'player_action',
+  const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
+  channel.trigger('client-player_action', {
     action: action,
-    data: data
-  }));
+    data: data,
+    senderId: gameState.playerId
+  });
 }
 
 function sendGameUpdate(data) {
-  if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) return;
+  if (!gameState.pusher) return;
   
-  gameState.ws.send(JSON.stringify({
-    type: 'game_update',
-    data: data
-  }));
+  const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
+  channel.trigger('client-game_update', {
+    data: data,
+    senderId: gameState.playerId
+  });
 }
 
 function handlePlayerAction(data) {
@@ -398,10 +467,10 @@ function checkGameIdInURL() {
     if (aiSection) {
       aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameId}</p>
-      <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to server...</p>`;
+      <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to Pusher...</p>`;
     }
-    // Connect to WebSocket server
-    connectWebSocket();
+    // Connect to Pusher
+    connectPusher();
   } else {
     // No game ID in URL, this is a new game - host mode
     gameState.isHost = true;
@@ -420,8 +489,8 @@ function checkGameIdInURL() {
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${newGameId}</p>
       <p style="color: #9a8f78; font-size: 0.8rem;">👤 Share link to invite players</p>`;
     }
-    // Connect to WebSocket server
-    connectWebSocket();
+    // Connect to Pusher
+    connectPusher();
   }
 }
 
@@ -456,9 +525,9 @@ tokenOptions.forEach(option => {
     hostTokenImg.style.display = 'block';
     hostTokenEmoji.style.display = 'none';
 
-    // If in multiplayer mode and token is selected, connect to WebSocket
-    if (gameState.gameMode === 'multiplayer' && !gameState.ws) {
-      connectWebSocket();
+    // If in multiplayer mode and token is selected, connect to Pusher
+    if (gameState.gameMode === 'multiplayer' && !gameState.pusher) {
+      connectPusher();
     }
 
     updateStartButton();
