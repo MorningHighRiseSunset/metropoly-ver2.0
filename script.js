@@ -76,10 +76,13 @@ function setupConnection(conn) {
     console.log('Connection established with:', conn.peer);
     gameState.connections.push(conn);
     
+    // Store playerId in connection object for consistency
+    conn.playerId = gameState.isHost ? 0 : conn.peer;
+    
     // Send player info (without token initially)
     conn.send({
       type: 'player_info',
-      playerId: gameState.isHost ? 0 : Date.now(),
+      playerId: conn.playerId,
       playerName: gameState.isHost ? 'Host' : 'You',
       token: gameState.selectedToken || null, // Don't send if not selected
       isHost: gameState.isHost
@@ -616,14 +619,15 @@ tokenOptions.forEach(option => {
         });
         console.log('Host broadcasted token update to peers');
       } else {
-        // Guest sends their token selection to host
+        // Guest sends their token selection to host using their peer ID
         if (gameState.connections.length > 0) {
+          const myPeerId = gameState.peer.id;
           gameState.connections[0].send({
             type: 'guest_token_selected',
-            playerId: Date.now(),
+            playerId: myPeerId,
             token: gameState.selectedToken
           });
-          console.log('Guest sent token selection to host');
+          console.log('Guest sent token selection to host with ID:', myPeerId);
         }
       }
     }
