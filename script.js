@@ -12,7 +12,8 @@ const gameState = {
   currentPlayerIndex: 0,
   playerTokens: [], // 3D token models on the board
   pusher: null, // Pusher connection
-  playerId: null // Player's ID in the game
+  playerId: null, // Player's ID in the game
+  connectedPlayers: [] // Store info about connected players
 };
 
 // Turn completion flag to prevent multiple rolls
@@ -58,6 +59,14 @@ function initPusher() {
     channel.bind('pusher:subscription_succeeded', () => {
       console.log(`Subscribed to game channel: ${channelName}`);
       
+      // Store own player info
+      gameState.connectedPlayers.push({
+        id: gameState.isHost ? 0 : (gameState.playerId || Date.now()),
+        name: gameState.isHost ? 'Host' : 'You',
+        token: gameState.selectedToken,
+        isHost: gameState.isHost
+      });
+      
       // Update UI to show connected
       const aiSection = document.getElementById('aiSection');
       if (aiSection) {
@@ -67,20 +76,28 @@ function initPusher() {
       }
       
       if (gameState.isHost) {
-        // Host announces game creation
-        channel.trigger('client-game_created', {
-          gameId: gameState.gameId,
-          playerId: 0,
-          playerName: 'Host',
-          token: gameState.selectedToken
-        });
+        // Host announces game creation with their info
+        if (gameState.selectedToken) {
+          channel.trigger('client-game_created', {
+            gameId: gameState.gameId,
+            playerId: 0,
+            playerName: 'Host',
+            token: gameState.selectedToken,
+            isHost: true
+          });
+          console.log('Host announced game creation with token:', gameState.selectedToken);
+        } else {
+          console.log('Host has not selected token yet, will announce when selected');
+        }
       } else {
         // Guest announces joining
         channel.trigger('client-player_joined', {
           gameId: gameState.gameId,
           playerName: 'You',
-          token: gameState.selectedToken
+          token: gameState.selectedToken,
+          isHost: false
         });
+        console.log('Guest announced joining');
       }
     });
     
@@ -109,14 +126,106 @@ function initPusher() {
       handleGameCreated(data);
     });
     
+    // Guest requests current game state when joining
+    if (!gameState.isHost) {
+      setTimeout(() => {
+        channel.trigger('client-request_state', {
+          gameId: gameState.gameId,
+          requesterId: 'guest'
+        });
+        console.log('Guest requested current game state');
+      }, 500);
+    }
+    
+    // Host responds to state requests
+    channel.bind('client-request_state', (data) => {
+      if (gameState.isHost) {
+        console.log('Host received state request, sending current players');
+        channel.trigger('client-current_state', {
+          gameId: gameState.gameId,
+          players: [{ id: 0, name: 'Host', token: gameState.selectedToken, isHost: true }]
+        });
+      }
+    });
+    
+    // Guest receives current state from host
+    channel.bind('client-current_state', (data) => {
+      console.log('Received current game state from host:', data);
+      if (!gameState.isHost) {
+        // Sync connected players
+        gameState.connectedPlayers = data.players || [];
+        
+        // Clear existing players except host player
+        const playerList = document.getElementById('playerList');
+        const existingPlayers = playerList.querySelectorAll('.player-item:not(#hostPlayer)');
+        existingPlayers.forEach(p => p.remove());
+        
+        // Add all players from state
+        data.players.forEach(player => {
+          if (player.isHost) {
+            // Update host player info
+            const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+            if (hostPlayerName) {
+              hostPlayerName.textContent = player.name;
+            }
+            const hostTokenImg = document.getElementById('hostToken');
+            if (hostTokenImg && player.token) {
+              const tokenImageMap = {
+                'RollsRoyce': 'rolls_royce',
+                'Helicopter': 'helicopter',
+                'TopHat': 'top_hat',
+                'Shoe': 'shoe',
+                'Cheeseburger': 'burger',
+                'CoffeeCup': 'coffee',
+                'Football': 'football',
+                'WhiteGirlIdle': 'whitegirlmodel'
+              };
+              const tokenImage = tokenImageMap[player.token] || 'burger';
+              hostTokenImg.src = `tokenimages/${tokenImage}.png`;
+              hostTokenImg.style.display = 'block';
+            }
+          } else {
+            addPlayerToLobby(player.id, player.name, player.token);
+          }
+        });
+        
+        // Update player count
+        const playerCount = document.getElementById('playerCount');
+        playerCount.textContent = data.players.length;
+      }
+    });
+    
   } catch (e) {
     console.error('Failed to initialize Pusher:', e);
   }
 }
 
 function handlePlayerJoined(data) {
-  console.log(`Player joined: ${data.playerName}`);
-  if (data.playerName !== 'You') {
+  console.log(`Player joined: ${data.playerName}`, data);
+  
+  // Track connected player
+  if (!gameState.connectedPlayers.find(p => p.id === data.playerId)) {
+    gameState.connectedPlayers.push({
+      id: data.playerId,
+      name: data.playerName,
+      token: data.token,
+      isHost: data.isHost || false
+    });
+  }
+  
+  // If this is the host receiving a guest's join event
+  if (gameState.isHost && data.playerName !== 'Host') {
+    addPlayerToLobby(data.playerId || Date.now(), data.playerName, data.token);
+    // Host responds with current players list
+    const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
+    channel.trigger('client-current_state', {
+      gameId: gameState.gameId,
+      players: gameState.connectedPlayers
+    });
+  }
+  
+  // If this is a guest receiving another guest's join event
+  if (!gameState.isHost && data.playerName !== 'You') {
     addPlayerToLobby(data.playerId || Date.now(), data.playerName, data.token);
   }
 }
@@ -127,10 +236,31 @@ function handlePlayerLeft(data) {
 }
 
 function handleGameCreated(data) {
-  console.log(`Game created by host: ${data.gameId}`);
+  console.log(`Game created by host: ${data.gameId}`, data);
   if (!gameState.isHost) {
-    // Sync with host's game state
-    addPlayerToLobby(0, data.playerName, data.token);
+    // Guest receives host's game creation event
+    // Update host player info
+    const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+    if (hostPlayerName) {
+      hostPlayerName.textContent = data.playerName;
+    }
+    const hostTokenImg = document.getElementById('hostToken');
+    if (hostTokenImg && data.token) {
+      const tokenImageMap = {
+        'RollsRoyce': 'rolls_royce',
+        'Helicopter': 'helicopter',
+        'TopHat': 'top_hat',
+        'Shoe': 'shoe',
+        'Cheeseburger': 'burger',
+        'CoffeeCup': 'coffee',
+        'Football': 'football',
+        'WhiteGirlIdle': 'whitegirlmodel'
+      };
+      const tokenImage = tokenImageMap[data.token] || 'burger';
+      hostTokenImg.src = `tokenimages/${tokenImage}.png`;
+      hostTokenImg.style.display = 'block';
+    }
+    console.log(`Updated host info: ${data.playerName} with token ${data.token}`);
   }
 }
 
@@ -195,6 +325,12 @@ function addPlayerToLobby(playerId, playerName, token) {
   // Generate ID if not provided
   const id = playerId || `player-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
   
+  // Check if player already exists
+  const existingPlayer = document.getElementById(`player-${id}`);
+  if (existingPlayer) {
+    existingPlayer.remove();
+  }
+  
   const playerItem = document.createElement('div');
   playerItem.className = 'player-item';
   playerItem.id = `player-${id}`;
@@ -206,7 +342,10 @@ function addPlayerToLobby(playerId, playerName, token) {
   
   // Update player count
   const playerCount = document.getElementById('playerCount');
-  playerCount.textContent = parseInt(playerCount.textContent) + 1;
+  const currentCount = parseInt(playerCount.textContent);
+  playerCount.textContent = currentCount + 1;
+  
+  console.log(`Added player to lobby: ${playerName} with token ${token} (ID: ${id})`);
 }
 
 function removePlayerFromLobby(playerId) {
@@ -528,6 +667,27 @@ tokenOptions.forEach(option => {
     // If in multiplayer mode and token is selected, connect to Pusher
     if (gameState.gameMode === 'multiplayer' && !gameState.pusher) {
       connectPusher();
+    } else if (gameState.gameMode === 'multiplayer' && gameState.pusher) {
+      // Re-announce when token is selected (for both host and guest)
+      const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
+      if (gameState.isHost) {
+        channel.trigger('client-game_created', {
+          gameId: gameState.gameId,
+          playerId: 0,
+          playerName: 'Host',
+          token: gameState.selectedToken,
+          isHost: true
+        });
+        console.log('Host re-announced game creation with new token:', gameState.selectedToken);
+      } else {
+        channel.trigger('client-player_joined', {
+          gameId: gameState.gameId,
+          playerName: 'You',
+          token: gameState.selectedToken,
+          isHost: false
+        });
+        console.log('Guest re-announced joining with new token:', gameState.selectedToken);
+      }
     }
 
     updateStartButton();
