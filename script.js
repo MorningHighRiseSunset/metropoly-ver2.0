@@ -44,7 +44,7 @@ function connectPeer() {
       gameState.myPeerId = id;
       document.getElementById('lobbyIdDisplay').textContent = id;
       document.getElementById('connectionStatus').textContent = 'Waiting for opponent...';
-      document.getElementById('lobbyInfo').classList.remove('hidden');
+      document.getElementById('lobbyInfoPanel').classList.remove('hidden');
     });
     
     peer.on('connection', (connection) => {
@@ -704,9 +704,9 @@ function checkGameIdInURL() {
     }
     
     // Show lobby info
-    const lobbyInfo = document.getElementById('lobbyInfo');
-    if (lobbyInfo) {
-      lobbyInfo.classList.remove('hidden');
+    const lobbyInfoPanel = document.getElementById('lobbyInfoPanel');
+    if (lobbyInfoPanel) {
+      lobbyInfoPanel.classList.remove('hidden');
     }
     
     // Connect to PeerJS

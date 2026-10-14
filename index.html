@@ -74,22 +74,26 @@
 
       <!-- Multiplayer Options -->
       <div class="multiplayer-section">
-        <div class="ai-section" id="aiSection" style="display: block;"> 
-          <div class="ai-controls">
-            <button class="ai-add-btn" id="addAiBtn">+ Add AI</button>
-            <span class="ai-count" id="aiCount">0 AI opponents</span>
+        <div class="lobby-info-panel" id="lobbyInfoPanel">
+          <div class="lobby-id-display">
+            <span class="lobby-label">Lobby ID</span>
+            <span class="lobby-id" id="lobbyIdDisplay"></span>
           </div>
-          <div id="lobbyInfo" class="lobby-info hidden">
-            <p>Lobby ID: <span id="lobbyIdDisplay"></span></p>
-            <p id="connectionStatus">Waiting for opponent...</p>
-          </div>
+          <div class="connection-status" id="connectionStatus">Waiting for opponent...</div>
         </div>
 
         <div class="invite-section">
-          <p>Share this link to invite opponents:</p>
+          <p class="invite-label">Share this link to invite opponents</p>
           <div class="invite-link-container">
             <input type="text" class="invite-link" id="inviteLink" readonly>
             <button class="copy-btn" id="copyBtn">Copy</button>
+          </div>
+        </div>
+
+        <div class="ai-section" id="aiSection" style="display: block;">
+          <div class="ai-controls">
+            <button class="ai-add-btn" id="addAiBtn">+ Add AI</button>
+            <span class="ai-count" id="aiCount">0 AI opponents</span>
           </div>
         </div>
       </div>
