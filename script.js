@@ -169,30 +169,9 @@ function handleNetworkMessage(data) {
     case 'START_GAME':
       // Start the game
       console.log('Starting game');
-      // For guest, initialize game with their player and host as opponent
+      // For guest, initialize game with host as first player and guest as second
       if (!gameState.isHost) {
-        const playerData = {
-          name: 'You',
-          token: gameState.selectedToken,
-          model: gameState.selectedModel,
-          isHuman: true,
-          isAI: false,
-          position: 0,
-          money: 2500,
-          isInJail: false,
-          jailTurns: 0,
-          properties: [],
-          getOutOfJailCards: 0
-        };
-
-        // Add walk model for female character
-        if (gameState.selectedToken === 'WhiteGirlIdle') {
-          playerData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
-        }
-
-        gameState.players = [playerData];
-
-        // Add host as opponent
+        // Add host as first player (they go first)
         if (gameState.opponentToken) {
           const hostData = {
             name: 'Host',
@@ -212,9 +191,32 @@ function handleNetworkMessage(data) {
             hostData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
           }
 
-          gameState.players.push(hostData);
-          console.log('Added host as opponent:', hostData);
+          gameState.players = [hostData];
+          console.log('Added host as first player:', hostData);
         }
+
+        // Add guest as second player
+        const playerData = {
+          name: 'You',
+          token: gameState.selectedToken,
+          model: gameState.selectedModel,
+          isHuman: true,
+          isAI: false,
+          position: 0,
+          money: 2500,
+          isInJail: false,
+          jailTurns: 0,
+          properties: [],
+          getOutOfJailCards: 0
+        };
+
+        // Add walk model for female character
+        if (gameState.selectedToken === 'WhiteGirlIdle') {
+          playerData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+        }
+
+        gameState.players.push(playerData);
+        console.log('Added guest as second player:', playerData);
 
         gameState.gameStarted = true;
         initializeGame();
