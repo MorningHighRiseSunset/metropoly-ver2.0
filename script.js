@@ -567,6 +567,7 @@ function checkGameIdInURL() {
     gameState.gameId = gameId;
     gameState.gameMode = 'multiplayer';
     gameState.isHost = false; // This player is joining, not hosting
+    // Keep AI mode enabled for both host and guests (can add AI to multiplayer)
     console.log(`Joining game: ${gameId} as guest`);
     // Update invite link to show the game ID
     if (inviteLink) {
@@ -578,10 +579,12 @@ function checkGameIdInURL() {
     if (inviteSection) {
       inviteSection.style.display = 'none';
     }
-    // Hide AI controls for guests
-    const aiControls = document.querySelector('.ai-controls');
-    if (aiControls) {
-      aiControls.style.display = 'none';
+    // Hide AI controls for guests (hosts keep them)
+    if (!gameState.isHost) {
+      const aiControls = document.querySelector('.ai-controls');
+      if (aiControls) {
+        aiControls.style.display = 'none';
+      }
     }
     // Reset player count to 0 (will be updated when host responds)
     const playerCount = document.getElementById('playerCount');
@@ -815,22 +818,37 @@ function updateStartButton() {
       console.log('Host has not selected a token yet');
       canStartMultiplayer = false;
     } else {
-      console.log('Host has selected a token, checking guests...');
-      // For host: check if all connected guests have selected tokens using connection flags
-      console.log('Checking guest tokens, connections:', gameState.connections.length);
-      console.log('Connections array:', gameState.connections.map(c => ({ id: c.remotePeerId, hasToken: c.hasToken })));
+      console.log('Host has selected a token, checking players...');
+      // For host: can start if there are either guests or AI opponents
+      console.log('Checking guests, connections:', gameState.connections.length);
+      console.log('AI count:', gameState.aiCount);
       
       // Check each connection individually
-      let allHaveTokens = true;
+      let allGuestsHaveTokens = true;
       gameState.connections.forEach((conn, index) => {
         console.log(`Connection ${index}: ID=${conn.remotePeerId}, hasToken=${conn.hasToken}, type=${typeof conn.hasToken}`);
         if (conn.hasToken !== true) {
-          allHaveTokens = false;
+          allGuestsHaveTokens = false;
         }
       });
       
-      console.log('All guests have tokens:', allHaveTokens);
-      canStartMultiplayer = allHaveTokens && gameState.connections.length > 0;
+      console.log('All guests have tokens:', allGuestsHaveTokens);
+      
+      // Can start if:
+      // - Has human guests who all have tokens, OR
+      // - Has AI opponents (no token check needed for AI)
+      const hasHumanGuests = gameState.connections.length > 0;
+      const hasAI = gameState.aiCount > 0;
+      
+      if (hasHumanGuests) {
+        canStartMultiplayer = allGuestsHaveTokens;
+      } else if (hasAI) {
+        canStartMultiplayer = true;
+      } else {
+        canStartMultiplayer = false; // Need at least one opponent
+      }
+      
+      console.log('Can start multiplayer:', canStartMultiplayer, '(hasHumanGuests:', hasHumanGuests, ', hasAI:', hasAI, ')');
     }
   }
 
