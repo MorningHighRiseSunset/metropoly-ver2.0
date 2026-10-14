@@ -840,15 +840,21 @@ function updateStartButton() {
       const hasHumanGuests = gameState.connections.length > 0;
       const hasAI = gameState.aiCount > 0;
       
-      if (hasHumanGuests) {
+      if (hasHumanGuests && hasAI) {
+        // Both: need guests to have tokens
+        canStartMultiplayer = allGuestsHaveTokens;
+      } else if (hasHumanGuests) {
+        // Only guests: need them to have tokens
         canStartMultiplayer = allGuestsHaveTokens;
       } else if (hasAI) {
+        // Only AI: can start
         canStartMultiplayer = true;
       } else {
-        canStartMultiplayer = false; // Need at least one opponent
+        // No opponents
+        canStartMultiplayer = false;
       }
       
-      console.log('Can start multiplayer:', canStartMultiplayer, '(hasHumanGuests:', hasHumanGuests, ', hasAI:', hasAI, ')');
+      console.log('Can start multiplayer:', canStartMultiplayer, '(hasHumanGuests:', hasHumanGuests, ', hasAI:', hasAI, ', allGuestsHaveTokens:', allGuestsHaveTokens, ')');
     }
   }
 
