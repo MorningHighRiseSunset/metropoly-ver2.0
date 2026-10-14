@@ -15,7 +15,8 @@ const gameState = {
   conn: null, // Single connection to opponent
   isHost: true, // True if host, false if guest
   myPeerId: null, // My peer ID
-  opponentPeerId: null // Opponent's peer ID
+  opponentPeerId: null, // Opponent's peer ID
+  opponentReady: false // Track if opponent is ready
 };
 
 // Turn completion flag to prevent multiple rolls
@@ -149,6 +150,13 @@ function handleNetworkMessage(data) {
       // Player received opponent's token selection
       console.log('Opponent selected token:', data.token);
       updateOpponentToken(data.token);
+      updateStartButton();
+      break;
+      
+    case 'PLAYER_READY':
+      // Host receives guest ready message
+      console.log('Guest is ready');
+      gameState.opponentReady = true;
       updateStartButton();
       break;
       
@@ -697,7 +705,7 @@ function updateStartButton() {
   const totalPlayers = 1 + gameState.aiCount;
   const canStart = hasToken && totalPlayers >= 2;
 
-  // In multiplayer mode, check if opponent has selected token
+  // In multiplayer mode, check if opponent has selected token and is ready
   const isMultiplayer = gameState.gameMode === 'multiplayer';
   let canStartMultiplayer = false;
   
@@ -716,7 +724,7 @@ function updateStartButton() {
       return;
     }
     
-    // For host: check if opponent has selected token or if has AI
+    // For host: check if opponent has selected token and is ready, or if has AI
     if (!hasToken) {
       canStartMultiplayer = false;
     } else {
@@ -727,7 +735,10 @@ function updateStartButton() {
       const opponentPlayerItem = document.querySelector('.player-item:not(#hostPlayer)');
       const opponentHasToken = opponentPlayerItem && opponentPlayerItem.querySelector('.player-token-img');
       
-      if (hasOpponent && opponentHasToken) {
+      // Check if opponent is ready
+      const opponentIsReady = gameState.opponentReady;
+      
+      if (hasOpponent && opponentHasToken && opponentIsReady) {
         canStartMultiplayer = true;
       } else if (hasAI) {
         canStartMultiplayer = true;
@@ -754,7 +765,11 @@ startGameBtn.addEventListener('click', () => {
 
   // In multiplayer mode, only host can start
   if (gameState.gameMode === 'multiplayer' && !gameState.isHost) {
-    console.log('Guest clicked Ready - visual indicator only');
+    console.log('Guest clicked Ready - sending ready status to host');
+    // Send ready message to host
+    gameState.conn.send({
+      type: 'PLAYER_READY'
+    });
     // Change button text to show ready state
     startGameBtn.textContent = 'Waiting for host...';
     startGameBtn.disabled = true;
