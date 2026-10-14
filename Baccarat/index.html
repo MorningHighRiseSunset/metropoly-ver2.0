@@ -569,9 +569,10 @@ window.initBaccaratMinigame = function(container, initialBalance, balanceCallbac
         state.bankroll = initialBalance || 0;
         state.bets = {};
         state.phase = "betting";
-        state.road = [];
+        state.road = []; // Clear beadplate on initialization
         state.message = "Place your bets on Player or Banker!";
         console.log('[BACCARAT DEBUG] Set state.bankroll to:', state.bankroll);
+        console.log('[BACCARAT DEBUG] Cleared beadplate on initialization');
 
         render();
 

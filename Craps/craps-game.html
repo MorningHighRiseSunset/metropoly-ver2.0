@@ -1101,8 +1101,10 @@ function roll3DDicePhysics(onComplete) {
                 'hard-10': 'Hard 10 (10 to 1)',
                 'hard-6': 'Hard 6 (8 to 1)',
                 'hard-8': 'Hard 8 (8 to 1)',
-                '30-to-1': '2 or 12 (30 to 1)',
-                '15-to-1': '3 or 11 (15 to 1)',
+                '2-30-to-1': '2 (30 to 1)',
+                '12-30-to-1': '12 (30 to 1)',
+                '3-15-to-1': '3 (15 to 1)',
+                '11-15-to-1': '11 (15 to 1)',
                 'any-craps-7-to-1': 'Any Craps (7 to 1)',
                 'seven-4-to-1': 'Seven (4 to 1)',
                 'dont-come-bar': "Don't Come Bar"
@@ -1231,19 +1233,39 @@ function roll3DDicePhysics(onComplete) {
                 }
             });
 
-            if (bets['15-to-1']) {
-                if (total === 3 || total === 11) {
-                    paid += payBet('15-to-1', 15, `🎰 3 or 11 (15 to 1) wins on ${total}!`);
+            // 2 bet (30 to 1)
+            if (bets['2-30-to-1']) {
+                if (total === 2) {
+                    paid += payBet('2-30-to-1', 30, `🎰 2 (30 to 1) wins!`);
                 } else {
-                    loseBet('15-to-1', `❌ 3 or 11 (15 to 1) lost on ${total}`);
+                    loseBet('2-30-to-1', `❌ 2 (30 to 1) lost on ${total}`);
                 }
             }
 
-            if (bets['30-to-1']) {
-                if (total === 2 || total === 12) {
-                    paid += payBet('30-to-1', 30, `🎰 2 or 12 (30 to 1) wins on ${total}!`);
+            // 12 bet (30 to 1)
+            if (bets['12-30-to-1']) {
+                if (total === 12) {
+                    paid += payBet('12-30-to-1', 30, `🎰 12 (30 to 1) wins!`);
                 } else {
-                    loseBet('30-to-1', `❌ 2 or 12 (30 to 1) lost on ${total}`);
+                    loseBet('12-30-to-1', `❌ 12 (30 to 1) lost on ${total}`);
+                }
+            }
+
+            // 3 bet (15 to 1)
+            if (bets['3-15-to-1']) {
+                if (total === 3) {
+                    paid += payBet('3-15-to-1', 15, `🎰 3 (15 to 1) wins!`);
+                } else {
+                    loseBet('3-15-to-1', `❌ 3 (15 to 1) lost on ${total}`);
+                }
+            }
+
+            // 11 bet (15 to 1)
+            if (bets['11-15-to-1']) {
+                if (total === 11) {
+                    paid += payBet('11-15-to-1', 15, `🎰 11 (15 to 1) wins!`);
+                } else {
+                    loseBet('11-15-to-1', `❌ 11 (15 to 1) lost on ${total}`);
                 }
             }
 
