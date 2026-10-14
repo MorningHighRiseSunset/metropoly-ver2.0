@@ -76,18 +76,20 @@ function setupConnection(conn) {
     console.log('Connection established with:', conn.peer);
     gameState.connections.push(conn);
     
-    // Send player info
+    // Send player info (without token initially)
     conn.send({
       type: 'player_info',
       playerId: gameState.isHost ? 0 : Date.now(),
       playerName: gameState.isHost ? 'Host' : 'You',
-      token: gameState.selectedToken,
+      token: gameState.selectedToken || null, // Don't send if not selected
       isHost: gameState.isHost
     });
     
-    // Update player count
-    const playerCount = document.getElementById('playerCount');
-    playerCount.textContent = parseInt(playerCount.textContent) + 1;
+    // Update player count (only for guests joining)
+    if (!gameState.isHost) {
+      const playerCount = document.getElementById('playerCount');
+      playerCount.textContent = parseInt(playerCount.textContent) + 1;
+    }
   });
   
   conn.on('data', (data) => {
@@ -120,27 +122,8 @@ function handlePeerMessage(data, conn) {
           token: gameState.selectedToken
         });
       } else {
-        // Guest receives host info
-        const hostPlayerName = document.querySelector('#hostPlayer .player-name');
-        if (hostPlayerName) {
-          hostPlayerName.textContent = data.playerName;
-        }
-        const hostTokenImg = document.getElementById('hostToken');
-        if (hostTokenImg && data.token) {
-          const tokenImageMap = {
-            'RollsRoyce': 'rolls_royce',
-            'Helicopter': 'helicopter',
-            'TopHat': 'top_hat',
-            'Shoe': 'shoe',
-            'Cheeseburger': 'burger',
-            'CoffeeCup': 'coffee',
-            'Football': 'football',
-            'WhiteGirlIdle': 'whitegirlmodel'
-          };
-          const tokenImage = tokenImageMap[data.token] || 'burger';
-          hostTokenImg.src = `tokenimages/${tokenImage}.png`;
-          hostTokenImg.style.display = 'block';
-        }
+        // Guest receives connection acknowledgment, nothing to update
+        console.log('Guest connected to host');
       }
       break;
       
@@ -165,6 +148,43 @@ function handlePeerMessage(data, conn) {
         const tokenImage = tokenImageMap[data.token] || 'burger';
         hostTokenImg.src = `tokenimages/${tokenImage}.png`;
         hostTokenImg.style.display = 'block';
+      }
+      break;
+      
+    case 'guest_token_selected':
+      // Host receives guest's token selection
+      if (gameState.isHost) {
+        console.log(`Host received token selection from guest ${data.playerId}: ${data.token}`);
+        // Update the guest's token in the lobby
+        const playerItem = document.getElementById(`player-${data.playerId}`);
+        if (playerItem) {
+          const tokenImageMap = {
+            'RollsRoyce': 'rolls_royce',
+            'Helicopter': 'helicopter',
+            'TopHat': 'top_hat',
+            'Shoe': 'shoe',
+            'Cheeseburger': 'burger',
+            'CoffeeCup': 'coffee',
+            'Football': 'football',
+            'WhiteGirlIdle': 'whitegirlmodel'
+          };
+          const tokenImage = tokenImageMap[data.token] || 'burger';
+          
+          let tokenImg = playerItem.querySelector('.player-token-img');
+          let tokenEmoji = playerItem.querySelector('.player-token');
+          
+          if (tokenImg) {
+            tokenImg.src = `tokenimages/${tokenImage}.png`;
+            tokenImg.style.display = 'block';
+          } else if (tokenEmoji) {
+            tokenEmoji.remove();
+            const newImg = document.createElement('img');
+            newImg.className = 'player-token-img';
+            newImg.src = `tokenimages/${tokenImage}.png`;
+            newImg.alt = data.token;
+            playerItem.insertBefore(newImg, playerItem.querySelector('.player-name'));
+          }
+        }
       }
       break;
       
@@ -193,6 +213,13 @@ function handlePlayerJoined(data) {
 
 function handleTokenUpdated(data) {
   console.log(`Player ${data.playerId} updated token to: ${data.token}`);
+  
+  // Don't update if this is the host and we're a guest (host updates their own display)
+  if (data.playerId === 0 && !gameState.isHost) {
+    console.log('Ignoring host token update from guest perspective');
+    return;
+  }
+  
   const playerItem = document.getElementById(`player-${data.playerId}`);
   if (playerItem) {
     const tokenImageMap = {
@@ -206,9 +233,22 @@ function handleTokenUpdated(data) {
       'WhiteGirlIdle': 'whitegirlmodel'
     };
     const tokenImage = tokenImageMap[data.token] || 'burger';
-    const tokenImg = playerItem.querySelector('.player-token-img');
+    
+    // Update existing token image or replace placeholder
+    let tokenImg = playerItem.querySelector('.player-token-img');
+    let tokenEmoji = playerItem.querySelector('.player-token');
+    
     if (tokenImg) {
       tokenImg.src = `tokenimages/${tokenImage}.png`;
+      tokenImg.style.display = 'block';
+    } else if (tokenEmoji) {
+      // Replace emoji with image
+      tokenEmoji.remove();
+      const newImg = document.createElement('img');
+      newImg.className = 'player-token-img';
+      newImg.src = `tokenimages/${tokenImage}.png`;
+      newImg.alt = data.token;
+      playerItem.insertBefore(newImg, playerItem.querySelector('.player-name'));
     }
   }
 }
@@ -230,8 +270,6 @@ function addPlayerToLobby(playerId, playerName, token) {
     'WhiteGirlIdle': 'whitegirlmodel'
   };
   
-  const tokenImage = tokenImageMap[token] || 'burger';
-  
   // Generate ID if not provided
   const id = playerId || `player-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
   
@@ -244,10 +282,22 @@ function addPlayerToLobby(playerId, playerName, token) {
   const playerItem = document.createElement('div');
   playerItem.className = 'player-item';
   playerItem.id = `player-${id}`;
-  playerItem.innerHTML = `
-    <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
-    <span class="player-name">${playerName}</span>
-  `;
+  
+  // Only show token image if token is selected
+  if (token) {
+    const tokenImage = tokenImageMap[token] || 'burger';
+    playerItem.innerHTML = `
+      <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
+      <span class="player-name">${playerName}</span>
+    `;
+  } else {
+    // Show placeholder if no token selected
+    playerItem.innerHTML = `
+      <span class="player-token">❓</span>
+      <span class="player-name">${playerName}</span>
+    `;
+  }
+  
   playerList.appendChild(playerItem);
   
   // Update player count (only increment if not the guest themselves and not host)
@@ -257,7 +307,7 @@ function addPlayerToLobby(playerId, playerName, token) {
     playerCount.textContent = currentCount + 1;
   }
   
-  console.log(`Added player to lobby: ${playerName} with token ${token} (ID: ${id})`);
+  console.log(`Added player to lobby: ${playerName} with token ${token || 'not selected'} (ID: ${id})`);
 }
 
 function removePlayerFromLobby(playerId) {
@@ -557,12 +607,25 @@ tokenOptions.forEach(option => {
 
     // If in multiplayer mode and token is selected, broadcast to peers
     if (gameState.gameMode === 'multiplayer' && gameState.connections.length > 0) {
-      broadcastToAll({
-        type: 'token_updated',
-        playerId: gameState.isHost ? 0 : Date.now(),
-        token: gameState.selectedToken
-      });
-      console.log('Broadcasted token update to peers');
+      // Only broadcast if we're the host (guests don't need to broadcast their token to host)
+      if (gameState.isHost) {
+        broadcastToAll({
+          type: 'token_updated',
+          playerId: 0,
+          token: gameState.selectedToken
+        });
+        console.log('Host broadcasted token update to peers');
+      } else {
+        // Guest sends their token selection to host
+        if (gameState.connections.length > 0) {
+          gameState.connections[0].send({
+            type: 'guest_token_selected',
+            playerId: Date.now(),
+            token: gameState.selectedToken
+          });
+          console.log('Guest sent token selection to host');
+        }
+      }
     }
 
     updateStartButton();
