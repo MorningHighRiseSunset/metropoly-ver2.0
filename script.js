@@ -2781,13 +2781,13 @@ function showJailUI(message, callback) {
   // Load and play random jail video
   const jailVideo = document.getElementById('jailVideo');
   const jailTile = boardConfig.find(t => t.position === 10);
-  
+
   if (jailTile && jailTile.videos && jailTile.videos.length > 0) {
     // Track last played jail video to avoid repeats
     if (!window.lastPlayedVideos) {
       window.lastPlayedVideos = {};
     }
-    
+
     const lastPlayed = window.lastPlayedVideos['jail'];
     let randomVideo;
     let attempts = 0;
@@ -2795,15 +2795,32 @@ function showJailUI(message, callback) {
       randomVideo = jailTile.videos[Math.floor(Math.random() * jailTile.videos.length)];
       attempts++;
     } while (lastPlayed === randomVideo && attempts < 10 && jailTile.videos.length > 1);
-    
+
     window.lastPlayedVideos['jail'] = randomVideo;
     jailVideo.src = randomVideo;
     jailVideo.muted = false; // Ensure audio is not muted
     jailVideo.volume = 1.0; // Set volume to max
     jailVideo.load();
-    
+
     let videoEnded = false;
     let jailFallbackTimeout = null;
+
+    // Add event handlers for better loading detection
+    jailVideo.oncanplay = () => {
+      console.log(`Jail video can play: ${randomVideo}`);
+    };
+
+    jailVideo.oncanplaythrough = () => {
+      console.log(`Jail video can play through: ${randomVideo}`);
+    };
+
+    jailVideo.onplaying = () => {
+      console.log(`Jail video started playing: ${randomVideo}`);
+    };
+
+    jailVideo.onwaiting = () => {
+      console.log(`Jail video buffering: ${randomVideo}`);
+    };
 
     // For AI: auto-close when video ends
     // For human: show overlay with proceed button, video plays in background
@@ -2824,14 +2841,14 @@ function showJailUI(message, callback) {
 
       jailFallbackTimeout = setTimeout(() => {
         if (!videoEnded) {
-          console.log('Jail video fallback timeout (10s), closing overlay');
+          console.log('Jail video fallback timeout (15s), closing overlay');
           videoEnded = true;
           jailVideo.pause();
           jailVideo.currentTime = 0;
           document.getElementById('jailOverlay').style.display = 'none';
           if (callback) callback();
         }
-      }, 10000); // Increased to 10 seconds
+      }, 15000); // Increased to 15 seconds to match property video timeout
 
       // Store timeout for cleanup
       window.currentJailFallbackTimeout = jailFallbackTimeout;
@@ -2839,7 +2856,7 @@ function showJailUI(message, callback) {
       // Human: show overlay with proceed button, play video
       document.getElementById('jailOverlay').style.display = 'flex';
       jailVideo.play().catch(e => console.log('Video play error:', e));
-      
+
       // For human, video ending doesn't auto-close - they must click proceed
       jailVideo.onended = function() {
         jailVideo.pause();
@@ -3432,9 +3449,18 @@ function playTileMedia(tile, isCasinoMinigame) {
       window.currentVideoLoadingTimeout = null;
     }
 
-    // Pause video before loading new source to prevent AbortError
-    propertyVideo.pause();
-    propertyVideo.currentTime = 0;
+    // Clear any stall timeout
+    if (window.currentVideoStallTimeout) {
+      clearTimeout(window.currentVideoStallTimeout);
+      window.currentVideoStallTimeout = null;
+    }
+
+    // Only pause if we're not on the first attempt of the first video
+    // This prevents unnecessary resets that cause freezing
+    if (retryAttempt > 0 || tried.size > 0) {
+      propertyVideo.pause();
+      propertyVideo.currentTime = 0;
+    }
 
     const videoUrl = videos[index];
     propertyVideo.style.display = 'block';
@@ -3467,7 +3493,7 @@ function playTileMedia(tile, isCasinoMinigame) {
         return;
       }
       if (retryAttempt < maxRetriesPerVideo - 1) {
-        window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 500);
+        window.currentVideoRetryTimeout = setTimeout(() => tryVideo(index, retryAttempt + 1), 1000);
         return;
       }
       tried.add(index);
@@ -3499,12 +3525,14 @@ function playTileMedia(tile, isCasinoMinigame) {
       if (document.getElementById('propertyOverlay').style.display === 'none') return;
       console.log(`Video loading timeout for: ${videoUrl}`);
       failOver(new Error('Video loading timeout'));
-    }, 8000); // 8 second timeout
+    }, 15000); // Increased to 15 seconds
 
     propertyVideo.src = videoUrl;
     propertyVideo.load();
 
     let videoHasStarted = false;
+    let stallCount = 0;
+    let bufferingCount = 0;
 
     propertyVideo.play().then(() => {
       console.log(`Video loaded successfully: ${videoUrl}`);
@@ -3527,21 +3555,47 @@ function playTileMedia(tile, isCasinoMinigame) {
       propertyVideo.muted = false; // Unmute once playing
       console.log(`Video started playing: ${videoUrl}`);
       videoHasStarted = true;
+      stallCount = 0; // Reset stall count when playing
+      bufferingCount = 0; // Reset buffering count when playing
     };
 
     propertyVideo.onwaiting = () => {
-      // Normal buffering event - don't trigger fallback
-      console.log(`Video buffering: ${videoUrl}`);
+      bufferingCount++;
+      console.log(`Video buffering: ${videoUrl} (buffering count: ${bufferingCount})`);
+      // Only treat excessive buffering as error
+      if (bufferingCount > 5 && videoHasStarted) {
+        console.log(`Video buffering threshold exceeded: ${videoUrl}`);
+        failOver(new Error('Excessive buffering'));
+      }
     };
 
     propertyVideo.onstalled = (e) => {
-      // Only treat stall as error if video hasn't started playing yet
-      // Once playing, stalls are normal network buffering and shouldn't trigger fallback
-      if (!videoHasStarted) {
-        console.log(`Video stalled before playing: ${videoUrl}`);
+      stallCount++;
+      console.log(`Video stalled: ${videoUrl} (stall count: ${stallCount})`);
+
+      // Only treat stall as error if video hasn't started playing yet OR if it stalls excessively
+      // Once playing, allow some stalls for normal network buffering
+      if (!videoHasStarted || stallCount > 3) {
+        console.log(`Video stall threshold exceeded: ${videoUrl}`);
         failOver(e);
-      } else {
-        console.log(`Video stalled during playback (normal buffering): ${videoUrl}`);
+      }
+    };
+
+    // Add oncanplay to detect when video is ready
+    propertyVideo.oncanplay = () => {
+      console.log(`Video can play: ${videoUrl}`);
+      if (window.currentVideoLoadingTimeout) {
+        clearTimeout(window.currentVideoLoadingTimeout);
+        window.currentVideoLoadingTimeout = null;
+      }
+    };
+
+    // Add oncanplaythrough to detect when video can play without buffering
+    propertyVideo.oncanplaythrough = () => {
+      console.log(`Video can play through without buffering: ${videoUrl}`);
+      if (window.currentVideoLoadingTimeout) {
+        clearTimeout(window.currentVideoLoadingTimeout);
+        window.currentVideoLoadingTimeout = null;
       }
     };
   }
@@ -3586,6 +3640,12 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
     if (window.currentVideoLoadingTimeout) {
       clearTimeout(window.currentVideoLoadingTimeout);
       window.currentVideoLoadingTimeout = null;
+    }
+
+    // Clear any pending video stall timeout
+    if (window.currentVideoStallTimeout) {
+      clearTimeout(window.currentVideoStallTimeout);
+      window.currentVideoStallTimeout = null;
     }
     
     // Stop horse sound if playing
@@ -3677,6 +3737,12 @@ document.getElementById('propertyBuyBtn').addEventListener('click', () => {
     window.currentVideoLoadingTimeout = null;
   }
 
+  // Clear any pending video stall timeout
+  if (window.currentVideoStallTimeout) {
+    clearTimeout(window.currentVideoStallTimeout);
+    window.currentVideoStallTimeout = null;
+  }
+
   // Stop horse sound if playing
   if (window.currentHorseSound) {
     window.currentHorseSound.pause();
@@ -3733,6 +3799,12 @@ document.getElementById('propertyPassBtn').addEventListener('click', () => {
   if (window.currentVideoLoadingTimeout) {
     clearTimeout(window.currentVideoLoadingTimeout);
     window.currentVideoLoadingTimeout = null;
+  }
+
+  // Clear any pending video stall timeout
+  if (window.currentVideoStallTimeout) {
+    clearTimeout(window.currentVideoStallTimeout);
+    window.currentVideoStallTimeout = null;
   }
 
   // Stop horse sound if playing
