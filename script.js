@@ -76,13 +76,15 @@ function setupConnection(conn) {
     console.log('Connection established with:', conn.peer);
     gameState.connections.push(conn);
     
-    // Store playerId in connection object for consistency
-    conn.playerId = gameState.isHost ? 0 : conn.peer;
+    // Store remote peer ID in connection object
+    // For host: conn.peer is the guest's ID
+    // For guest: conn.peer is the host's ID
+    conn.remotePeerId = conn.peer;
     
     // Send player info (without token initially)
     conn.send({
       type: 'player_info',
-      playerId: conn.playerId,
+      playerId: gameState.isHost ? 0 : gameState.peer.id, // Send own peer ID
       playerName: gameState.isHost ? 'Host' : 'You',
       token: gameState.selectedToken || null, // Don't send if not selected
       isHost: gameState.isHost
@@ -125,18 +127,23 @@ function handlePeerMessage(data, conn) {
           token: gameState.selectedToken
         });
       } else {
-        // Guest receives connection acknowledgment, nothing to update
+        // Guest receives connection acknowledgment
         console.log('Guest connected to host');
+        // Guest adds themselves to lobby (as second player)
+        if (!document.getElementById(`player-${gameState.peer.id}`)) {
+          addPlayerToLobby(gameState.peer.id, 'You (Joining)', null);
+        }
       }
       break;
       
     case 'host_info':
-      // Guest receives host info
+      // Guest receives host info - update the hostPlayer div
       const hostPlayerName = document.querySelector('#hostPlayer .player-name');
       if (hostPlayerName) {
         hostPlayerName.textContent = data.playerName;
       }
       const hostTokenImg = document.getElementById('hostToken');
+      const hostTokenEmoji = document.getElementById('hostTokenEmoji');
       if (hostTokenImg && data.token) {
         const tokenImageMap = {
           'RollsRoyce': 'rolls_royce',
@@ -151,6 +158,7 @@ function handlePeerMessage(data, conn) {
         const tokenImage = tokenImageMap[data.token] || 'burger';
         hostTokenImg.src = `tokenimages/${tokenImage}.png`;
         hostTokenImg.style.display = 'block';
+        hostTokenEmoji.style.display = 'none';
       }
       break;
       
@@ -158,35 +166,46 @@ function handlePeerMessage(data, conn) {
       // Host receives guest's token selection
       if (gameState.isHost) {
         console.log(`Host received token selection from guest ${data.playerId}: ${data.token}`);
-        // Update the guest's token in the lobby
-        const playerItem = document.getElementById(`player-${data.playerId}`);
-        if (playerItem) {
-          const tokenImageMap = {
-            'RollsRoyce': 'rolls_royce',
-            'Helicopter': 'helicopter',
-            'TopHat': 'top_hat',
-            'Shoe': 'shoe',
-            'Cheeseburger': 'burger',
-            'CoffeeCup': 'coffee',
-            'Football': 'football',
-            'WhiteGirlIdle': 'whitegirlmodel'
-          };
-          const tokenImage = tokenImageMap[data.token] || 'burger';
-          
-          let tokenImg = playerItem.querySelector('.player-token-img');
-          let tokenEmoji = playerItem.querySelector('.player-token');
-          
-          if (tokenImg) {
-            tokenImg.src = `tokenimages/${tokenImage}.png`;
-            tokenImg.style.display = 'block';
-          } else if (tokenEmoji) {
-            tokenEmoji.remove();
-            const newImg = document.createElement('img');
-            newImg.className = 'player-token-img';
-            newImg.src = `tokenimages/${tokenImage}.png`;
-            newImg.alt = data.token;
-            playerItem.insertBefore(newImg, playerItem.querySelector('.player-name'));
+        // Update the guest's token in the lobby using the connection
+        const guestConn = gameState.connections.find(c => c.remotePeerId === data.playerId);
+        if (guestConn) {
+          // Find the player item by peer ID
+          const playerItem = document.getElementById(`player-${data.playerId}`);
+          if (playerItem) {
+            const tokenImageMap = {
+              'RollsRoyce': 'rolls_royce',
+              'Helicopter': 'helicopter',
+              'TopHat': 'top_hat',
+              'Shoe': 'shoe',
+              'Cheeseburger': 'burger',
+              'CoffeeCup': 'coffee',
+              'Football': 'football',
+              'WhiteGirlIdle': 'whitegirlmodel'
+            };
+            const tokenImage = tokenImageMap[data.token] || 'burger';
+            
+            let tokenImg = playerItem.querySelector('.player-token-img');
+            let tokenEmoji = playerItem.querySelector('.player-token');
+            
+            if (tokenImg) {
+              tokenImg.src = `tokenimages/${tokenImage}.png`;
+              tokenImg.style.display = 'block';
+            } else if (tokenEmoji) {
+              tokenEmoji.remove();
+              const newImg = document.createElement('img');
+              newImg.className = 'player-token-img';
+              newImg.src = `tokenimages/${tokenImage}.png`;
+              newImg.alt = data.token;
+              playerItem.insertBefore(newImg, playerItem.querySelector('.player-name'));
+            }
+            console.log(`Updated guest ${data.playerId} token to ${data.token}`);
+            // Update start button state
+            updateStartButton();
+          } else {
+            console.error(`Could not find player item for ID: ${data.playerId}`);
           }
+        } else {
+          console.error(`Could not find connection for guest ID: ${data.playerId}`);
         }
       }
       break;
@@ -273,8 +292,8 @@ function addPlayerToLobby(playerId, playerName, token) {
     'WhiteGirlIdle': 'whitegirlmodel'
   };
   
-  // Generate ID if not provided
-  const id = playerId || `player-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+  // Use the provided ID (should be peer ID for guests)
+  const id = playerId;
   
   // Check if player already exists
   const existingPlayer = document.getElementById(`player-${id}`);
@@ -599,14 +618,36 @@ tokenOptions.forEach(option => {
     gameState.selectedToken = option.dataset.token;
     gameState.selectedModel = option.dataset.model;
 
-    // Update host token display
-    const hostTokenImg = document.getElementById('hostToken');
-    const hostTokenEmoji = document.getElementById('hostTokenEmoji');
     const selectedImg = option.querySelector('img').src;
 
-    hostTokenImg.src = selectedImg;
-    hostTokenImg.style.display = 'block';
-    hostTokenEmoji.style.display = 'none';
+    // Update token display based on whether we're host or guest
+    if (gameState.isHost) {
+      // Host updates their own display (hostToken)
+      const hostTokenImg = document.getElementById('hostToken');
+      const hostTokenEmoji = document.getElementById('hostTokenEmoji');
+      hostTokenImg.src = selectedImg;
+      hostTokenImg.style.display = 'block';
+      hostTokenEmoji.style.display = 'none';
+    } else {
+      // Guest updates their own display (find their player item)
+      const myPlayerItem = document.getElementById(`player-${gameState.peer.id}`);
+      if (myPlayerItem) {
+        let tokenImg = myPlayerItem.querySelector('.player-token-img');
+        let tokenEmoji = myPlayerItem.querySelector('.player-token');
+        
+        if (tokenImg) {
+          tokenImg.src = selectedImg;
+          tokenImg.style.display = 'block';
+        } else if (tokenEmoji) {
+          tokenEmoji.remove();
+          const newImg = document.createElement('img');
+          newImg.className = 'player-token-img';
+          newImg.src = selectedImg;
+          newImg.alt = gameState.selectedToken;
+          myPlayerItem.insertBefore(newImg, myPlayerItem.querySelector('.player-name'));
+        }
+      }
+    }
 
     // If in multiplayer mode and token is selected, broadcast to peers
     if (gameState.gameMode === 'multiplayer' && gameState.connections.length > 0) {
@@ -618,6 +659,8 @@ tokenOptions.forEach(option => {
           token: gameState.selectedToken
         });
         console.log('Host broadcasted token update to peers');
+        // Update start button state
+        updateStartButton();
       } else {
         // Guest sends their token selection to host using their peer ID
         if (gameState.connections.length > 0) {
@@ -628,6 +671,8 @@ tokenOptions.forEach(option => {
             token: gameState.selectedToken
           });
           console.log('Guest sent token selection to host with ID:', myPeerId);
+          // Update start button state for guest
+          updateStartButton();
         }
       }
     }
@@ -715,18 +760,41 @@ function updateStartButton() {
   const totalPlayers = 1 + gameState.aiCount;
   const canStart = hasToken && totalPlayers >= 2;
 
-  // In multiplayer mode, just need a token selected (waiting for other players)
+  // In multiplayer mode, check if all players have selected tokens
   const isMultiplayer = gameState.gameMode === 'multiplayer';
-  const canStartMultiplayer = hasToken && isMultiplayer;
+  let canStartMultiplayer = false;
+  
+  if (isMultiplayer) {
+    // Check if current player has a token
+    if (!hasToken) {
+      canStartMultiplayer = false;
+    } else {
+      // For host: check if all connected guests have selected tokens
+      if (gameState.isHost) {
+        const allGuestsHaveTokens = gameState.connections.every(conn => {
+          const guestPlayerItem = document.getElementById(`player-${conn.remotePeerId}`);
+          if (!guestPlayerItem) return false;
+          const hasTokenImg = guestPlayerItem.querySelector('.player-token-img');
+          const hasTokenEmoji = guestPlayerItem.querySelector('.player-token');
+          // Has token if there's an image AND no emoji placeholder
+          return hasTokenImg && !hasTokenEmoji;
+        });
+        canStartMultiplayer = allGuestsHaveTokens && gameState.connections.length > 0;
+      } else {
+        // For guest: just need to have selected token (host will check)
+        canStartMultiplayer = true;
+      }
+    }
+  }
 
   if (canStart || canStartMultiplayer) {
     startGameBtn.disabled = false;
     startGameBtn.classList.add('enabled');
-    startGameBtn.textContent = isMultiplayer ? 'Ready' : 'Start Game';
+    startGameBtn.textContent = isMultiplayer ? 'Start Game' : 'Start Game';
   } else {
     startGameBtn.disabled = true;
     startGameBtn.classList.remove('enabled');
-    startGameBtn.textContent = 'Start Game';
+    startGameBtn.textContent = isMultiplayer ? 'Waiting for players...' : 'Start Game';
   }
 }
 
