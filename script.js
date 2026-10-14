@@ -10,13 +10,236 @@ const gameState = {
   players: [],
   gameStarted: false,
   currentPlayerIndex: 0,
-  playerTokens: [] // 3D token models on the board
+  playerTokens: [], // 3D token models on the board
+  ws: null, // WebSocket connection
+  playerId: null // Player's ID in the game
 };
 
 // Turn completion flag to prevent multiple rolls
 window.turnCompleting = false;
 window.aiRollScheduled = false;
 window.diceProcessed = false;
+
+// ===== WEBSOCKET CONNECTION =====
+const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'ws://localhost:8080'
+  : `wss://${window.location.hostname}/ws`;
+
+function connectWebSocket() {
+  if (gameState.gameMode !== 'multiplayer') return;
+  
+  try {
+    gameState.ws = new WebSocket(WS_URL);
+    
+    gameState.ws.onopen = () => {
+      console.log('WebSocket connected');
+      
+      if (gameState.isHost) {
+        // Create game
+        gameState.ws.send(JSON.stringify({
+          type: 'create_game',
+          playerName: 'Host',
+          token: gameState.selectedToken
+        }));
+      } else {
+        // Join game
+        gameState.ws.send(JSON.stringify({
+          type: 'join_game',
+          gameId: gameState.gameId,
+          playerName: 'You',
+          token: gameState.selectedToken
+        }));
+      }
+    };
+    
+    gameState.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      handleWebSocketMessage(data);
+    };
+    
+    gameState.ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    gameState.ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      gameState.ws = null;
+    };
+  } catch (e) {
+    console.error('Failed to connect WebSocket:', e);
+  }
+}
+
+function handleWebSocketMessage(data) {
+  switch (data.type) {
+    case 'game_created':
+      gameState.gameId = data.gameId;
+      gameState.playerId = data.playerId;
+      console.log(`Game created: ${data.gameId}, player ID: ${data.playerId}`);
+      // Update invite link
+      if (inviteLink) {
+        inviteLink.value = generateInviteLink();
+      }
+      break;
+      
+    case 'game_joined':
+      gameState.playerId = data.playerId;
+      console.log(`Joined game: ${data.gameId}, player ID: ${data.playerId}`);
+      updatePlayerListFromServer(data.players);
+      break;
+      
+    case 'player_joined':
+      console.log(`Player ${data.playerName} joined the game`);
+      addPlayerToLobby(data.playerId, data.playerName, data.token);
+      break;
+      
+    case 'player_left':
+      console.log(`Player ${data.playerId} left the game`);
+      removePlayerFromLobby(data.playerId);
+      break;
+      
+    case 'player_action':
+      handlePlayerAction(data);
+      break;
+      
+    case 'game_update':
+      handleGameUpdate(data);
+      break;
+      
+    case 'error':
+      console.error('Server error:', data.message);
+      alert(data.message);
+      break;
+  }
+}
+
+function addPlayerToLobby(playerId, playerName, token) {
+  const playerList = document.getElementById('playerList');
+  const tokenImageMap = {
+    'RollsRoyce': 'rolls_royce',
+    'Helicopter': 'helicopter',
+    'TopHat': 'top_hat',
+    'Shoe': 'shoe',
+    'Cheeseburger': 'burger',
+    'CoffeeCup': 'coffee',
+    'Football': 'football',
+    'WhiteGirlIdle': 'whitegirlmodel'
+  };
+  
+  const tokenImage = tokenImageMap[token] || 'burger';
+  
+  const playerItem = document.createElement('div');
+  playerItem.className = 'player-item';
+  playerItem.id = `player-${playerId}`;
+  playerItem.innerHTML = `
+    <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${token}">
+    <span class="player-name">${playerName}</span>
+  `;
+  playerList.appendChild(playerItem);
+  
+  // Update player count
+  const playerCount = document.getElementById('playerCount');
+  playerCount.textContent = parseInt(playerCount.textContent) + 1;
+}
+
+function removePlayerFromLobby(playerId) {
+  const playerItem = document.getElementById(`player-${playerId}`);
+  if (playerItem) {
+    playerItem.remove();
+  }
+  
+  // Update player count
+  const playerCount = document.getElementById('playerCount');
+  playerCount.textContent = Math.max(1, parseInt(playerCount.textContent) - 1);
+}
+
+function updatePlayerListFromServer(players) {
+  const playerList = document.getElementById('playerList');
+  // Clear existing players except host
+  const existingPlayers = playerList.querySelectorAll('.player-item:not(#hostPlayer)');
+  existingPlayers.forEach(p => p.remove());
+  
+  const tokenImageMap = {
+    'RollsRoyce': 'rolls_royce',
+    'Helicopter': 'helicopter',
+    'TopHat': 'top_hat',
+    'Shoe': 'shoe',
+    'Cheeseburger': 'burger',
+    'CoffeeCup': 'coffee',
+    'Football': 'football',
+    'WhiteGirlIdle': 'whitegirlmodel'
+  };
+  
+  players.forEach(player => {
+    if (player.id === gameState.playerId) return; // Skip self
+    
+    const tokenImage = tokenImageMap[player.token] || 'burger';
+    const playerItem = document.createElement('div');
+    playerItem.className = 'player-item';
+    playerItem.id = `player-${player.id}`;
+    playerItem.innerHTML = `
+      <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${player.token}">
+      <span class="player-name">${player.name}</span>
+    `;
+    playerList.appendChild(playerItem);
+  });
+  
+  // Update player count
+  const playerCount = document.getElementById('playerCount');
+  playerCount.textContent = players.length;
+}
+
+function sendPlayerAction(action, data) {
+  if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) return;
+  
+  gameState.ws.send(JSON.stringify({
+    type: 'player_action',
+    action: action,
+    data: data
+  }));
+}
+
+function sendGameUpdate(data) {
+  if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) return;
+  
+  gameState.ws.send(JSON.stringify({
+    type: 'game_update',
+    data: data
+  }));
+}
+
+function handlePlayerAction(data) {
+  // Handle actions from other players
+  console.log('Received player action:', data);
+  
+  switch (data.action) {
+    case 'roll':
+      // Update dice display
+      break;
+    case 'move':
+      // Move other player's token
+      break;
+    case 'buy_property':
+      // Update property ownership
+      break;
+    case 'pay_rent':
+      // Update money
+      break;
+  }
+}
+
+function handleGameUpdate(data) {
+  // Sync game state from server
+  console.log('Received game update:', data);
+  
+  if (data.gameState) {
+    // Merge server state with local state
+    Object.assign(gameState, data.gameState);
+    updatePlayerMoney();
+    updatePlayersList();
+    updatePropertiesList();
+  }
+}
 
 // Store animation mixers for each player
 const playerAnimations = {};
@@ -175,11 +398,10 @@ function checkGameIdInURL() {
     if (aiSection) {
       aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameId}</p>
-      <p style="color: #ff6b6b; font-size: 0.8rem;">⚠️ Multiplayer not fully implemented - local mode only</p>`;
+      <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to server...</p>`;
     }
-    // NOTE: Multiplayer requires backend/WebSocket server for real-time connection
-    // Currently this only sets the game ID and mode, but doesn't actually connect players
-    // TODO: Implement WebSocket server and real-time sync for actual multiplayer
+    // Connect to WebSocket server
+    connectWebSocket();
   } else {
     // No game ID in URL, this is a new game - host mode
     gameState.isHost = true;
@@ -191,6 +413,15 @@ function checkGameIdInURL() {
     if (inviteLink) {
       inviteLink.value = generateInviteLink();
     }
+    // Show visual indicator in lobby
+    const aiSection = document.getElementById('aiSection');
+    if (aiSection) {
+      aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
+      <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${newGameId}</p>
+      <p style="color: #9a8f78; font-size: 0.8rem;">👤 Share link to invite players</p>`;
+    }
+    // Connect to WebSocket server
+    connectWebSocket();
   }
 }
 
@@ -224,6 +455,11 @@ tokenOptions.forEach(option => {
     hostTokenImg.src = selectedImg;
     hostTokenImg.style.display = 'block';
     hostTokenEmoji.style.display = 'none';
+
+    // If in multiplayer mode and token is selected, connect to WebSocket
+    if (gameState.gameMode === 'multiplayer' && !gameState.ws) {
+      connectWebSocket();
+    }
 
     updateStartButton();
   });
