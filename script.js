@@ -271,6 +271,10 @@ function handlePlayerAction(data) {
 function handleOpponentDiceRoll(data) {
   console.log('Opponent rolled:', data.dice1, data.dice2, 'Total:', data.total);
   
+  // Add to opponent moves panel
+  const opponentName = gameState.isHost ? 'Player 2' : 'Host';
+  addAIMove(opponentName, `Rolled ${data.dice1} + ${data.dice2} = ${data.total}`);
+  
   // Display opponent's dice roll
   // Show dice animation with the opponent's results
   if (diceLoaded && !isRolling) {
@@ -281,8 +285,8 @@ function handleOpponentDiceRoll(data) {
     diceBody1.position.set(-0.1, 5, 0);
     diceBody2.position.set(0.1, 5, 0);
     
-    // Set dice results to match opponent's roll
-    // TODO: Need to actually rotate dice to show the correct numbers
+    // Set dice rotations to show the correct numbers
+    // This is a simplified version - ideally we'd calculate the exact rotation
     // For now, just show them and hide after delay
     setTimeout(() => {
       diceModel1.visible = false;
@@ -293,10 +297,37 @@ function handleOpponentDiceRoll(data) {
 
 function handleOpponentMove(data) {
   console.log('Opponent moved to position:', data.position);
-  // Move opponent's token on board
-  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  
+  // Find the opponent player index
+  const opponentIndex = gameState.players.findIndex(p => {
+    // If we're host, opponent is "Player 2"
+    // If we're guest, opponent is "Host"
+    if (gameState.isHost) {
+      return p.name === 'Player 2';
+    } else {
+      return p.name === 'Host';
+    }
+  });
+  
   if (opponentIndex !== -1) {
-    movePlayerToken(opponentIndex, data.position);
+    const opponent = gameState.players[opponentIndex];
+    const oldPosition = opponent.position;
+    
+    // Add to opponent moves panel
+    const opponentName = gameState.isHost ? 'Player 2' : 'Host';
+    addOpponentMove(opponentName, `Moved to position ${data.position}`);
+    
+    // Update opponent's position
+    opponent.position = data.position;
+    
+    // Animate the movement
+    switchAnimation(opponentIndex, 'walk');
+    animatePlayerMovement(opponentIndex, oldPosition, data.position, () => {
+      switchAnimation(opponentIndex, 'idle');
+      console.log('Opponent movement complete');
+    }, false);
+  } else {
+    console.error('Could not find opponent player');
   }
 }
 
@@ -309,20 +340,48 @@ function handleOpponentPropertyPurchase(data) {
 function handleOpponentMoneyUpdate(data) {
   console.log('Opponent money changed:', data.money);
   // Update opponent's money display
-  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  const opponentIndex = gameState.players.findIndex(p => {
+    if (gameState.isHost) {
+      return p.name === 'Player 2';
+    } else {
+      return p.name === 'Host';
+    }
+  });
   if (opponentIndex !== -1) {
+    const oldMoney = gameState.players[opponentIndex].money;
     gameState.players[opponentIndex].money = data.money;
     updatePlayerMoney();
+    
+    // Add to opponent moves panel
+    const opponentName = gameState.isHost ? 'Player 2' : 'Host';
+    const diff = data.money - oldMoney;
+    if (diff > 0) {
+      addOpponentMove(opponentName, `Collected $${diff}`);
+    } else if (diff < 0) {
+      addOpponentMove(opponentName, `Paid $${Math.abs(diff)}`);
+    }
   }
 }
 
 function handleOpponentJailStatus(data) {
   console.log('Opponent jail status changed:', data.isInJail);
   // Update opponent's jail status
-  const opponentIndex = gameState.players.findIndex(p => p.name === 'Host' || p.name === 'Player 2');
+  const opponentIndex = gameState.players.findIndex(p => {
+    if (gameState.isHost) {
+      return p.name === 'Player 2';
+    } else {
+      return p.name === 'Host';
+    }
+  });
   if (opponentIndex !== -1) {
     gameState.players[opponentIndex].isInJail = data.isInJail;
     gameState.players[opponentIndex].jailTurns = data.jailTurns || 0;
+    
+    // Add to opponent moves panel
+    const opponentName = gameState.isHost ? 'Player 2' : 'Host';
+    if (data.isInJail) {
+      addOpponentMove(opponentName, 'Sent to Jail');
+    }
   }
 }
 
@@ -923,6 +982,14 @@ function updateStartButton() {
 function initializeGame() {
   gameState.gameStarted = true;
 
+  // Update AI Moves panel title based on game mode
+  if (gameState.gameMode === 'multiplayer') {
+    const aiMovesTitle = document.getElementById('aiMovesTitle');
+    if (aiMovesTitle) {
+      aiMovesTitle.textContent = 'Opponent Moves';
+    }
+  }
+
   // Start animation loop when game starts
   animateThreeJS();
 
@@ -1131,7 +1198,7 @@ function updatePlayersList() {
   // console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money || 2500}`);
 }
 
-// Update AI moves display
+// Update AI/Opponent moves display
 function addAIMove(playerName, action) {
   if (!aiMoves) return;
   const moveEntry = document.createElement('div');
@@ -1142,6 +1209,11 @@ function addAIMove(playerName, action) {
   `;
   aiMoves.appendChild(moveEntry);
   aiMoves.scrollTop = aiMoves.scrollHeight;
+}
+
+// Add opponent move (alias for addAIMove but more semantic for multiplayer)
+function addOpponentMove(playerName, action) {
+  addAIMove(playerName, action);
 }
 
 // Add chat message
@@ -1723,6 +1795,16 @@ rollDiceBtn.addEventListener('click', () => {
   if (currentPlayer.isAI) {
     console.log('Cannot roll - it is AI\'s turn');
     return;
+  }
+
+  // In multiplayer mode, only allow rolling if it's the local player's turn
+  if (gameState.gameMode === 'multiplayer') {
+    // Host is always index 0, guest is always index 1
+    const localPlayerIndex = gameState.isHost ? 0 : 1;
+    if (gameState.currentPlayerIndex !== localPlayerIndex) {
+      console.log('Cannot roll - it is not your turn');
+      return;
+    }
   }
 
   // Don't allow rolling if it's not the human player's turn
