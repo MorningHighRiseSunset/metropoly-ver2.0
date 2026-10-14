@@ -11,7 +11,8 @@ const gameState = {
   gameStarted: false,
   currentPlayerIndex: 0,
   playerTokens: [], // 3D token models on the board
-  ws: null, // WebSocket connection
+  peer: null, // PeerJS connection
+  connections: [], // Connected peers
   playerId: null // Player's ID in the game
 };
 
@@ -20,85 +21,174 @@ window.turnCompleting = false;
 window.aiRollScheduled = false;
 window.diceProcessed = false;
 
-// ===== WEBSOCKET CONNECTION =====
-const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'ws://localhost:8080'
-  : `wss://${window.location.hostname}`;
-
-function connectWebSocket() {
-  if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) return; // Already connected
+// ===== PEERJS CONNECTION =====
+function connectPeer() {
+  if (gameState.peer) return; // Already connected
   
-  console.log(`Connecting to WebSocket: ${WS_URL}`);
+  console.log('Initializing PeerJS...');
   
-  const ws = new WebSocket(WS_URL);
-  gameState.ws = ws;
+  // Create a new Peer (host uses gameId as ID, guest generates random ID)
+  const peerId = gameState.isHost ? gameState.gameId : `guest-${Date.now()}`;
   
-  ws.onopen = () => {
-    console.log('WebSocket connected');
+  const peer = new Peer(peerId);
+  gameState.peer = peer;
+  
+  peer.on('open', (id) => {
+    console.log('PeerJS connected with ID:', id);
     
     // Update UI to show connected
     const aiSection = document.getElementById('aiSection');
     if (aiSection) {
       aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
-      <p style="color: #4caf50; font-size: 0.8rem;">✓ Connected to server</p>`;
+      <p style="color: #4caf50; font-size: 0.8rem;">✓ Connected</p>`;
     }
     
     if (gameState.isHost) {
-      // Host creates the game
-      ws.send(JSON.stringify({
-        type: 'create_game',
-        gameId: gameState.gameId,
-        playerName: 'Host',
-        token: gameState.selectedToken
-      }));
-      console.log('Host sent create_game');
+      // Host waits for connections
+      console.log('Host waiting for connections...');
     } else {
-      // Guest joins the game
-      ws.send(JSON.stringify({
-        type: 'join_game',
-        gameId: gameState.gameId,
-        playerName: 'You',
-        token: gameState.selectedToken
-      }));
-      console.log('Guest sent join_game');
+      // Guest connects to host
+      console.log('Guest connecting to host:', gameState.gameId);
+      const conn = peer.connect(gameState.gameId);
+      setupConnection(conn);
     }
-  };
+  });
   
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      console.log('Received:', data.type, data);
-      handleWebSocketMessage(data);
-    } catch (error) {
-      console.error('Error handling message:', error);
-    }
-  };
+  peer.on('connection', (conn) => {
+    console.log('Incoming connection from:', conn.peer);
+    setupConnection(conn);
+  });
   
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
+  peer.on('error', (err) => {
+    console.error('PeerJS error:', err);
     const aiSection = document.getElementById('aiSection');
     if (aiSection) {
       aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
       <p style="color: #f44336; font-size: 0.8rem;">❌ Connection error</p>`;
     }
-  };
+  });
+}
+
+function setupConnection(conn) {
+  conn.on('open', () => {
+    console.log('Connection established with:', conn.peer);
+    gameState.connections.push(conn);
+    
+    // Send player info
+    conn.send({
+      type: 'player_info',
+      playerId: gameState.isHost ? 0 : Date.now(),
+      playerName: gameState.isHost ? 'Host' : 'You',
+      token: gameState.selectedToken,
+      isHost: gameState.isHost
+    });
+    
+    // Update player count
+    const playerCount = document.getElementById('playerCount');
+    playerCount.textContent = parseInt(playerCount.textContent) + 1;
+  });
   
-  ws.onclose = () => {
-    console.log('WebSocket disconnected');
-    gameState.ws = null;
-  };
+  conn.on('data', (data) => {
+    console.log('Received data:', data);
+    handlePeerMessage(data, conn);
+  });
+  
+  conn.on('close', () => {
+    console.log('Connection closed:', conn.peer);
+    gameState.connections = gameState.connections.filter(c => c !== conn);
+    const playerCount = document.getElementById('playerCount');
+    playerCount.textContent = Math.max(1, parseInt(playerCount.textContent) - 1);
+  });
+  
+  conn.on('error', (err) => {
+    console.error('Connection error:', err);
+  });
+}
+
+function handlePeerMessage(data, conn) {
+  switch (data.type) {
+    case 'player_info':
+      if (gameState.isHost) {
+        // Host adds guest to lobby
+        addPlayerToLobby(data.playerId, data.playerName, data.token);
+        // Send host info back
+        conn.send({
+          type: 'host_info',
+          playerName: 'Host',
+          token: gameState.selectedToken
+        });
+      } else {
+        // Guest receives host info
+        const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+        if (hostPlayerName) {
+          hostPlayerName.textContent = data.playerName;
+        }
+        const hostTokenImg = document.getElementById('hostToken');
+        if (hostTokenImg && data.token) {
+          const tokenImageMap = {
+            'RollsRoyce': 'rolls_royce',
+            'Helicopter': 'helicopter',
+            'TopHat': 'top_hat',
+            'Shoe': 'shoe',
+            'Cheeseburger': 'burger',
+            'CoffeeCup': 'coffee',
+            'Football': 'football',
+            'WhiteGirlIdle': 'whitegirlmodel'
+          };
+          const tokenImage = tokenImageMap[data.token] || 'burger';
+          hostTokenImg.src = `tokenimages/${tokenImage}.png`;
+          hostTokenImg.style.display = 'block';
+        }
+      }
+      break;
+      
+    case 'host_info':
+      // Guest receives host info
+      const hostPlayerName = document.querySelector('#hostPlayer .player-name');
+      if (hostPlayerName) {
+        hostPlayerName.textContent = data.playerName;
+      }
+      const hostTokenImg = document.getElementById('hostToken');
+      if (hostTokenImg && data.token) {
+        const tokenImageMap = {
+          'RollsRoyce': 'rolls_royce',
+          'Helicopter': 'helicopter',
+          'TopHat': 'top_hat',
+          'Shoe': 'shoe',
+          'Cheeseburger': 'burger',
+          'CoffeeCup': 'coffee',
+          'Football': 'football',
+          'WhiteGirlIdle': 'whitegirlmodel'
+        };
+        const tokenImage = tokenImageMap[data.token] || 'burger';
+        hostTokenImg.src = `tokenimages/${tokenImage}.png`;
+        hostTokenImg.style.display = 'block';
+      }
+      break;
+      
+    case 'player_action':
+      handlePlayerAction(data);
+      break;
+      
+    case 'token_updated':
+      handleTokenUpdated(data);
+      break;
+  }
+}
+
+function broadcastToAll(data) {
+  gameState.connections.forEach(conn => {
+    if (conn.open) {
+      conn.send(data);
+    }
+  });
 }
 
 function handlePlayerJoined(data) {
   console.log(`Player joined: ${data.playerName}`, data);
   addPlayerToLobby(data.playerId, data.playerName, data.token);
-}
-
-function handlePlayerLeft(data) {
-  console.log(`Player left: ${data.playerId}`);
-  removePlayerFromLobby(data.playerId);
 }
 
 function handleTokenUpdated(data) {
@@ -125,52 +215,7 @@ function handleTokenUpdated(data) {
 
 
 
-function handleWebSocketMessage(data) {
-  switch (data.type) {
-    case 'game_created':
-      gameState.gameId = data.gameId;
-      gameState.playerId = data.playerId;
-      console.log(`Game created: ${data.gameId}, player ID: ${data.playerId}`);
-      // Update invite link
-      if (inviteLink) {
-        inviteLink.value = generateInviteLink();
-      }
-      break;
-      
-    case 'game_joined':
-      gameState.playerId = data.playerId;
-      console.log(`Joined game: ${data.gameId}, player ID: ${data.playerId}`);
-      updatePlayerListFromServer(data.players);
-      break;
-      
-    case 'player_joined':
-      console.log(`Player ${data.playerName} joined the game`);
-      addPlayerToLobby(data.playerId, data.playerName, data.token);
-      break;
-      
-    case 'player_left':
-      console.log(`Player ${data.playerId} left the game`);
-      removePlayerFromLobby(data.playerId);
-      break;
-      
-    case 'player_action':
-      handlePlayerAction(data);
-      break;
-      
-    case 'token_updated':
-      handleTokenUpdated(data);
-      break;
-      
-    case 'game_update':
-      handleGameUpdate(data);
-      break;
-      
-    case 'error':
-      console.error('Server error:', data.message);
-      alert(data.message);
-      break;
-  }
-}
+
 
 function addPlayerToLobby(playerId, playerName, token) {
   const playerList = document.getElementById('playerList');
@@ -226,60 +271,24 @@ function removePlayerFromLobby(playerId) {
   playerCount.textContent = Math.max(1, parseInt(playerCount.textContent) - 1);
 }
 
-function updatePlayerListFromServer(players) {
-  const playerList = document.getElementById('playerList');
-  // Clear existing players except host
-  const existingPlayers = playerList.querySelectorAll('.player-item:not(#hostPlayer)');
-  existingPlayers.forEach(p => p.remove());
-  
-  const tokenImageMap = {
-    'RollsRoyce': 'rolls_royce',
-    'Helicopter': 'helicopter',
-    'TopHat': 'top_hat',
-    'Shoe': 'shoe',
-    'Cheeseburger': 'burger',
-    'CoffeeCup': 'coffee',
-    'Football': 'football',
-    'WhiteGirlIdle': 'whitegirlmodel'
-  };
-  
-  players.forEach(player => {
-    if (player.id === gameState.playerId) return; // Skip self
-    
-    const tokenImage = tokenImageMap[player.token] || 'burger';
-    const playerItem = document.createElement('div');
-    playerItem.className = 'player-item';
-    playerItem.id = `player-${player.id}`;
-    playerItem.innerHTML = `
-      <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="${player.token}">
-      <span class="player-name">${player.name}</span>
-    `;
-    playerList.appendChild(playerItem);
-  });
-  
-  // Update player count
-  const playerCount = document.getElementById('playerCount');
-  playerCount.textContent = players.length;
-}
-
 function sendPlayerAction(action, data) {
-  if (!gameState.pusher) return;
+  if (gameState.connections.length === 0) return;
   
-  const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
-  channel.trigger('client-player_action', {
+  broadcastToAll({
+    type: 'player_action',
     action: action,
     data: data,
-    senderId: gameState.playerId
+    senderId: gameState.isHost ? 0 : Date.now()
   });
 }
 
 function sendGameUpdate(data) {
-  if (!gameState.pusher) return;
+  if (gameState.connections.length === 0) return;
   
-  const channel = gameState.pusher.subscribe(`game-${gameState.gameId}`);
-  channel.trigger('client-game_update', {
+  broadcastToAll({
+    type: 'game_update',
     data: data,
-    senderId: gameState.playerId
+    senderId: gameState.isHost ? 0 : Date.now()
   });
 }
 
@@ -490,8 +499,8 @@ function checkGameIdInURL() {
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameId}</p>
       <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to server...</p>`;
     }
-    // Connect to WebSocket
-    connectWebSocket();
+    // Connect to PeerJS
+    connectPeer();
   } else {
     // No game ID in URL, this is a new game - host mode
     gameState.isHost = true;
@@ -510,8 +519,8 @@ function checkGameIdInURL() {
       <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${newGameId}</p>
       <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to server...</p>`;
     }
-    // Connect to WebSocket
-    connectWebSocket();
+    // Connect to PeerJS
+    connectPeer();
   }
 }
 
@@ -546,15 +555,14 @@ tokenOptions.forEach(option => {
     hostTokenImg.style.display = 'block';
     hostTokenEmoji.style.display = 'none';
 
-    // If in multiplayer mode and token is selected, send update to server
-    if (gameState.gameMode === 'multiplayer' && gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
-      gameState.ws.send(JSON.stringify({
-        type: 'update_token',
-        gameId: gameState.gameId,
-        playerId: gameState.playerId,
+    // If in multiplayer mode and token is selected, broadcast to peers
+    if (gameState.gameMode === 'multiplayer' && gameState.connections.length > 0) {
+      broadcastToAll({
+        type: 'token_updated',
+        playerId: gameState.isHost ? 0 : Date.now(),
         token: gameState.selectedToken
-      }));
-      console.log('Sent token update to server');
+      });
+      console.log('Broadcasted token update to peers');
     }
 
     updateStartButton();
