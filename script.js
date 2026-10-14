@@ -35,15 +35,25 @@ function connectPeer() {
   
   peer.on('open', (id) => {
     console.log('PeerJS connected with ID:', id);
-    
+
     // Update UI to show connected
-    const aiSection = document.getElementById('aiSection');
-    if (aiSection) {
-      aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
-      <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
-      <p style="color: #4caf50; font-size: 0.8rem;">✓ Connected</p>`;
+    if (!gameState.isHost) {
+      // Guest: replace entire section with status
+      const aiSection = document.getElementById('aiSection');
+      if (aiSection) {
+        aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
+        <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
+        <p style="color: #4caf50; font-size: 0.8rem;">✓ Connected</p>`;
+      }
+    } else {
+      // Host: just update the connection status indicator
+      const statusDiv = document.querySelector('.connection-status');
+      if (statusDiv) {
+        statusDiv.textContent = '✓ Connected';
+        statusDiv.style.color = '#4caf50';
+      }
     }
-    
+
     if (gameState.isHost) {
       // Host waits for connections
       console.log('Host waiting for connections...');
@@ -62,11 +72,21 @@ function connectPeer() {
   
   peer.on('error', (err) => {
     console.error('PeerJS error:', err);
-    const aiSection = document.getElementById('aiSection');
-    if (aiSection) {
-      aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
-      <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
-      <p style="color: #f44336; font-size: 0.8rem;">❌ Connection error</p>`;
+    if (!gameState.isHost) {
+      // Guest: replace entire section with error
+      const aiSection = document.getElementById('aiSection');
+      if (aiSection) {
+        aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
+        <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameState.gameId}</p>
+        <p style="color: #f44336; font-size: 0.8rem;">❌ Connection error</p>`;
+      }
+    } else {
+      // Host: just update the connection status indicator
+      const statusDiv = document.querySelector('.connection-status');
+      if (statusDiv) {
+        statusDiv.textContent = '❌ Connection error';
+        statusDiv.style.color = '#f44336';
+      }
     }
   });
 }
@@ -591,7 +611,7 @@ function checkGameIdInURL() {
     if (playerCount) {
       playerCount.textContent = '0';
     }
-    // Show visual indicator in lobby
+    // Show visual indicator in lobby for guests
     const aiSection = document.getElementById('aiSection');
     if (aiSection) {
       aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
@@ -611,12 +631,15 @@ function checkGameIdInURL() {
     if (inviteLink) {
       inviteLink.value = generateInviteLink();
     }
-    // Show visual indicator in lobby
+    // Host keeps AI controls visible - don't replace aiSection content
+    // Just add a small status indicator
     const aiSection = document.getElementById('aiSection');
-    if (aiSection) {
-      aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
-      <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${newGameId}</p>
-      <p style="color: #4caf50; font-size: 0.8rem;">📡 Connecting to server...</p>`;
+    if (aiSection && !aiSection.querySelector('.connection-status')) {
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'connection-status';
+      statusDiv.style.cssText = 'color: #4caf50; font-size: 0.8rem; margin-top: 5px;';
+      statusDiv.textContent = '📡 Connecting to server...';
+      aiSection.appendChild(statusDiv);
     }
     // Connect to PeerJS
     connectPeer();
