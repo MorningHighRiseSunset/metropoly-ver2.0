@@ -542,6 +542,7 @@ function checkGameIdInURL() {
   } else {
     // No game ID in URL, this is a new game - host mode
     gameState.isHost = true;
+    gameState.gameMode = 'multiplayer'; // Set to multiplayer mode
     // Generate a game ID for the host
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     gameState.gameId = newGameId;
