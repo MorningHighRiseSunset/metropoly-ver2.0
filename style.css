@@ -451,20 +451,20 @@ body {
 }
 
 .settings-btn {
-  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1.2rem;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
 }
 
 .settings-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .game-main {
@@ -485,13 +485,12 @@ body {
 }
 
 .sidebar-panel-title {
-  color: #ffffff;
-  margin: 0 0 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.85;
 }
 
 .panel-scroll {
@@ -580,10 +579,10 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 10px 11px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 16px;
 }
 
 .sidebar-panel--ai-moves {
@@ -596,19 +595,19 @@ body {
   flex: 1;
   min-height: 0;
   max-height: 150px;
-  margin-bottom: 8px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  padding: 8px;
-  border: none;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
   overflow-y: auto;
 }
 
 .ai-move-entry {
-  padding: 8px 10px;
-  margin-bottom: 4px;
-  background: rgba(74, 158, 255, 0.1);
-  border-left: 3px solid #4a9eff;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   font-size: 0.75rem;
   line-height: 1.4;
@@ -620,13 +619,17 @@ body {
   overflow-wrap: break-word;
 }
 
+.ai-move-entry:last-child {
+  margin-bottom: 0;
+}
+
 .ai-move-player {
-  font-weight: 600;
-  color: #4a9eff;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .ai-move-action {
-  color: #e0e0e0;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .sidebar-panel--chat {
@@ -635,44 +638,57 @@ body {
 
 .chat-messages.panel-scroll {
   max-height: 88px;
-  margin-bottom: 8px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  padding: 8px;
-  border: none;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .chat-message {
-  padding: 6px 8px;
-  margin-bottom: 4px;
-  font-size: 0.85rem;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
   line-height: 1.3;
 }
 
+.chat-message:last-child {
+  margin-bottom: 0;
+}
+
 .chat-message-author {
-  font-weight: 600;
-  color: #4a9eff;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .chat-message-text {
-  color: #e0e0e0;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .chat-compose {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: stretch;
 }
 
 .chat-compose input {
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #2a2a2a;
-  color: #ffffff;
-  font-size: 0.82rem;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+}
+
+.chat-compose input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.chat-compose input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-panel--video {
@@ -696,10 +712,11 @@ body {
 .remote-video {
   width: 100%;
   height: 120px;
-  background: #000;
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   object-fit: cover;
   display: block;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .video-controls {
@@ -710,11 +727,12 @@ body {
 
 .connection-status {
   text-align: center;
-  font-size: 0.8rem;
-  color: #888888;
-  padding: 6px;
-  background: #2a2a2a;
-  border-radius: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .game-board-section {
@@ -734,9 +752,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(74, 158, 255, 0.05) 0%, rgba(26, 26, 26, 0.95) 50%, #1a1a1a 100%);
-  border: 2px solid rgba(74, 158, 255, 0.3);
-  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
   padding: 20px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   overflow: hidden;
@@ -849,23 +867,26 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn:disabled {
@@ -889,18 +910,20 @@ body {
 }
 
 .btn-small {
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  padding: 8px 12px;
+  font-size: 0.75rem;
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-  color: white;
+  background: rgba(255, 100, 100, 0.1);
+  color: rgba(255, 150, 150, 0.8);
+  border: 1px solid rgba(255, 100, 100, 0.2);
 }
 
 .btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+  background: rgba(255, 100, 100, 0.2);
+  border-color: rgba(255, 100, 100, 0.3);
+  color: rgba(255, 150, 150, 1);
 }
 
 /* ===== THREE.JS CONTAINER ===== */
