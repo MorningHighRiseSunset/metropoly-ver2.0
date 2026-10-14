@@ -3,6 +3,7 @@ const gameState = {
   selectedToken: null,
   selectedModel: null,
   gameMode: 'ai', // 'multiplayer' or 'ai'
+  gameId: null, // Store game ID from URL
   aiCount: 0,
   aiSelectedTokens: [], // Store AI token selections from lobby
   players: [],
@@ -150,10 +151,38 @@ if (scene) {
 
 // ===== LOBBY FUNCTIONALITY =====
 
+// Check URL for game ID to detect multiplayer join
+function checkGameIdInURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameId = urlParams.get('game');
+  if (gameId) {
+    gameState.gameId = gameId;
+    gameState.gameMode = 'multiplayer';
+    console.log(`Joining game: ${gameId}`);
+    // Update invite link to show the game ID
+    if (inviteLink) {
+      inviteLink.value = window.location.href;
+    }
+    // Show visual indicator in lobby
+    const aiSection = document.getElementById('aiSection');
+    if (aiSection) {
+      aiSection.innerHTML = `<p style="color: #4a9eff; font-weight: bold;">🎮 Multiplayer Mode</p>
+      <p style="color: #e0e0e0; font-size: 0.9rem;">Game ID: ${gameId}</p>
+      <p style="color: #ff6b6b; font-size: 0.8rem;">⚠️ Multiplayer not fully implemented - local mode only</p>`;
+    }
+    // NOTE: Multiplayer requires backend/WebSocket server for real-time connection
+    // Currently this only sets the game ID and mode, but doesn't actually connect players
+    // TODO: Implement WebSocket server and real-time sync for actual multiplayer
+  }
+}
+
 // Generate invite link
 function generateInviteLink() {
   const baseUrl = window.location.origin + window.location.pathname;
-  const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const gameId = gameState.gameId || Math.random().toString(36).substring(2, 8).toUpperCase();
+  if (!gameState.gameId) {
+    gameState.gameId = gameId;
+  }
   return `${baseUrl}?game=${gameId}`;
 }
 
@@ -161,6 +190,9 @@ function generateInviteLink() {
 if (inviteLink) {
   inviteLink.value = generateInviteLink();
 }
+
+// Check for game ID on page load
+checkGameIdInURL();
 
 // Token selection
 tokenOptions.forEach(option => {
@@ -262,12 +294,18 @@ function updateStartButton() {
   const totalPlayers = 1 + gameState.aiCount;
   const canStart = hasToken && totalPlayers >= 2;
 
-  if (canStart) {
+  // In multiplayer mode, just need a token selected (waiting for other players)
+  const isMultiplayer = gameState.gameMode === 'multiplayer';
+  const canStartMultiplayer = hasToken && isMultiplayer;
+
+  if (canStart || canStartMultiplayer) {
     startGameBtn.disabled = false;
     startGameBtn.classList.add('enabled');
+    startGameBtn.textContent = isMultiplayer ? 'Ready' : 'Start Game';
   } else {
     startGameBtn.disabled = true;
     startGameBtn.classList.remove('enabled');
+    startGameBtn.textContent = 'Start Game';
   }
 }
 
