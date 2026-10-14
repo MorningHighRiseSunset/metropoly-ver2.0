@@ -1319,20 +1319,28 @@ function roll3DDicePhysics(onComplete) {
             let paid = 0;
             const placeBetMap = {4: '4', 5: '5', 6: 'six', 8: '8', 9: 'nine', 10: '10'};
             if (sevenOut) {
-                ['4', '5', 'six', '8', 'nine', '10', 'big-6-8'].forEach(id => {
+                // Place bets lose on 7 (seven out)
+                ['4', '5', 'six', '8', 'nine', '10'].forEach(id => {
                     if (bets[id]) loseBet(id, `❌ ${formatBetName(id)} lost on Seven Out`);
                 });
+                // Big 6 & 8 also lose on 7 (seven out)
+                if (bets['big-6-8']) {
+                    loseBet('big-6-8', `❌ Big 6 & 8 lost on Seven Out`);
+                }
                 return 0;
             }
+            // Pay place bets that match the rolled number
             const placeId = placeBetMap[total];
             if (placeId && bets[placeId]) {
                 // Standard craps Place bet odds: 6/8=7:6, 5/9=7:5, 4/10=9:5
                 const placeOdds = {4: 9/5, 5: 7/5, 6: 7/6, 8: 7/6, 9: 7/5, 10: 9/5};
                 paid += payBet(placeId, placeOdds[total], `🎰 Place bet on ${total} wins!`);
             }
+            // Big 6 & 8 wins on 6 or 8
             if (bets['big-6-8'] && (total === 6 || total === 8)) {
                 paid += payBet('big-6-8', 1, `🎰 Big 6 & 8 wins on ${total}!`);
             }
+            // Big 6 & 8 does NOT lose on other numbers - it stays until resolved
             return paid;
         }
 
@@ -1414,6 +1422,14 @@ function roll3DDicePhysics(onComplete) {
                     // Seven out - lose pass line, win don't pass
                     loseBet('pass-line', `❌ SEVEN OUT. A 7 before the point means Pass Line loses.`);
                     winnings += payBet("don't-pass-bar", 1, `🎉 SEVEN OUT! Don't Pass wins.`);
+                    // Place bets lose on 7 (seven out)
+                    ['4', '5', 'six', '8', 'nine', '10'].forEach(id => {
+                        if (bets[id]) loseBet(id, `❌ ${formatBetName(id)} lost on Seven Out`);
+                    });
+                    // Big 6 & 8 also loses on 7 (seven out)
+                    if (bets['big-6-8']) {
+                        loseBet('big-6-8', `❌ Big 6 & 8 lost on Seven Out`);
+                    }
                     winnings += resolvePlaceAndBig(die1, die2, true);
                     balance += winnings;
                     addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
@@ -1442,6 +1458,7 @@ function roll3DDicePhysics(onComplete) {
                     rollBtn.textContent = 'Roll Dice';
                 } else {
                     // Continue rolling - no resolution of line bets
+                    // But place bets can still win/lose based on the number
                     winnings += resolvePlaceAndBig(die1, die2, false);
                     if (winnings > 0) {
                         balance += winnings;
