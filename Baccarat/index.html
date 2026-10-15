@@ -321,7 +321,7 @@ function dealNextCard(){
       } else {
         state.message=`Player has ${p}, Banker has ${b}. `;
         if(shouldPlayerDraw(p)){
-          state.message+="Click Deal to deal Player's third card";
+          state.message+="Player draws third card. Click Deal to draw it.";
           dealStep=4;
         } else {
           state.message+="Player stands. ";
