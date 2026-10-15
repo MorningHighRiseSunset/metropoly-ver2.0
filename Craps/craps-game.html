@@ -1269,45 +1269,43 @@ function roll3DDicePhysics(onComplete) {
                 }
             }
 
-            // Hard 4 bet
+            // Hard 4 bet (one-roll bet - loses on 7 or easy 4)
             if (bets['hard-4']) {
                 const hard4 = die1 === 2 && die2 === 2;
                 if (hard4) {
                     paid += payBet('hard-4', 9, `🎰 Hard 4 wins (9 to 1)!`);
-                } else if (total === 7 || total === 4) {
-                    loseBet('hard-4', `❌ Hard 4 lost on ${die1}+${die2}=${total}`);
+                } else {
+                    loseBet('hard-4', `❌ Hard 4 lost on ${die1}+${die2}=${total}${total === 4 ? ' (easy 4)' : total === 7 ? ' (seven out)' : ''}`);
                 }
             }
 
-            // Hard 10 bet
+            // Hard 10 bet (one-roll bet - loses on 7 or easy 10)
             if (bets['hard-10']) {
                 const hard10 = die1 === 5 && die2 === 5;
                 if (hard10) {
                     paid += payBet('hard-10', 9, `🎰 Hard 10 wins (9 to 1)!`);
-                } else if (total === 7 || total === 10) {
-                    loseBet('hard-10', `❌ Hard 10 lost on ${die1}+${die2}=${total}`);
+                } else {
+                    loseBet('hard-10', `❌ Hard 10 lost on ${die1}+${die2}=${total}${total === 10 ? ' (easy 10)' : total === 7 ? ' (seven out)' : ''}`);
                 }
             }
 
-            // Hard 6 bet
+            // Hard 6 bet (one-roll bet - loses on 7 or easy 6)
             if (bets['hard-6']) {
                 const hard6 = die1 === 3 && die2 === 3;
                 if (hard6) {
                     paid += payBet('hard-6', 9, `🎰 Hard 6 wins (9 to 1)!`);
-                } else if (total === 7 || total === 6) {
-                    const isEasy = total === 6 && !hard6;
-                    loseBet('hard-6', `❌ Hard 6 lost on ${die1}+${die2}=${total}${isEasy ? ' (easy)' : ''}`);
+                } else {
+                    loseBet('hard-6', `❌ Hard 6 lost on ${die1}+${die2}=${total}${total === 6 ? ' (easy 6)' : total === 7 ? ' (seven out)' : ''}`);
                 }
             }
 
-            // Hard 8 bet
+            // Hard 8 bet (one-roll bet - loses on 7 or easy 8)
             if (bets['hard-8']) {
                 const hard8 = die1 === 4 && die2 === 4;
                 if (hard8) {
                     paid += payBet('hard-8', 9, `🎰 Hard 8 wins (9 to 1)!`);
-                } else if (total === 7 || total === 8) {
-                    const isEasy = total === 8 && !hard8;
-                    loseBet('hard-8', `❌ Hard 8 lost on ${die1}+${die2}=${total}${isEasy ? ' (easy)' : ''}`);
+                } else {
+                    loseBet('hard-8', `❌ Hard 8 lost on ${die1}+${die2}=${total}${total === 8 ? ' (easy 8)' : total === 7 ? ' (seven out)' : ''}`);
                 }
             }
 

@@ -1294,6 +1294,9 @@ function checkGameEnd() {
   const winningAmount = 10000;
 
   for (const player of gameState.players) {
+    // Round money to 2 decimal places to avoid floating point issues
+    player.money = Math.round(player.money * 100) / 100;
+    
     // Check if player won
     if (player.money >= winningAmount) {
       showGameOver(player, true);
@@ -3220,7 +3223,7 @@ function handleLanding(player, position, canRollAgain = false) {
           // If it's a casino property, AI plays the game
           if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
             const winAmount = Math.floor(Math.random() * 100) + 50; // Random win between 50-150
-            player.money += winAmount;
+            player.money = Math.round((player.money + winAmount) * 100) / 100;
             addAIMove(player.name, `bought ${tile.name} for $${tile.price}, won $${winAmount} at ${tile.casinoGame}`);
           } else {
             addAIMove(player.name, `bought ${tile.name} for $${tile.price}`);
@@ -3270,7 +3273,7 @@ function handleLanding(player, position, canRollAgain = false) {
         } else {
           // AI plays casino game
           const winAmount = Math.floor(Math.random() * 100) + 50;
-          player.money += winAmount;
+          player.money = Math.round((player.money + winAmount) * 100) / 100;
           addAIMove(player.name, `won $${winAmount} at ${tile.casinoGame}`);
           updatePlayerMoney();
           checkGameEnd();
@@ -3414,7 +3417,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
     case 'advance_to_go':
       const oldPositionGo = player.position;
       if (oldPositionGo !== 0) {
-        player.money += 200;
+        player.money = Math.round((player.money + 200) * 100) / 100;
         updatePlayerMoney();
         addAIMove(player.name, 'advanced to GO and collected $200');
       }
@@ -3434,7 +3437,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       // Check if passed GO (handles both forward and backward movement)
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
-        player.money += 200;
+        player.money = Math.round((player.money + 200) * 100) / 100;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
@@ -3473,7 +3476,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       // Check if passed GO (handles both forward and backward movement)
       const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
       if (passedGoNearest) {
-        player.money += 200;
+        player.money = Math.round((player.money + 200) * 100) / 100;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
@@ -3488,7 +3491,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       break;
       
     case 'gain_money':
-      player.money += amount;
+      player.money = Math.round((player.money + amount) * 100) / 100;
       updatePlayerMoney();
       addAIMove(player.name, `gained $${amount} from card`);
       endTurn();
@@ -3552,7 +3555,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       gameState.players.forEach(otherPlayer => {
         if (otherPlayer !== player) {
           otherPlayer.money -= amount;
-          player.money += amount;
+          player.money = Math.round((player.money + amount) * 100) / 100;
         }
       });
       updatePlayerMoney();
@@ -3939,7 +3942,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
       // Balance sync callback - don't check game end here, wait until casino closes
       const balanceCallback = (newBalance) => {
         // console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
-        currentPlayer.money = newBalance;
+        currentPlayer.money = Math.round(newBalance * 100) / 100; // Round to 2 decimal places
         updatePlayerMoney();
         updatePlayersList();
         checkGameEnd(); // Check for game end immediately when balance changes
@@ -4196,7 +4199,7 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       // Pay each other player
       gameState.players.forEach(player => {
         if (player !== currentPlayer) {
-          player.money += amount;
+          player.money = Math.round((player.money + amount) * 100) / 100;
           currentPlayer.money -= amount;
         }
       });
