@@ -1303,8 +1303,8 @@ function checkGameEnd() {
       return;
     }
 
-    // Check if player went bankrupt
-    if (player.money <= 0) {
+    // Check if player went bankrupt (negative balance from rent/taxes, not from betting)
+    if (player.money < 0) {
       showGameOver(player, false);
       return;
     }

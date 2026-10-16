@@ -1004,7 +1004,7 @@ function next() {
 
     // player bet + AI matches
     state.bet = bet;
-    state.chips -= bet;
+    state.chips = Math.round((state.chips - bet) * 100) / 100; // Round to 2 decimal places
     state.pot = bet * 2; // AI matches
     console.log('[POKER DEBUG] Bet deducted, chips now:', state.chips, 'Pot:', state.pot);
 
@@ -1070,7 +1070,7 @@ function next() {
     result.className = 'result';
     if (cmp > 0) {
       const totalPayout = state.pot;
-      state.chips += state.pot;
+      state.chips = Math.round((state.chips + state.pot) * 100) / 100;
       console.log('[POKER DEBUG] PLAYER WINS, chips now:', state.chips);
       result.classList.add('win');
       // If hand names are the same, it means same hand type but better kickers
@@ -1092,7 +1092,7 @@ function next() {
     } else {
       // True tie - split the pot (player gets their bet back)
       const playerWinnings = state.bet; // Return original bet only
-      state.chips += playerWinnings;
+      state.chips = Math.round((state.chips + playerWinnings) * 100) / 100;
       console.log('[POKER DEBUG] TIE, chips now:', state.chips, 'Winnings:', playerWinnings);
       result.classList.add('tie');
       result.innerHTML = `Tie — bet returned (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
