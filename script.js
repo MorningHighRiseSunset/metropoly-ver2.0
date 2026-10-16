@@ -1208,7 +1208,7 @@ function updatePlayersList() {
     playerItem.innerHTML = `
       <div class="player-info">
         <div class="player-name">${player.name}</div>
-        <div class="player-money">$${player.money || 2500}</div>
+        <div class="player-money">$${player.money}</div>
       </div>
       ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">â“</div>`}
     `;
@@ -1216,7 +1216,7 @@ function updatePlayersList() {
     playersList.appendChild(playerItem);
   });
   
-  // console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money || 2500}`);
+  // console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money}`);
 }
 
 // Update AI/Opponent moves display
@@ -1281,8 +1281,10 @@ function updatePlayerMoney() {
   if (!playerMoney) return;
   const humanPlayer = gameState.players.find(p => p.isHuman);
   if (humanPlayer) {
-    // console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money || 2500}`);
-    playerMoney.textContent = `$${humanPlayer.money || 2500}`;
+    // console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money}`);
+    // Don't use || 2500 fallback - if money is undefined/0, show the actual value
+    // This prevents masking real balance issues
+    playerMoney.textContent = `$${humanPlayer.money}`;
   }
 
   // Don't check game end here - wait until casino closes (handled in closeCasinoBtn)
@@ -3945,7 +3947,8 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
         currentPlayer.money = Math.round(newBalance * 100) / 100; // Round to 2 decimal places
         updatePlayerMoney();
         updatePlayersList();
-        checkGameEnd(); // Check for game end immediately when balance changes
+        // Don't check game end here - wait until casino closes (handled in closeCasinoBtn)
+        // This prevents premature bankruptcy when player bets entire balance before game resolves
       };
       
       // Initialize the minigame with player's balance
@@ -3987,16 +3990,18 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   // Close button handler
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
     // console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
-    
+
     // Sync balance from casino iframe before closing
     const iframeWindow = document.getElementById('casinoFrame').contentWindow;
     if (iframeWindow && iframeWindow.__casinoBalance !== undefined) {
       const casinoBalance = iframeWindow.__casinoBalance;
-      currentPlayer.money = casinoBalance;
+      currentPlayer.money = Math.round(casinoBalance * 100) / 100; // Round to 2 decimal places
       console.log(`[CASINO DEBUG] Synced balance from casino: $${casinoBalance}`);
       updatePlayerMoney();
+    } else {
+      console.log(`[CASINO DEBUG] __casinoBalance not available, balance already synced via callback`);
     }
-    
+
     document.body.removeChild(casinoOverlay);
     
     // Check for game end after casino closes
