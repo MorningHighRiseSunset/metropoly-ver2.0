@@ -4074,13 +4074,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       const oldPosition = currentPlayer.position;
       let newPosition = position;
       
-      // Skip Baccarat property (position 13) - move to position 14 instead
-      // TODO: REMOVE BEFORE PUSH - Temporary block for Baccarat property
-      if (newPosition === 13) {
-        console.log('Card: Skipping Baccarat property (position 13), moving to position 14');
-        newPosition = 14;
-      }
-      
       // Check if passed GO (handles both forward and backward movement)
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
