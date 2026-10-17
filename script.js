@@ -66,6 +66,55 @@ function connectPeer() {
       console.error('PeerJS error:', err);
       document.getElementById('connectionStatus').textContent = 'Error: ' + err.type;
     });
+
+    // Handle incoming video calls
+    peer.on('call', (call) => {
+      console.log('Incoming video call from:', call.peer);
+
+      // Get local stream first, then answer the call
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((localStream) => {
+          const localVideo = document.getElementById('localVideo');
+          if (localVideo) {
+            localVideo.srcObject = localStream;
+          }
+          call.answer(localStream);
+          gameState.currentCall = call;
+          const startVideoCall = document.getElementById('startVideoCall');
+          const endVideoCall = document.getElementById('endVideoCall');
+          if (startVideoCall) startVideoCall.style.display = 'none';
+          if (endVideoCall) endVideoCall.style.display = 'block';
+        })
+        .catch((err) => {
+          console.error('Error getting local stream:', err);
+          const connectionStatus = document.getElementById('connectionStatus');
+          if (connectionStatus) {
+            connectionStatus.textContent = 'Error: Could not access camera';
+          }
+        });
+
+      call.on('stream', (remoteStream) => {
+        const remoteVideo = document.getElementById('remoteVideo');
+        if (remoteVideo) {
+          remoteVideo.srcObject = remoteStream;
+        }
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Video call connected';
+        }
+      });
+
+      call.on('close', () => {
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Call ended';
+        }
+        const startVideoCall = document.getElementById('startVideoCall');
+        const endVideoCall = document.getElementById('endVideoCall');
+        if (startVideoCall) startVideoCall.style.display = 'block';
+        if (endVideoCall) endVideoCall.style.display = 'none';
+      });
+    });
   } else {
     // Guest: create peer with null ID (auto-generated), then connect to host
     const peer = new Peer(null, {
@@ -87,6 +136,55 @@ function connectPeer() {
     peer.on('error', (err) => {
       console.error('PeerJS error:', err);
       document.getElementById('connectionStatus').textContent = 'Error: ' + err.type;
+    });
+
+    // Handle incoming video calls
+    peer.on('call', (call) => {
+      console.log('Incoming video call from:', call.peer);
+
+      // Get local stream first, then answer the call
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((localStream) => {
+          const localVideo = document.getElementById('localVideo');
+          if (localVideo) {
+            localVideo.srcObject = localStream;
+          }
+          call.answer(localStream);
+          gameState.currentCall = call;
+          const startVideoCall = document.getElementById('startVideoCall');
+          const endVideoCall = document.getElementById('endVideoCall');
+          if (startVideoCall) startVideoCall.style.display = 'none';
+          if (endVideoCall) endVideoCall.style.display = 'block';
+        })
+        .catch((err) => {
+          console.error('Error getting local stream:', err);
+          const connectionStatus = document.getElementById('connectionStatus');
+          if (connectionStatus) {
+            connectionStatus.textContent = 'Error: Could not access camera';
+          }
+        });
+
+      call.on('stream', (remoteStream) => {
+        const remoteVideo = document.getElementById('remoteVideo');
+        if (remoteVideo) {
+          remoteVideo.srcObject = remoteStream;
+        }
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Video call connected';
+        }
+      });
+
+      call.on('close', () => {
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Call ended';
+        }
+        const startVideoCall = document.getElementById('startVideoCall');
+        const endVideoCall = document.getElementById('endVideoCall');
+        if (startVideoCall) startVideoCall.style.display = 'block';
+        if (endVideoCall) endVideoCall.style.display = 'none';
+      });
     });
   }
 }
@@ -5027,21 +5125,85 @@ const endVideoCall = document.getElementById('endVideoCall');
 const connectionStatus = document.getElementById('connectionStatus');
 
 if (startVideoCall) {
-  startVideoCall.addEventListener('click', () => {
-    if (connectionStatus) {
-      connectionStatus.textContent = 'Video chat not yet implemented';
+  startVideoCall.addEventListener('click', async () => {
+    if (!gameState.peer || !gameState.opponentPeerId) {
+      if (connectionStatus) {
+        connectionStatus.textContent = 'Not connected to opponent';
+      }
+      return;
     }
-    // TODO: Implement WebRTC video call using PeerJS
-    // This requires:
-    // 1. getUserMedia() to access camera/microphone
-    // 2. PeerJS call() method to establish video connection
-    // 3. Video element binding for local/remote streams
-    alert('Video chat feature coming soon! This requires WebRTC implementation via PeerJS.');
+
+    try {
+      // Get local media stream
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+
+      // Display local stream
+      const localVideo = document.getElementById('localVideo');
+      if (localVideo) {
+        localVideo.srcObject = localStream;
+      }
+
+      // Call opponent
+      const call = gameState.peer.call(gameState.opponentPeerId, localStream);
+      gameState.currentCall = call;
+
+      call.on('stream', (remoteStream) => {
+        // Display remote stream
+        const remoteVideo = document.getElementById('remoteVideo');
+        if (remoteVideo) {
+          remoteVideo.srcObject = remoteStream;
+        }
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Video call connected';
+        }
+      });
+
+      call.on('close', () => {
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Call ended';
+        }
+        if (startVideoCall) startVideoCall.style.display = 'block';
+        if (endVideoCall) endVideoCall.style.display = 'none';
+      });
+
+      if (startVideoCall) startVideoCall.style.display = 'none';
+      if (endVideoCall) endVideoCall.style.display = 'block';
+      if (connectionStatus) connectionStatus.textContent = 'Calling...';
+
+    } catch (err) {
+      console.error('Error starting video call:', err);
+      if (connectionStatus) {
+        connectionStatus.textContent = 'Error: ' + err.message;
+      }
+      alert('Could not access camera/microphone. Please ensure permissions are granted.');
+    }
   });
 }
 
 if (endVideoCall) {
   endVideoCall.addEventListener('click', () => {
+    // Stop local video stream
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo && localVideo.srcObject) {
+      localVideo.srcObject.getTracks().forEach(track => track.stop());
+      localVideo.srcObject = null;
+    }
+
+    // Clear remote video
+    const remoteVideo = document.getElementById('remoteVideo');
+    if (remoteVideo) {
+      remoteVideo.srcObject = null;
+    }
+
+    // Close PeerJS call
+    if (gameState.currentCall) {
+      gameState.currentCall.close();
+      gameState.currentCall = null;
+    }
+
     if (connectionStatus) {
       connectionStatus.textContent = 'Not connected';
     }
