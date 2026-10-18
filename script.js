@@ -1,4 +1,4 @@
-﻿// ===== GAME STATE ======
+// ===== GAME STATE ======
 const gameState = {
   selectedToken: null,
   selectedModel: null,
@@ -604,7 +604,7 @@ function addPlayerToLobby(playerId, playerName, token) {
   } else {
     // Show placeholder if no token selected
     playerItem.innerHTML = `
-      <span class="player-token">❓</span>
+      <span class="player-token">?</span>
       <span class="player-name">${playerName}</span>
     `;
   }
@@ -1308,7 +1308,7 @@ function updatePlayersList() {
         <div class="player-name">${player.name}</div>
         <div class="player-money">$${player.money}</div>
       </div>
-      ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">â“</div>`}
+      ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">❓</div>`}
     `;
     
     playersList.appendChild(playerItem);
@@ -1403,8 +1403,8 @@ function checkGameEnd() {
       return;
     }
 
-    // Check if player went bankrupt (negative balance from rent/taxes, not from betting)
-    if (player.money < 0) {
+    // Check if player went bankrupt (zero or negative balance)
+    if (player.money <= 0) {
       showGameOver(player, false);
       return;
     }
@@ -1436,7 +1436,7 @@ function showGameOver(winner, playerWon) {
   gameOverOverlay.innerHTML = `
     <div class="game-over-container" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(74, 158, 255, 0.3); border-radius: 24px; padding: 64px; max-width: 500px; text-align: center; backdrop-filter: blur(20px);">
       <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 16px; background: ${youWon ? 'linear-gradient(135deg, #3dd68c 0%, #00ff88 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)'}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-        ${youWon ? 'ðŸŽ‰ YOU WIN!' : 'ðŸ’” GAME OVER'}
+        ${youWon ? 'YOU WIN!' : 'GAME OVER'}
       </h2>
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
         ${playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
@@ -2559,7 +2559,7 @@ function createMonopolyFaceTexture(spaceData, row, col) {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#f5f8fc';
     ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-    const displayName = spaceData.isCasino ? 'â˜… ' + spaceData.name : spaceData.name;
+    const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
     const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
     const sub = tileSubLabel(spaceData);
     const lineH = 62;
@@ -5228,7 +5228,7 @@ window.teleportToVenetian = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 13; // Venetian position
   
-  console.log('ðŸŽ° Teleporting to Venetian (Position 13) - Minigame: Baccarat');
+  console.log('🎰 Teleporting to Venetian (Position 13) - Minigame: Baccarat');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5239,7 +5239,7 @@ window.teleportToBellagio = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 15; // Bellagio position
   
-  console.log('ðŸŽ° Teleporting to Bellagio (Position 15) - Minigame: Blackjack');
+  console.log('🎰 Teleporting to Bellagio (Position 15) - Minigame: Blackjack');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5255,7 +5255,7 @@ window.sendAItoJail = () => {
   
   const aiIndex = gameState.players.indexOf(aiPlayer);
   
-  console.log(`ðŸš” Sending ${aiPlayer.name} to Jail (position 10)`);
+  console.log(`� Sending ${aiPlayer.name} to Jail (position 10)`);
   
   // Set current player to the AI
   gameState.currentPlayerIndex = aiIndex;
@@ -5276,7 +5276,7 @@ window.teleportToSantaFe = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 18; // Santa Fe Hotel and Casino position
   
-  console.log('ðŸŽ° Teleporting to Santa Fe Hotel and Casino (Position 18) - Minigame: Poker');
+  console.log('🎰 Teleporting to Santa Fe Hotel and Casino (Position 18) - Minigame: Poker');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5287,7 +5287,7 @@ window.teleportToHardRock = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 21; // Hard Rock Hotel position
   
-  console.log('ðŸŽ° Teleporting to Hard Rock Hotel (Position 21) - Minigame: Roulette');
+  console.log('🎰 Teleporting to Hard Rock Hotel (Position 21) - Minigame: Roulette');
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5298,7 +5298,7 @@ window.teleportToCaesars = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 29; // Caesars Palace position
 
-  console.log('ðŸŽ° Teleporting to Caesars Palace (Position 29) - Minigame: Poker');
+  console.log('🎰 Teleporting to Caesars Palace (Position 29) - Minigame: Poker');
 
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5309,7 +5309,7 @@ window.teleportToWynn = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 35; // Wynn Las Vegas position
 
-  console.log('ðŸŽ° Teleporting to Wynn Las Vegas (Position 35) - Minigame: Craps');
+  console.log('🎰 Teleporting to Wynn Las Vegas (Position 35) - Minigame: Craps');
 
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5320,7 +5320,7 @@ window.teleportToCosmopolitan = () => {
   if (!gameState.gameStarted) return console.log('Game not started');
   const newPosition = 36; // The Cosmopolitan position
 
-  console.log('ðŸŽ° Teleporting to The Cosmopolitan (Position 36) - Minigame: Slots');
+  console.log('🎰 Teleporting to The Cosmopolitan (Position 36) - Minigame: Slots');
 
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
@@ -5337,7 +5337,7 @@ window.teleportTo = (position) => {
   const tile = boardConfig.find(t => t.position === newPosition);
   const minigameInfo = tile && tile.isCasino ? `- Minigame: ${tile.casinoGame}${tile.disableCasino ? ' (DISABLED)' : ''}` : '- Regular property';
   
-  console.log(`ðŸŽ° Teleporting to ${tile ? tile.name : 'Position ' + newPosition} (Position ${newPosition}) ${minigameInfo}`);
+  console.log(`🎰 Teleporting to ${tile ? tile.name : 'Position ' + newPosition} (Position ${newPosition}) ${minigameInfo}`);
   
   movePlayerToken(gameState.currentPlayerIndex, newPosition);
   handleLanding(gameState.players[gameState.currentPlayerIndex], newPosition);
