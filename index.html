@@ -16,15 +16,9 @@
   <script src="dice-glb-config.js"></script>
   <script src="dice-sound.js"></script>
   <script>
-    // Only load Vercel Insights once
-    if (!window._vercelInsightsLoaded) {
-      window._vercelInsightsLoaded = true;
-      const script = document.createElement('script');
-      script.src = 'https://cdn.vercel-insights.com/v1/script.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    }
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <!-- Lobby Overlay -->
