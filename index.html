@@ -17,7 +17,7 @@
   <script src="dice-sound.js"></script>
   <script>
     // Only load Vercel Insights on production (not localhost)
-    if (!window._vercelInsightsLoaded && window.location.hostname.includes('vercel.app')) {
+    if (!window._vercelInsightsLoaded && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       window._vercelInsightsLoaded = true;
       const script = document.createElement('script');
       script.src = 'https://cdn.vercel-insights.com/v1/script.js';
