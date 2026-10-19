@@ -1436,7 +1436,7 @@ function showGameOver(winner, playerWon) {
   gameOverOverlay.innerHTML = `
     <div class="game-over-container" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(74, 158, 255, 0.3); border-radius: 24px; padding: 64px; max-width: 500px; text-align: center; backdrop-filter: blur(20px);">
       <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 16px; background: ${youWon ? 'linear-gradient(135deg, #3dd68c 0%, #00ff88 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)'}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-        ${youWon ? 'YOU WIN!' : 'GAME OVER'}
+        ${youWon ? 'GAME OVER YOU WON!' : 'GAME OVER'}
       </h2>
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
         ${playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
