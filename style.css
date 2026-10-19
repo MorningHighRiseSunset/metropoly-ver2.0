@@ -56,12 +56,12 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 20px 32px;
+  padding: 16px 24px;
   max-width: 750px;
   width: 90%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
@@ -79,9 +79,9 @@ body {
   text-align: center;
   color: rgba(255, 255, 255, 0.4);
   margin-bottom: 0;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 400;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
@@ -89,7 +89,7 @@ body {
 .multiplayer-section,
 .player-section {
   margin-bottom: 0;
-  gap: 16px;
+  gap: 10px;
 }
 
 .token-section h3,
@@ -106,14 +106,14 @@ body {
 .token-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .token-option {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 16px 12px;
+  padding: 12px 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
@@ -121,7 +121,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 90px;
+  height: 75px;
   position: relative;
 }
 
@@ -194,10 +194,10 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 20px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .lobby-id-display {
@@ -234,7 +234,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 20px;
+  padding: 14px;
 }
 
 .invite-label {
@@ -286,7 +286,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 20px;
+  padding: 14px;
 }
 
 .ai-controls {
@@ -378,12 +378,12 @@ body {
 
 .start-game-btn {
   width: 100%;
-  padding: 16px 32px;
+  padding: 12px 24px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
