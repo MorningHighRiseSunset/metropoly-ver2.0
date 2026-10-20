@@ -1950,6 +1950,46 @@ function movePlayerToken(playerIndex, newPosition) {
   }
 }
 
+// Teleport current player to Horseback Riding square (position 38)
+function teleportToHorsebackRiding() {
+  if (!gameState.gameStarted) {
+    console.log('Game must be started first');
+    return;
+  }
+
+  const playerIndex = gameState.currentPlayerIndex;
+  const player = gameState.players[playerIndex];
+  if (!player) {
+    console.log('No current player found');
+    return;
+  }
+
+  const oldPosition = player.position;
+  const newPosition = 38; // Horseback Riding position
+
+  console.log(`Teleporting ${player.name} from position ${oldPosition} to 38 (Horseback Riding)`);
+
+  // Update player position
+  player.position = newPosition;
+
+  // Move the 3D token
+  movePlayerToken(playerIndex, newPosition);
+
+  // Trigger the tile landing event
+  handleLanding(player, newPosition, false);
+}
+
+// Expose teleport function to window for console access
+window.teleportToHorsebackRiding = teleportToHorsebackRiding;
+
+// Add keyboard shortcut (Ctrl+H)
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'h') {
+    e.preventDefault();
+    teleportToHorsebackRiding();
+  }
+});
+
 // Animate player movement between cells (continuous smooth movement following board perimeter)
 function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, reverse = false) {
   const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
