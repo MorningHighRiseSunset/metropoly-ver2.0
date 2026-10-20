@@ -56,18 +56,18 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 16px 16px;
-  max-width: 700px;
-  width: 80%;
+  padding: 16px 24px;
+  max-width: 750px;
+  width: 90%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .lobby-title {
   font-family: 'Bebas Neue', cursive;
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 500;
   text-align: center;
   margin-bottom: 2px;
@@ -79,9 +79,9 @@ body {
   text-align: center;
   color: rgba(255, 255, 255, 0.4);
   margin-bottom: 0;
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   font-weight: 400;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
@@ -89,6 +89,7 @@ body {
 .multiplayer-section,
 .player-section {
   margin-bottom: 0;
+  gap: 10px;
 }
 
 .token-section h3,
@@ -112,7 +113,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 8px 6px;
+  padding: 12px 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
@@ -120,7 +121,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 60px;
+  height: 75px;
   position: relative;
 }
 
@@ -141,10 +142,10 @@ body {
 }
 
 .token-option img {
-  width: 26px;
-  height: 26px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   position: relative;
   z-index: 1;
   filter: grayscale(0.2);
@@ -193,7 +194,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -233,7 +234,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .invite-label {
@@ -285,7 +286,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .ai-controls {
@@ -377,12 +378,12 @@ body {
 
 .start-game-btn {
   width: 100%;
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1132,6 +1133,7 @@ body {
   margin: 0;
   font-style: italic;
   text-align: center;
+  display: block;
 }
 
 .property-price-section {
