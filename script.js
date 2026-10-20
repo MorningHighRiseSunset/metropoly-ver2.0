@@ -899,7 +899,7 @@ tokenOptions.forEach(option => {
     option.classList.add('selected');
     gameState.selectedToken = option.dataset.token;
     gameState.selectedModel = option.dataset.model;
-    
+
     console.log('Token selected:', gameState.selectedToken, 'isHost:', gameState.isHost);
 
     const selectedImg = option.querySelector('img').src;
@@ -918,7 +918,7 @@ tokenOptions.forEach(option => {
       if (myPlayerItem) {
         let tokenImg = myPlayerItem.querySelector('.player-token-img');
         let tokenEmoji = myPlayerItem.querySelector('.player-token');
-        
+
         if (tokenImg) {
           tokenImg.src = selectedImg;
           tokenImg.style.display = 'block';
@@ -953,6 +953,186 @@ if (copyBtn && inviteLink) {
       copyBtn.textContent = 'Copy';
     }, 2000);
   });
+}
+
+// Helicopter in lobby scene
+let lobbyHelicopterScene, lobbyHelicopterCamera, lobbyHelicopterRenderer;
+let lobbyHelicopter = null;
+let lobbyHelicopterMixer = null;
+let lobbyHelicopterInitialized = false;
+let helicopterVisible = true;
+let helicopterNextSpawnTime = 0;
+let helicopterDirection = 1; // 1 = right, -1 = left
+
+let lobbyHelicopter2 = null;
+let lobbyHelicopter2Mixer = null;
+let helicopter2Visible = false;
+let helicopter2NextSpawnTime = 0;
+let helicopter2Direction = -1; // Left direction
+let activeHelicopter = 1; // 1 or 2
+
+function initLobbyHelicopter() {
+  if (lobbyHelicopterInitialized) return;
+
+  const container = document.getElementById('lobbyHelicopterContainer');
+  if (!container) return;
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  // Scene
+  lobbyHelicopterScene = new THREE.Scene();
+  lobbyHelicopterScene.background = new THREE.Color(0x1a1a2e);
+
+  // Camera
+  lobbyHelicopterCamera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
+  lobbyHelicopterCamera.position.set(0, 1, 15);
+  lobbyHelicopterCamera.lookAt(0, 0, 0);
+
+  // Renderer
+  lobbyHelicopterRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  lobbyHelicopterRenderer.setSize(width, height);
+  lobbyHelicopterRenderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(lobbyHelicopterRenderer.domElement);
+
+  // Lights
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  lobbyHelicopterScene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(5, 10, 7);
+  lobbyHelicopterScene.add(directionalLight);
+
+  // Load helicopter model
+  const loader = new THREE.GLTFLoader();
+  loader.load('Models/Helicopter/helicopter.glb', (gltf) => {
+    lobbyHelicopter = gltf.scene;
+    lobbyHelicopter.scale.set(0.03, 0.03, 0.03);
+    lobbyHelicopter.position.set(-5, -1, 0);
+    lobbyHelicopter.rotation.y = 0;
+    lobbyHelicopterScene.add(lobbyHelicopter);
+
+    console.log('Helicopter loaded, animations:', gltf.animations.length);
+
+    // Setup animation mixer - play all animations
+    if (gltf.animations && gltf.animations.length > 0) {
+      lobbyHelicopterMixer = new THREE.AnimationMixer(lobbyHelicopter);
+      gltf.animations.forEach((clip) => {
+        const action = lobbyHelicopterMixer.clipAction(clip);
+        action.play();
+        console.log('Playing animation:', clip.name);
+      });
+    } else {
+      console.log('No animations found in helicopter model');
+    }
+
+    // Load second helicopter (flying left)
+    loader.load('Models/Helicopter/helicopter.glb', (gltf2) => {
+      lobbyHelicopter2 = gltf2.scene;
+      lobbyHelicopter2.scale.set(0.03, 0.03, 0.03);
+      lobbyHelicopter2.position.set(20, -1, 0);
+      lobbyHelicopter2.rotation.y = Math.PI; // Face left
+      lobbyHelicopter2.visible = false;
+      lobbyHelicopterScene.add(lobbyHelicopter2);
+
+      // Setup animation mixer for second helicopter
+      if (gltf2.animations && gltf2.animations.length > 0) {
+        lobbyHelicopter2Mixer = new THREE.AnimationMixer(lobbyHelicopter2);
+        gltf2.animations.forEach((clip) => {
+          const action = lobbyHelicopter2Mixer.clipAction(clip);
+          action.play();
+        });
+      }
+
+      // Set initial spawn time for second helicopter
+      helicopter2NextSpawnTime = Date.now() + 3000 + Math.random() * 2000;
+
+      lobbyHelicopterInitialized = true;
+      animateLobbyHelicopter();
+    });
+  }, undefined, (error) => {
+    console.error('Error loading lobby helicopter:', error);
+  });
+}
+
+function animateLobbyHelicopter() {
+  if (!lobbyHelicopterInitialized) return;
+
+  requestAnimationFrame(animateLobbyHelicopter);
+
+  // Update animation mixers at higher framerate
+  if (lobbyHelicopterMixer) {
+    lobbyHelicopterMixer.update(0.033);
+  }
+  if (lobbyHelicopter2Mixer) {
+    lobbyHelicopter2Mixer.update(0.033);
+  }
+
+  const time = Date.now() * 0.001;
+
+  // Animate first helicopter - fly to the right
+  if (lobbyHelicopter && activeHelicopter === 1) {
+    if (helicopterVisible) {
+      lobbyHelicopter.position.x += 0.25;
+      lobbyHelicopter.position.y = -1 + Math.sin(time * 2) * 0.1;
+
+      // Hide when it goes off screen and switch to second helicopter
+      if (lobbyHelicopter.position.x > 20) {
+        helicopterVisible = false;
+        lobbyHelicopter.visible = false;
+        activeHelicopter = 2;
+        // Set random spawn time for second helicopter
+        helicopter2NextSpawnTime = Date.now() + (2000 + Math.random() * 3000);
+      }
+    } else {
+      // Check if it's time to respawn
+      if (Date.now() > helicopterNextSpawnTime) {
+        helicopterVisible = true;
+        lobbyHelicopter.visible = true;
+        lobbyHelicopter.position.x = -20;
+      }
+    }
+  }
+
+  // Animate second helicopter - fly to the left
+  if (lobbyHelicopter2 && activeHelicopter === 2) {
+    if (helicopter2Visible) {
+      lobbyHelicopter2.position.x -= 0.25;
+      lobbyHelicopter2.position.y = -1 + Math.sin(time * 2) * 0.1;
+
+      // Hide when it goes off screen and switch to first helicopter
+      if (lobbyHelicopter2.position.x < -20) {
+        helicopter2Visible = false;
+        lobbyHelicopter2.visible = false;
+        activeHelicopter = 1;
+        // Set random spawn time for first helicopter
+        helicopterNextSpawnTime = Date.now() + (2000 + Math.random() * 3000);
+      }
+    } else {
+      // Check if it's time to respawn
+      if (Date.now() > helicopter2NextSpawnTime) {
+        helicopter2Visible = true;
+        lobbyHelicopter2.visible = true;
+        lobbyHelicopter2.position.x = 20;
+      }
+    }
+  }
+
+  lobbyHelicopterRenderer.render(lobbyHelicopterScene, lobbyHelicopterCamera);
+}
+
+function removeLobbyHelicopter() {
+  if (lobbyHelicopterRenderer) {
+    const container = document.getElementById('lobbyHelicopterContainer');
+    if (container && lobbyHelicopterRenderer.domElement) {
+      container.removeChild(lobbyHelicopterRenderer.domElement);
+    }
+    lobbyHelicopterRenderer.dispose();
+    lobbyHelicopterRenderer = null;
+  }
+  lobbyHelicopter = null;
+  lobbyHelicopterMixer = null;
+  lobbyHelicopterInitialized = false;
 }
 
 // Add AI opponents
@@ -1087,6 +1267,9 @@ function updateStartButton() {
 function initializeGame() {
   gameState.gameStarted = true;
 
+  // Remove lobby helicopter when game starts
+  removeLobbyHelicopter();
+
   // Update AI Moves panel title based on game mode
   if (gameState.gameMode === 'multiplayer') {
     const aiMovesTitle = document.getElementById('aiMovesTitle');
@@ -1095,10 +1278,7 @@ function initializeGame() {
     }
   }
 
-  // Start animation loop when game starts
-  animateThreeJS();
-
-  // Create the 3D board
+  // Animation loop is already running from initThreeJS
   create3DBoard();
 
   // Load 3D token models asynchronously to improve button responsiveness
@@ -2257,6 +2437,9 @@ function initThreeJS() {
   // Load dice model
   loadDiceModel();
 
+  // Initialize lobby helicopter
+  initLobbyHelicopter();
+
   // Don't start animation loop until game starts
   // animateThreeJS();
 
@@ -2816,12 +2999,12 @@ function animateThreeJS() {
     if (animData.mixer) {
       animData.mixer.update(0.01); // Update all animations at 100fps for smoother rotors
     }
-    
+
     // Handle helicopter animations
     const tokenData = playerTokenModels.find(t => t.playerIndex === index);
     if (tokenData) {
       const player = gameState.players[index];
-      
+
       if (player && player.token === 'Helicopter') {
         // Hover animation (only when not moving)
         if (animData.isHovering && !animData.isMoving) {
@@ -2832,7 +3015,7 @@ function animateThreeJS() {
           // Keep at base height when moving
           tokenData.model.position.y = animData.hoverBaseY;
         }
-        
+
         // Movement animation (forward tilt when moving)
         if (animData.isMoving) {
           const moveElapsed = (Date.now() - animData.moveStartTime) / 1000;
@@ -2844,7 +3027,7 @@ function animateThreeJS() {
           tokenData.model.rotation.x = 0;
         }
       }
-      
+
       // Handle hopping animations (Cheeseburger, CoffeeCup, Shoe, TopHat)
       if (player && (player.token === 'Cheeseburger' || player.token === 'CoffeeCup' || player.token === 'Shoe' || player.token === 'TopHat')) {
         if (animData.isHopping && !animData.isMoving) {
@@ -2856,7 +3039,7 @@ function animateThreeJS() {
           tokenData.model.position.y = animData.hopBaseY;
         }
       }
-      
+
       // Handle football throw animation
       if (player && player.token === 'Football') {
         if (animData.isThrowing) {

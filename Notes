@@ -1,0 +1,17 @@
+Craps ---------------------------------------------------------------------------------------------
+Every round of craps follows a two-step sequence governed by a marker puck (which reads OFF or ON):
+
+1. The Come-Out Roll
+
+• The round begins with a come-out roll.
+• Pass Line wins: If the shooter rolls a 7 or 11.
+• Pass Line loses (Craps): If the shooter rolls a 2, 3, or 12. (Note: On the Don’t Pass line, 2 or 3 wins and 12 is a tie/push).
+• Establish the Point: If the shooter rolls a 4, 5, 6, 8, 9, or 10, that number becomes the "Point". The dealer flips the puck to ON and places it on that number.
+
+2. The Point Phase
+
+• Once the Point is set, the shooter continues rolling the dice.
+• To Win (Make the Point): If the shooter re-rolls the Point number before rolling a 7, Pass Line bets win. The puck flips back to OFF, and a new come-out roll begins with the same shooter.
+• To Lose (Seven Out): If the shooter rolls a 7 before re-rolling the Point, Pass Line bets lose. This is called "sevening out," and the dice pass clockwise to the next player.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
