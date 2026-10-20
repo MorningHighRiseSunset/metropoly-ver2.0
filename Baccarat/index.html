@@ -291,9 +291,11 @@ function startDeal(){
   if(playerBet+bankerBet+tieBet===0){ state.message="Put a wager on the felt first."; render(); return; }
   state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null;
   dealStep=0; player=[]; banker=[]; deck=state.shoe.slice();
-  state.message="Click Deal to deal Player's first card (Banker cards are automatic)";
-  document.getElementById("deal").textContent="Deal Card";
+  state.message="Dealing cards...";
+  document.getElementById("deal").textContent="Deal";
   render();
+  // Automatically start dealing
+  setTimeout(dealNextCard, 300);
 }
 
 function dealNextCard(){
@@ -306,8 +308,10 @@ function dealNextCard(){
       player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
       // Automatically deal Banker's first card
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
-      state.message="Click Deal to deal Player's second card";
+      state.message="Dealing cards...";
       dealStep=2;
+      // Automatically proceed to second cards
+      setTimeout(dealNextCard, 500);
       break;
     case 2:
       player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
@@ -321,40 +325,38 @@ function dealNextCard(){
       } else {
         state.message=`Player has ${p}, Banker has ${b}. `;
         if(shouldPlayerDraw(p)){
-          state.message+="Player draws third card. Click Deal to draw it.";
-          dealStep=4;
+          // Automatically deal player's third card
+          const playerThirdCard = draw();
+          player.push(playerThirdCard); state.playerHand=[...player]; state.shoe=deck;
+          p=handTotal(player);
+          state.message+=`Player draws third card (${playerThirdCard.rank}). `;
+          // Check if banker should draw based on player's third card
+          if(shouldBankerDraw(b, playerThirdCard.value)){
+            banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+            b=handTotal(banker);
+            state.message+="Banker draws third card.";
+          } else {
+            state.message+="Banker stands.";
+          }
+          dealStep=99;
+          document.getElementById("deal").textContent="Show Result";
         } else {
           state.message+="Player stands. ";
           // Automatically deal Banker's third card if needed
           if(shouldBankerDraw(b, null)){
             banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
             b=handTotal(banker);
-            state.message+="Banker draws third card. Click Deal to show result";
+            state.message+="Banker draws third card.";
             dealStep=99;
             document.getElementById("deal").textContent="Show Result";
           } else {
-            state.message+="Banker stands. Click Deal to show result";
+            state.message+="Banker stands.";
             dealStep=99;
             document.getElementById("deal").textContent="Show Result";
           }
         }
       }
-      break;
-    case 4:
-      const card=draw(); player.push(card); state.playerHand=[...player]; state.shoe=deck;
-      p=handTotal(player); b=handTotal(banker);
-      if(shouldBankerDraw(b, card.value)){
-        // Automatically deal Banker's third card
-        banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
-        b=handTotal(banker);
-        state.message=`Player's third card: ${card.rank}. Banker draws third card. Click Deal to show result`;
-        dealStep=99;
-        document.getElementById("deal").textContent="Show Result";
-      } else {
-        state.message=`Player's third card: ${card.rank}. Banker stands. Click Deal to show result`;
-        dealStep=99;
-        document.getElementById("deal").textContent="Show Result";
-      }
+      render();
       break;
     case 99:
       const outcome=decideWinner(handTotal(player), handTotal(banker));

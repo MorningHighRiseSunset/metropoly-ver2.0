@@ -121,8 +121,8 @@ body {
 .token-section h3,
 .multiplayer-section h3,
 .player-section h3 {
-  font-size: 0.85rem;
-  margin-bottom: 16px;
+  font-size: 0.6rem;
+  margin-bottom: 8px;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
   letter-spacing: 2px;
@@ -183,7 +183,7 @@ body {
 }
 
 .token-option span {
-  font-size: 0.75rem;
+  font-size: 0.45rem;
   color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
   position: relative;
@@ -243,7 +243,7 @@ body {
 }
 
 .lobby-id {
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
   letter-spacing: 3px;
@@ -355,8 +355,8 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 16px;
-  max-height: 180px;
+  padding: 10px;
+  max-height: 140px;
   overflow-y: auto;
 }
 
@@ -364,11 +364,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   transition: all 0.2s ease;
 }
 
@@ -446,7 +446,7 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  z-index: 100;
+  z-index: 200;
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2a2a2a 100%);
 }
 
@@ -970,7 +970,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 300;
   backdrop-filter: blur(10px);
 }
 
@@ -1051,7 +1051,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 5000;
+  z-index: 400;
   animation: doublesPop 0.3s ease-out;
 }
 
@@ -1103,7 +1103,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 300;
   backdrop-filter: blur(10px);
 }
 
@@ -1154,8 +1154,8 @@ body {
 }
 
 .property-address {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
   margin: 0;
   font-style: italic;
   text-align: center;
@@ -1250,7 +1250,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 300;
   backdrop-filter: blur(10px);
 }
 
@@ -1316,7 +1316,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 300;
   backdrop-filter: blur(10px);
 }
 
