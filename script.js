@@ -1686,7 +1686,11 @@ function loadPlayerToken(player, index) {
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'Helicopter') {
         tokenModel.rotation.y = 0; // Faces east by default, which is correct
-        tokenModel.position.y = 0.5; // Raise helicopter higher above the board
+        tokenModel.position.y = HELICOPTER_HOVER_Y; // Raise helicopter higher above the board
+        tokenModel.renderOrder = 10;
+        tokenModel.traverse((child) => {
+          child.renderOrder = 10;
+        });
       } else if (player.token === 'Cheeseburger') {
         tokenModel.position.y = 0.2; // Raise a bit higher
       } else if (player.token === 'RollsRoyce') {
@@ -1856,6 +1860,7 @@ function switchAnimation(playerIndex, animationType) {
     } else if (animationType === 'idle') {
       animData.isMoving = false;
       animData.hoverStartTime = Date.now(); // Reset hover timing
+      animData.hoverBaseY = getTokenBoardY(player, player.position);
     }
     return; // Don't process standard animation switching for helicopter
   }
@@ -1935,15 +1940,39 @@ function getCellPosition(cellIndex) {
   return { x: 0, z: 0 };
 }
 
+function getTokenBoardY(player, boardPosition) {
+  if (!player) return 0.12;
+  const pos = ((boardPosition % 40) + 40) % 40;
+  if (player.token === 'Helicopter') {
+    if (pos === COUNTY_FAIR_POSITION) {
+      return countyFairWheelTopWorldY + HELICOPTER_COUNTY_FAIR_CLEARANCE;
+    }
+    return HELICOPTER_HOVER_Y;
+  }
+  if (player.token === 'Shoe' || player.token === 'Football' || player.token === 'Cheeseburger') {
+    return 0.2;
+  }
+  return 0.12;
+}
+
+function setHelicopterHoverHeight(playerIndex, boardPosition) {
+  const player = gameState.players[playerIndex];
+  const animData = playerAnimations[playerIndex];
+  if (!player || player.token !== 'Helicopter' || !animData) return;
+  animData.hoverBaseY = getTokenBoardY(player, boardPosition);
+}
+
 // Move player token to new position
 function movePlayerToken(playerIndex, newPosition) {
   const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
   if (tokenData) {
     const position = getCellPosition(newPosition);
-    tokenData.model.position.set(position.x, 0.12, position.z);
-    tokenData.position = newPosition;
-    // Also update the player's position
     const player = gameState.players[playerIndex];
+    const tokenY = getTokenBoardY(player, newPosition);
+    tokenData.model.position.set(position.x, tokenY, position.z);
+    tokenData.position = newPosition;
+    setHelicopterHoverHeight(playerIndex, newPosition);
+    // Also update the player's position
     if (player) {
       player.position = newPosition;
     }
@@ -2029,7 +2058,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       cellIndex = (oldPosition + i) % 40;
     }
     const pos = getCellPosition(cellIndex);
-    path.push(pos);
+    path.push({ x: pos.x, z: pos.z, index: cellIndex });
     
     // Check if passed GO (when going from 39 to 0)
     if (cellIndex === 0 && i > 0 && !reverse) {
@@ -2068,6 +2097,15 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       
       tokenData.model.position.x = currentPos.x + (nextPos.x - currentPos.x) * segmentProgress;
       tokenData.model.position.z = currentPos.z + (nextPos.z - currentPos.z) * segmentProgress;
+
+      const movingPlayer = gameState.players[playerIndex];
+      const startY = getTokenBoardY(movingPlayer, currentPos.index);
+      const endY = getTokenBoardY(movingPlayer, nextPos.index);
+      const interpolatedY = startY + (endY - startY) * segmentProgress;
+      tokenData.model.position.y = interpolatedY;
+      if (playerAnimations[playerIndex]) {
+        playerAnimations[playerIndex].hoverBaseY = interpolatedY;
+      }
       
       // Update rotation to face direction of movement
       const segDx = nextPos.x - currentPos.x;
@@ -2102,8 +2140,11 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     } else {
       // Ensure the model is exactly at the final position
       const finalPos = path[path.length - 1];
+      const landingPlayer = gameState.players[playerIndex];
       tokenData.model.position.x = finalPos.x;
       tokenData.model.position.z = finalPos.z;
+      tokenData.model.position.y = getTokenBoardY(landingPlayer, newPosition);
+      setHelicopterHoverHeight(playerIndex, newPosition);
       
       // Done - switch to idle immediately
       const finalCell = boardCells.find(c => c.index === newPosition % 40);
@@ -2408,6 +2449,10 @@ const tileSize = 0.7;
 const gap = 0.03;
 const tileHeight = 0.12;
 const step = 0.73;
+const COUNTY_FAIR_POSITION = 24;
+const HELICOPTER_HOVER_Y = 0.5;
+const HELICOPTER_COUNTY_FAIR_CLEARANCE = 0.22;
+let countyFairWheelTopWorldY = 1.15;
 let boardConfig = [];
 
 // Board configuration - defined once at startup
@@ -2672,6 +2717,14 @@ function createTile(spaceData, row, col) {
         model.position.y = tileHeight / 2 + 0.2;
         model.rotation.y = 0; // No rotation
         group.add(model);
+
+        if (spaceData.position === COUNTY_FAIR_POSITION) {
+          model.updateWorldMatrix(true, true);
+          const wheelBounds = new THREE.Box3().setFromObject(model);
+          if (Number.isFinite(wheelBounds.max.y)) {
+            countyFairWheelTopWorldY = Math.min(Math.max(wheelBounds.max.y, 0.7), 2.4);
+          }
+        }
         
         // Add animation for spinning
         if (object.animations && object.animations.length > 0) {
