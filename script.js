@@ -2066,11 +2066,18 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     const pos = getCellPosition(cellIndex);
     path.push({ x: pos.x, z: pos.z, index: cellIndex });
     
-    // Check if passed GO (when going from 39 to 0)
+    // Check if passed GO (when going from 39 to 0) or landed on GO
     if (cellIndex === 0 && i > 0 && !reverse) {
       const currentPlayer = gameState.players[playerIndex];
       currentPlayer.money += 200;
       console.log(`${currentPlayer.name} passed GO and collected $200`);
+      updatePlayerMoney();
+    }
+    // Also pay $200 if landing on GO (i === 0)
+    if (cellIndex === 0 && i === 0 && !reverse) {
+      const currentPlayer = gameState.players[playerIndex];
+      currentPlayer.money += 200;
+      console.log(`${currentPlayer.name} landed on GO and collected $200`);
       updatePlayerMoney();
     }
   }
@@ -3747,42 +3754,42 @@ function handleLanding(player, position, canRollAgain = false) {
 
 // Chance and Community Chest card decks
 const chanceCards = [
-  { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
-  { message: "Advance to Las Vegas Grand Prix", action: "advance_to", position: 3 },
-  { message: "Advance to Bellagio (Blackjack) - If you pass Go, collect $200", action: "advance_to", position: 15 },
-  { message: "Advance to The Cosmopolitan (Slots) - If you pass Go, collect $200", action: "advance_to", position: 36 },
-  { message: "Advance to Venetian (Baccarat) - If you pass Go, collect $200", action: "advance_to", position: 13 },
-  { message: "Advance to Santa Fe Hotel and Casino (Poker) - If you pass Go, collect $200", action: "advance_to", position: 18 },
-  { message: "Advance to Hard Rock Hotel (Roulette) - If you pass Go, collect $200", action: "advance_to", position: 21 },
-  { message: "Advance to Wynn Las Vegas (Craps) - If you pass Go, collect $200", action: "advance_to", position: 35 },
-  { message: "Casino dividend of $50", action: "gain_money", amount: 50 },
-  { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
-  { message: "Go back 3 spaces", action: "go_back", spaces: 3 },
-  { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Casino repair fees - $25 per property", action: "pay_repairs", amount: 25 },
-  { message: "Las Vegas speeding fine $150", action: "pay_fine", amount: 150 },
-  { message: "You have been elected Casino Chairman - Pay each player $50", action: "pay_players", amount: 50 },
-  { message: "Your casino investment matures - Collect $150", action: "gain_money", amount: 150 },
-  { message: "You have won a Blackjack competition - Collect $500", action: "gain_money", amount: 500 }
+  { message: "Collect $200 and move to GO", action: "advance_to_go" },
+  { message: "Move to Las Vegas Grand Prix", action: "advance_to", position: 3 },
+  { message: "Move to Bellagio (Blackjack)", action: "advance_to", position: 15 },
+  { message: "Move to The Cosmopolitan (Slots)", action: "advance_to", position: 36 },
+  { message: "Move to Venetian (Baccarat)", action: "advance_to", position: 13 },
+  { message: "Move to Santa Fe Hotel and Casino (Poker)", action: "advance_to", position: 18 },
+  { message: "Move to Hard Rock Hotel (Roulette)", action: "advance_to", position: 21 },
+  { message: "Move to Wynn Las Vegas (Craps)", action: "advance_to", position: 35 },
+  { message: "Collect $50 casino dividend", action: "gain_money", amount: 50 },
+  { message: "Get out of Jail Free - Keep this card", action: "get_out_of_jail" },
+  { message: "Move back 3 spaces", action: "go_back", spaces: 3 },
+  { message: "Go to Jail - Move directly to Jail", action: "go_to_jail" },
+  { message: "Pay $25 per property for repairs", action: "pay_repairs", amount: 25 },
+  { message: "Pay $150 speeding fine", action: "pay_fine", amount: 150 },
+  { message: "Pay $50 to each player (Casino Chairman)", action: "pay_players", amount: 50 },
+  { message: "Collect $150 investment returns", action: "gain_money", amount: 150 },
+  { message: "Collect $500 Blackjack winnings", action: "gain_money", amount: 500 }
 ];
 
 const communityChestCards = [
-  { message: "Advance to Go (Collect $200)", action: "advance_to_go" },
-  { message: "Casino jackpot error in your favor - Collect $400", action: "gain_money", amount: 400 },
-  { message: "Doctor's fee - Pay $200", action: "pay_fine", amount: 200 },
-  { message: "From casino investment you get $300", action: "gain_money", amount: 300 },
-  { message: "Get out of Jail Free - This card may be kept until needed", action: "get_out_of_jail" },
-  { message: "Go to Jail - Go directly to Jail - Do not pass Go, do not collect $200", action: "go_to_jail" },
-  { message: "Vegas vacation fund matures - Collect $400", action: "gain_money", amount: 400 },
-  { message: "Casino tax refund - Collect $480", action: "gain_money", amount: 480 },
-  { message: "It is your birthday - Collect $50 from each player", action: "collect_from_players", amount: 50 },
-  { message: "Casino life insurance matures - Collect $400", action: "gain_money", amount: 400 },
-  { message: "Pay hospital fees of $300", action: "pay_fine", amount: 300 },
-  { message: "Pay school fees of $200", action: "pay_fine", amount: 200 },
-  { message: "Receive $200 poker tournament fee", action: "gain_money", amount: 200 },
-  { message: "You are assessed for casino repairs - $150 per property", action: "pay_repairs", amount: 150 },
-  { message: "You have won second prize in a Vegas Bingo contest - Collect $100", action: "gain_money", amount: 100 },
-  { message: "You inherit $400", action: "gain_money", amount: 400 }
+  { message: "Collect $200 and move to GO", action: "advance_to_go" },
+  { message: "Collect $400 casino jackpot", action: "gain_money", amount: 400 },
+  { message: "Pay $200 doctor's fee", action: "pay_fine", amount: 200 },
+  { message: "Collect $300 casino investment returns", action: "gain_money", amount: 300 },
+  { message: "Get out of Jail Free - Keep this card", action: "get_out_of_jail" },
+  { message: "Go to Jail - Move directly to Jail", action: "go_to_jail" },
+  { message: "Collect $400 vacation fund", action: "gain_money", amount: 400 },
+  { message: "Collect $480 tax refund", action: "gain_money", amount: 480 },
+  { message: "Collect $50 from each player (birthday)", action: "collect_from_players", amount: 50 },
+  { message: "Collect $400 life insurance payout", action: "gain_money", amount: 400 },
+  { message: "Pay $300 hospital fees", action: "pay_fine", amount: 300 },
+  { message: "Pay $200 school fees", action: "pay_fine", amount: 200 },
+  { message: "Collect $200 poker winnings", action: "gain_money", amount: 200 },
+  { message: "Pay $150 per property for repairs", action: "pay_repairs", amount: 150 },
+  { message: "Collect $100 Bingo prize", action: "gain_money", amount: 100 },
+  { message: "Collect $400 inheritance", action: "gain_money", amount: 400 }
 ];
 
 // Execute card action (for AI players)
