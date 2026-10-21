@@ -1737,6 +1737,12 @@ function loadPlayerToken(player, index) {
             idleAction.timeScale = 2.0; // Speed up idle animation
             animations['Idle'] = idleAction;
             // console.log(`[ANIMATION DEBUG] Created Idle action for ${player.name}, tracks: ${idleClip.tracks.length}`);
+          } else if (player.token === 'Helicopter') {
+            // For helicopter, speed up rotor animations significantly
+            const action = mixer.clipAction(clip);
+            action.timeScale = 3.0; // Speed up rotor animation for smoother, faster spin
+            action.play();
+            animations[clip.name] = action;
           } else {
             // For other models, play all built-in animations (rotors, wheels, etc.)
             const action = mixer.clipAction(clip);
@@ -3090,7 +3096,7 @@ function animateThreeJS() {
   // Update animation mixers (update all, not just walk)
   Object.values(playerAnimations).forEach((animData, index) => {
     if (animData.mixer) {
-      animData.mixer.update(0.01); // Update all animations at 100fps for smoother rotors
+      animData.mixer.update(0.016); // Update at ~60fps for smoother animations
     }
 
     // Handle helicopter animations
