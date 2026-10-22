@@ -3259,7 +3259,7 @@ function roll3DDice() {
       y: threeCamera.position.y,
       z: threeCamera.position.z
     };
-    threeCamera.position.set(0, 12, 5);
+    threeCamera.position.set(0, 15, 8);
     threeCamera.lookAt(0, 0, 0);
   }
 
@@ -3280,6 +3280,12 @@ function roll3DDice() {
   isRolling = true;
   diceModel1.visible = true;
   diceModel2.visible = true;
+
+  // Ensure dice are visible on mobile
+  if (window.cameraFollowMode) {
+    diceModel1.position.set(-0.1, 8, 0);
+    diceModel2.position.set(0.1, 8, 0);
+  }
 
   // Play dice rolling sound
   if (typeof playDiceRollSound === 'function') {

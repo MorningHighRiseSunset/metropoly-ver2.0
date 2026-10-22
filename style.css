@@ -1975,6 +1975,61 @@ body {
   .lobby-container::-webkit-scrollbar-thumb:hover {
     background: rgba(74, 158, 255, 0.6);
   }
+
+  /* Overlays mobile optimization */
+  .jail-container,
+  .property-container,
+  .card-container,
+  .tax-container {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .jail-video-container,
+  .property-video-container {
+    height: 250px;
+  }
+
+  .jail-content,
+  .property-content,
+  .card-content,
+  .tax-content {
+    padding: 16px;
+  }
+
+  .jail-title,
+  .property-title,
+  .card-title,
+  .tax-title {
+    font-size: 1.2rem;
+  }
+
+  .jail-message,
+  .property-address,
+  .card-message,
+  .tax-message {
+    font-size: 0.9rem;
+  }
+
+  .jail-btn,
+  .property-btn,
+  .card-btn,
+  .tax-btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  .doubles-content {
+    padding: 15px 25px;
+  }
+
+  .doubles-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .doubles-content p {
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
