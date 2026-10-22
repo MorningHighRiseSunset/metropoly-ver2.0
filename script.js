@@ -3251,11 +3251,22 @@ function roll3DDice() {
   // Mark turn as completing
   window.turnCompleting = true;
   window.diceProcessed = false;
-  
+
+  // Mobile: switch camera to dice POV when rolling
+  if (window.cameraFollowMode) {
+    window.savedCameraPosition = {
+      x: threeCamera.position.x,
+      y: threeCamera.position.y,
+      z: threeCamera.position.z
+    };
+    threeCamera.position.set(0, 12, 5);
+    threeCamera.lookAt(0, 0, 0);
+  }
+
   // Increment roll ID to prevent stale callbacks from processing
   window.currentRollId = (window.currentRollId || 0) + 1;
   const thisRollId = window.currentRollId;
-  
+
   // Capture the rolling player index to prevent stale player references
   const rollingPlayerIndex = gameState.currentPlayerIndex;
   const rollingPlayer = gameState.players[rollingPlayerIndex];
@@ -3352,6 +3363,16 @@ function roll3DDice() {
       setTimeout(() => {
         diceModel1.visible = false;
         diceModel2.visible = false;
+
+        // Mobile: restore camera to follow mode after dice are hidden
+        if (window.cameraFollowMode && window.savedCameraPosition) {
+          threeCamera.position.set(
+            window.savedCameraPosition.x,
+            window.savedCameraPosition.y,
+            window.savedCameraPosition.z
+          );
+          window.savedCameraPosition = null;
+        }
 
         // Get dice results based on final rotation
         const currentPlayer = rollingPlayer;
@@ -3464,6 +3485,16 @@ function roll3DDice() {
       isRolling = false;
       diceModel1.visible = false;
       diceModel2.visible = false;
+
+      // Mobile: restore camera
+      if (window.cameraFollowMode && window.savedCameraPosition) {
+        threeCamera.position.set(
+          window.savedCameraPosition.x,
+          window.savedCameraPosition.y,
+          window.savedCameraPosition.z
+        );
+        window.savedCameraPosition = null;
+      }
 
       // Process dice results even if they didn't settle properly
       const currentPlayer = rollingPlayer;
@@ -5351,30 +5382,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sync mobile menu with game data
   function syncMobileMenu() {
-    // Sync players list
     const mobilePlayersList = document.getElementById('mobilePlayersList');
     const playersList = document.getElementById('playersList');
     if (mobilePlayersList && playersList) {
       mobilePlayersList.innerHTML = playersList.innerHTML;
     }
 
-    // Sync AI moves
     const mobileAiMoves = document.getElementById('mobileAiMoves');
     const aiMoves = document.getElementById('aiMoves');
     if (mobileAiMoves && aiMoves) {
       mobileAiMoves.innerHTML = aiMoves.innerHTML;
     }
 
-    // Sync properties
     const mobilePropertiesList = document.getElementById('mobilePropertiesList');
     const myProperties = document.getElementById('myProperties');
     if (mobilePropertiesList && myProperties) {
       mobilePropertiesList.innerHTML = myProperties.innerHTML;
     }
 
-    // Sync balance
     const mobileBalanceValue = document.getElementById('mobileBalanceValue');
-    const balanceValue = document.querySelector('.actions-balance-value');
+    const balanceValue = document.getElementById('playerMoney');
     if (mobileBalanceValue && balanceValue) {
       mobileBalanceValue.textContent = balanceValue.textContent;
     }
@@ -5399,11 +5426,11 @@ document.addEventListener('DOMContentLoaded', () => {
     syncMobileMenu();
   };
 
-  // Mobile roll dice button
+  // Mobile roll dice button (header version)
   const mobileRollDiceBtn = document.getElementById('mobileRollDiceBtn');
   if (mobileRollDiceBtn) {
     mobileRollDiceBtn.addEventListener('click', () => {
-      if (rollDiceBtn) {
+      if (rollDiceBtn && !rollDiceBtn.disabled) {
         rollDiceBtn.click();
       }
     });
