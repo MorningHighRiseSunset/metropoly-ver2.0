@@ -3122,8 +3122,8 @@ function animateThreeJS() {
     orbitControls.update();
   }
 
-  // Mobile camera follow - ONLY on mobile
-  if (window.cameraFollowMode && gameState.gameStarted) {
+  // Mobile camera follow - ONLY on mobile, and NOT during dice rolling
+  if (window.cameraFollowMode && gameState.gameStarted && !isRolling) {
     const currentPlayerIndex = gameState.currentPlayerIndex;
     const tokenData = playerTokenModels.find(t => t.playerIndex === currentPlayerIndex);
 
@@ -3140,27 +3140,8 @@ function animateThreeJS() {
     }
   }
 
-  // Mobile camera follow mode - follow current player token
-  if (window.cameraFollowMode && gameState.gameStarted) {
-    const currentPlayerIndex = gameState.currentPlayerIndex;
-    const tokenData = playerTokenModels.find(t => t.playerIndex === currentPlayerIndex);
-
-    if (tokenData && tokenData.model) {
-      const tokenPos = tokenData.model.position;
-      // Position camera above and behind the token
-      const targetX = tokenPos.x;
-      const targetZ = tokenPos.z + 3; // Behind the token
-      const targetY = 8; // Height above the board
-
-      // Smooth camera movement
-      threeCamera.position.x += (targetX - threeCamera.position.x) * 0.05;
-      threeCamera.position.z += (targetZ - threeCamera.position.z) * 0.05;
-      threeCamera.position.y += (targetY - threeCamera.position.y) * 0.05;
-
-      // Look at the token
-      threeCamera.lookAt(tokenPos.x, 0, tokenPos.z);
-    }
-  }
+  // Mobile camera follow mode - follow current player token (DUPLICATE - remove this)
+  // REMOVED - duplicate of the code above
 
   // Update physics
   if (physicsWorld) {
