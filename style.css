@@ -2036,6 +2036,50 @@ body {
   }
 }
 
+/* Mobile landscape orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  .jail-container,
+  .property-container,
+  .card-container,
+  .tax-container {
+    max-height: 70vh;
+    max-width: 50%;
+  }
+
+  .jail-content,
+  .property-content,
+  .card-content,
+  .tax-content {
+    padding: 10px;
+  }
+
+  .jail-title,
+  .property-title,
+  .card-title,
+  .tax-title {
+    font-size: 0.9rem;
+  }
+
+  .jail-message,
+  .property-address,
+  .card-message,
+  .tax-message {
+    font-size: 0.8rem;
+  }
+
+  .jail-btn,
+  .property-btn,
+  .card-btn,
+  .tax-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .doubles-content {
+    padding: 10px 15px;
+  }
+}
+
 @media (max-width: 480px) {
   .lobby-container {
     max-height: 85vh;
