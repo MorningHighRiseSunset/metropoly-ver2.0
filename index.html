@@ -207,10 +207,45 @@
         <h1>🏛️ METROPOLY</h1>
         <div class="game-id">First to 10,000 is winner</div>
       </div>
-      
+
+      <!-- Burger Menu Button (Mobile) -->
+      <button id="burgerBtn" class="burger-btn" title="Menu">☰</button>
+
       <!-- Settings Button -->
       <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
     </header>
+
+    <!-- Mobile Menu Sidebar -->
+    <div id="mobileMenu" class="mobile-menu">
+      <div class="mobile-menu-content">
+        <button id="closeMobileMenu" class="close-mobile-menu">✕</button>
+
+        <h3 class="sidebar-panel-title">Players</h3>
+        <div id="mobilePlayersList" class="players-list panel-scroll">
+        </div>
+
+        <div class="sidebar-panel sidebar-panel--ai-moves">
+          <h3 class="sidebar-panel-title" id="mobileAiMovesTitle">AI Moves</h3>
+          <div id="mobileAiMoves" class="ai-moves panel-scroll">
+          </div>
+        </div>
+
+        <div class="sidebar-panel sidebar-panel--properties">
+          <h3 class="sidebar-panel-title">Properties</h3>
+          <div id="mobilePropertiesList" class="properties-list panel-scroll">
+          </div>
+        </div>
+
+        <div class="sidebar-panel sidebar-panel--actions">
+          <div class="actions-balance">
+            <span class="actions-balance-label">Balance</span>
+            <span class="actions-balance-value" id="mobileBalanceValue">$0</span>
+          </div>
+          <button id="mobileRollDiceBtn" class="btn btn-primary btn-block btn-roll">🎲 ROLL DICE</button>
+          <button id="mobileEndTurnBtn" class="btn btn-secondary btn-block">End Turn</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Main game area -->
     <main class="game-main">

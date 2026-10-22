@@ -2547,6 +2547,15 @@ function initThreeJS() {
   orbitControls.maxDistance = 20;
   orbitControls.target.set(0, 0, 0);
 
+  // Mobile camera following mode
+  window.isMobileView = window.innerWidth <= 768;
+  window.cameraFollowMode = window.isMobileView;
+
+  // Disable orbit controls on mobile for camera follow mode
+  if (window.cameraFollowMode) {
+    orbitControls.enabled = false;
+  }
+
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   threeScene.add(ambientLight);
@@ -3083,6 +3092,28 @@ function animateThreeJS() {
   // Update orbit controls
   if (orbitControls) {
     orbitControls.update();
+  }
+
+  // Mobile camera follow mode - follow current player token
+  if (window.cameraFollowMode && gameState.gameStarted) {
+    const currentPlayerIndex = gameState.currentPlayerIndex;
+    const tokenData = playerTokenModels.find(t => t.playerIndex === currentPlayerIndex);
+
+    if (tokenData && tokenData.model) {
+      const tokenPos = tokenData.model.position;
+      // Position camera above and behind the token
+      const targetX = tokenPos.x;
+      const targetZ = tokenPos.z + 3; // Behind the token
+      const targetY = 8; // Height above the board
+
+      // Smooth camera movement
+      threeCamera.position.x += (targetX - threeCamera.position.x) * 0.05;
+      threeCamera.position.z += (targetZ - threeCamera.position.z) * 0.05;
+      threeCamera.position.y += (targetY - threeCamera.position.y) * 0.05;
+
+      // Look at the token
+      threeCamera.lookAt(tokenPos.x, 0, tokenPos.z);
+    }
   }
 
   // Update physics
@@ -5263,7 +5294,119 @@ function endTurn() {
 // Initialize Three.js when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   initThreeJS();
-  
+
+  // Mobile menu handlers
+  const burgerBtn = document.getElementById('burgerBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const closeMobileMenu = document.getElementById('closeMobileMenu');
+
+  if (burgerBtn && mobileMenu && closeMobileMenu) {
+    burgerBtn.addEventListener('click', () => {
+      mobileMenu.classList.add('open');
+    });
+
+    closeMobileMenu.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu.contains(e.target) && !burgerBtn.contains(e.target)) {
+        mobileMenu.classList.remove('open');
+      }
+    });
+  }
+
+  // Sync mobile menu with game data
+  function syncMobileMenu() {
+    // Sync players list
+    const mobilePlayersList = document.getElementById('mobilePlayersList');
+    const playersList = document.getElementById('playersList');
+    if (mobilePlayersList && playersList) {
+      mobilePlayersList.innerHTML = playersList.innerHTML;
+    }
+
+    // Sync AI moves
+    const mobileAiMoves = document.getElementById('mobileAiMoves');
+    const aiMoves = document.getElementById('aiMoves');
+    if (mobileAiMoves && aiMoves) {
+      mobileAiMoves.innerHTML = aiMoves.innerHTML;
+    }
+
+    // Sync properties
+    const mobilePropertiesList = document.getElementById('mobilePropertiesList');
+    const myProperties = document.getElementById('myProperties');
+    if (mobilePropertiesList && myProperties) {
+      mobilePropertiesList.innerHTML = myProperties.innerHTML;
+    }
+
+    // Sync balance
+    const mobileBalanceValue = document.getElementById('mobileBalanceValue');
+    const balanceValue = document.querySelector('.actions-balance-value');
+    if (mobileBalanceValue && balanceValue) {
+      mobileBalanceValue.textContent = balanceValue.textContent;
+    }
+  }
+
+  // Update mobile menu when game state changes
+  const originalUpdatePlayersList = updatePlayersList;
+  updatePlayersList = function() {
+    originalUpdatePlayersList();
+    syncMobileMenu();
+  };
+
+  const originalUpdatePlayerMoney = updatePlayerMoney;
+  updatePlayerMoney = function() {
+    originalUpdatePlayerMoney();
+    syncMobileMenu();
+  };
+
+  const originalUpdatePropertiesList = updatePropertiesList;
+  updatePropertiesList = function() {
+    originalUpdatePropertiesList();
+    syncMobileMenu();
+  };
+
+  // Mobile roll dice button
+  const mobileRollDiceBtn = document.getElementById('mobileRollDiceBtn');
+  if (mobileRollDiceBtn) {
+    mobileRollDiceBtn.addEventListener('click', () => {
+      if (rollDiceBtn) {
+        rollDiceBtn.click();
+      }
+    });
+  }
+
+  // Mobile end turn button
+  const mobileEndTurnBtn = document.getElementById('mobileEndTurnBtn');
+  if (mobileEndTurnBtn) {
+    mobileEndTurnBtn.addEventListener('click', () => {
+      endTurn();
+    });
+  }
+
+  // Handle window resize for mobile detection
+  window.addEventListener('resize', () => {
+    const wasMobile = window.isMobileView;
+    window.isMobileView = window.innerWidth <= 768;
+
+    if (wasMobile !== window.isMobileView) {
+      window.cameraFollowMode = window.isMobileView;
+      if (orbitControls) {
+        orbitControls.enabled = !window.cameraFollowMode;
+      }
+
+      // Reset camera when switching modes
+      if (!window.cameraFollowMode) {
+        threeCamera.position.set(0, 9, 0);
+        threeCamera.lookAt(0, 0, 0);
+        if (orbitControls) {
+          orbitControls.target.set(0, 0, 0);
+        }
+      }
+    }
+  });
+
   // Jail UI handlers
   document.getElementById('jailProceedBtn').addEventListener('click', () => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
