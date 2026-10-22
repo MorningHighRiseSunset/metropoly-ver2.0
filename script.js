@@ -3956,7 +3956,12 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
     case 'advance_to':
       const oldPosition = player.position;
       let newPosition = position;
-      
+
+      // Calculate steps forward and backward to find shortest path
+      const stepsForward = (newPosition - oldPosition + 40) % 40;
+      const stepsBackward = (oldPosition - newPosition + 40) % 40;
+      const useReverse = stepsBackward < stepsForward;
+
       // Check if passed GO (handles both forward and backward movement)
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
@@ -3964,14 +3969,14 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
-      
-      // Animate forward movement
+
+      // Animate movement in shortest direction
       switchAnimation(playerIndex, 'walk');
       animatePlayerMovement(playerIndex, oldPosition, newPosition, () => {
         player.position = newPosition;
         addAIMove(player.name, `advanced to position ${newPosition}`);
         handleLanding(player, newPosition, canRollAgain);
-      }, false); // false = forward direction
+      }, useReverse); // Use reverse if it's shorter
       break;
       
     case 'advance_to_nearest':
@@ -4599,7 +4604,12 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       // Move to specific position
       const oldPosition = currentPlayer.position;
       let newPosition = position;
-      
+
+      // Calculate steps forward and backward to find shortest path
+      const stepsForward = (newPosition - oldPosition + 40) % 40;
+      const stepsBackward = (oldPosition - newPosition + 40) % 40;
+      const useReverse = stepsBackward < stepsForward;
+
       // Check if passed GO (handles both forward and backward movement)
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
@@ -4607,12 +4617,12 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         updatePlayerMoney();
         console.log(`${currentPlayer.name} passed GO and collected $200`);
       }
-      
+
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
         currentPlayer.position = newPosition;
         handleLanding(currentPlayer, newPosition, canRollAgain);
-      }, false); // false = forward direction
+      }, useReverse); // Use reverse if it's shorter
       break;
       
     case 'advance_to_nearest':
