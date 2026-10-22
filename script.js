@@ -2173,10 +2173,24 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       
       // Wait 2 seconds to show idle animation, then return camera and show UI
       setTimeout(() => {
-        // Return camera to top-down view
-        threeCamera.position.set(0, 9, 0);
-        threeCamera.lookAt(0, 0, 0);
-        orbitControls.enabled = true;
+        // Return camera to appropriate view based on mode
+        if (window.cameraFollowMode) {
+          // Mobile: restore to follow mode
+          if (window.savedCameraPosition) {
+            threeCamera.position.set(
+              window.savedCameraPosition.x,
+              window.savedCameraPosition.y,
+              window.savedCameraPosition.z
+            );
+            window.savedCameraPosition = null;
+          }
+          orbitControls.enabled = false; // Keep orbit disabled in follow mode
+        } else {
+          // Desktop: return to top-down view
+          threeCamera.position.set(0, 9, 0);
+          threeCamera.lookAt(0, 0, 0);
+          orbitControls.enabled = true;
+        }
         
         if (callback) callback();
       }, 2000);
@@ -3281,12 +3295,6 @@ function roll3DDice() {
   diceModel1.visible = true;
   diceModel2.visible = true;
 
-  // Ensure dice are visible on mobile
-  if (window.cameraFollowMode) {
-    diceModel1.position.set(-0.1, 8, 0);
-    diceModel2.position.set(0.1, 8, 0);
-  }
-
   // Play dice rolling sound
   if (typeof playDiceRollSound === 'function') {
     playDiceRollSound();
@@ -3294,9 +3302,41 @@ function roll3DDice() {
 
   console.log('Starting dice roll for player:', gameState.players[gameState.currentPlayerIndex]?.name);
 
+  // Mobile: switch camera first, then wait before dropping dice
+  if (window.cameraFollowMode) {
+    window.savedCameraPosition = {
+      x: threeCamera.position.x,
+      y: threeCamera.position.y,
+      z: threeCamera.position.z
+    };
+    threeCamera.position.set(0, 20, 12);
+    threeCamera.lookAt(0, 0, 0);
+
+    // Position dice high up so they fall into camera view
+    diceModel1.position.set(-0.1, 25, 0);
+    diceModel2.position.set(0.1, 25, 0);
+
+    // Wait for camera to switch, then start physics
+    setTimeout(() => {
+      startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId);
+    }, 200);
+    return;
+  }
+
+  // Desktop: start physics immediately
+  startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId);
+}
+
+function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
   // Reset dice positions above the board (drop from much higher)
-  diceBody1.position.set(-0.1, 5, 0);
-  diceBody2.position.set(0.1, 5, 0);
+  // Mobile: drop from higher position so they're visible in camera view
+  if (window.cameraFollowMode) {
+    diceBody1.position.set(-0.1, 25, 0);
+    diceBody2.position.set(0.1, 25, 0);
+  } else {
+    diceBody1.position.set(-0.1, 5, 0);
+    diceBody2.position.set(0.1, 5, 0);
+  }
 
   // Reset dice rotations with random starting orientations
   diceBody1.quaternion.setFromAxisAngle(new CANNON.Vec3(Math.random(), Math.random(), Math.random()), Math.random() * Math.PI * 2);
@@ -3370,15 +3410,9 @@ function roll3DDice() {
         diceModel1.visible = false;
         diceModel2.visible = false;
 
-        // Mobile: restore camera to follow mode after dice are hidden
-        if (window.cameraFollowMode && window.savedCameraPosition) {
-          threeCamera.position.set(
-            window.savedCameraPosition.x,
-            window.savedCameraPosition.y,
-            window.savedCameraPosition.z
-          );
-          window.savedCameraPosition = null;
-        }
+        // Mobile: restore camera AFTER token movement completes
+        // Camera will be restored in movePlayerToken completion handler
+        // Don't restore here anymore
 
         // Get dice results based on final rotation
         const currentPlayer = rollingPlayer;

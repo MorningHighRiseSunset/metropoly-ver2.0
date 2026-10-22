@@ -2030,6 +2030,30 @@ body {
   .doubles-content p {
     font-size: 0.9rem;
   }
+
+  /* Tax/Utility specific mobile optimization */
+  .tax-image-container {
+    height: 200px !important;
+  }
+
+  .tax-image {
+    max-height: 200px !important;
+  }
+
+  /* Property specific mobile optimization */
+  .property-video-container {
+    height: 200px !important;
+  }
+
+  .property-video {
+    max-height: 200px !important;
+  }
+
+  /* Remove videos on mobile to save space */
+  .tax-image-container,
+  .property-video-container {
+    display: none !important;
+  }
 }
 
 @media (max-width: 480px) {
