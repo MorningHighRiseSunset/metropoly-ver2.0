@@ -3405,7 +3405,7 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
       // Mark dice as processed to prevent fallback from re-processing
       window.diceProcessed = true;
 
-      // Wait 0.5 seconds after settling to ensure completely flat, then hide dice
+      // Wait 2.5 seconds after settling to show dice result, then hide dice and start token movement
       setTimeout(() => {
         diceModel1.visible = false;
         diceModel2.visible = false;

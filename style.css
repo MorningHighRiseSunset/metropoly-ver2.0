@@ -1983,44 +1983,48 @@ body {
   .tax-container {
     width: 95%;
     max-width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
   }
 
   .jail-video-container,
-  .property-video-container {
-    height: 250px;
+  .property-video-container,
+  .tax-image-container {
+    display: none !important;
   }
 
   .jail-content,
   .property-content,
   .card-content,
   .tax-content {
-    padding: 16px;
+    padding: 12px;
   }
 
   .jail-title,
   .property-title,
   .card-title,
   .tax-title {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .jail-message,
   .property-address,
   .card-message,
   .tax-message {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .jail-btn,
   .property-btn,
   .card-btn,
   .tax-btn {
-    padding: 12px 20px;
-    font-size: 0.9rem;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    width: 100%;
   }
 
   .doubles-content {
-    padding: 15px 25px;
+    padding: 12px 20px;
   }
 
   .doubles-content h2 {
@@ -2028,31 +2032,7 @@ body {
   }
 
   .doubles-content p {
-    font-size: 0.9rem;
-  }
-
-  /* Tax/Utility specific mobile optimization */
-  .tax-image-container {
-    height: 200px !important;
-  }
-
-  .tax-image {
-    max-height: 200px !important;
-  }
-
-  /* Property specific mobile optimization */
-  .property-video-container {
-    height: 200px !important;
-  }
-
-  .property-video {
-    max-height: 200px !important;
-  }
-
-  /* Remove videos on mobile to save space */
-  .tax-image-container,
-  .property-video-container {
-    display: none !important;
+    font-size: 0.85rem;
   }
 }
 
