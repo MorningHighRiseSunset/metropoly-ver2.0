@@ -1398,3 +1398,304 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(74, 158, 255, 0.4);
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  body {
+    padding: 8px 8px 20px;
+  }
+
+  /* Lobby */
+  .lobby-container {
+    max-width: 100%;
+    width: 95%;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .lobby-title {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+  }
+
+  .lobby-subtitle {
+    font-size: 0.7rem;
+  }
+
+  .token-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .token-option {
+    height: 65px;
+    padding: 8px 6px;
+  }
+
+  .token-option img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .token-option span {
+    font-size: 0.4rem;
+  }
+
+  .invite-link-container {
+    flex-direction: column;
+  }
+
+  .copy-btn {
+    width: 100%;
+  }
+
+  .player-list {
+    max-height: 120px;
+  }
+
+  /* Game UI */
+  .game-ui {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .game-header {
+    padding: 6px 12px;
+  }
+
+  .game-title h1 {
+    font-size: 1rem;
+  }
+
+  .game-id {
+    font-size: 0.65rem;
+  }
+
+  .settings-btn {
+    padding: 6px 10px;
+    font-size: 1rem;
+  }
+
+  .game-main {
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .sidebar {
+    border-radius: 12px;
+  }
+
+  .players-sidebar {
+    flex: 0 0 auto;
+    max-height: 150px;
+    padding: 10px;
+  }
+
+  .players-list {
+    max-height: 100px;
+  }
+
+  .player-item {
+    padding: 6px;
+  }
+
+  .player-name {
+    font-size: 0.75rem;
+  }
+
+  .player-money {
+    font-size: 0.7rem;
+  }
+
+  .player-token {
+    font-size: 1.2rem;
+  }
+
+  .board-container {
+    flex: 1;
+    min-height: 300px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .right-sidebar {
+    flex: 0 0 auto;
+    max-height: 200px;
+    padding: 10px;
+  }
+
+  .sidebar-panel--properties {
+    max-height: 150px;
+  }
+
+  .properties-list.panel-scroll {
+    max-height: 120px;
+  }
+
+  .property-item {
+    padding: 6px;
+  }
+
+  .property-name {
+    font-size: 0.75rem;
+  }
+
+  .property-rent {
+    font-size: 0.65rem;
+  }
+
+  .sidebar-panel--actions {
+    gap: 6px;
+  }
+
+  .actions-balance {
+    padding: 2px 2px 4px;
+  }
+
+  .actions-balance-label {
+    font-size: 0.65rem;
+  }
+
+  .actions-balance-value {
+    font-size: 1.1rem;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .btn-roll {
+    padding: 12px 14px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .btn-small {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+
+  /* Overlays */
+  .jail-container,
+  .property-container,
+  .card-container,
+  .tax-container {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .jail-video-container,
+  .property-video-container {
+    height: 300px;
+  }
+
+  .jail-content,
+  .property-content,
+  .card-content,
+  .tax-content {
+    padding: 16px;
+  }
+
+  .jail-title,
+  .property-title,
+  .card-title,
+  .tax-title {
+    font-size: 1.2rem;
+  }
+
+  .jail-message,
+  .property-address,
+  .card-message,
+  .tax-message {
+    font-size: 0.9rem;
+  }
+
+  .jail-btn,
+  .property-btn,
+  .card-btn,
+  .tax-btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  .doubles-content {
+    padding: 20px 30px;
+  }
+
+  .doubles-content h2 {
+    font-size: 1.8rem;
+  }
+
+  .doubles-content p {
+    font-size: 1rem;
+  }
+
+  /* Video containers */
+  .local-video,
+  .remote-video {
+    height: 80px;
+  }
+
+  /* Sidebar panels */
+  .sidebar-panel--ai-moves {
+    height: 100px;
+    max-height: 100px;
+  }
+
+  .ai-moves.panel-scroll {
+    max-height: 80px;
+  }
+
+  .chat-messages.panel-scroll {
+    max-height: 60px;
+  }
+
+  .ai-move-entry,
+  .chat-message {
+    font-size: 0.65rem;
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lobby-title {
+    font-size: 1.4rem;
+  }
+
+  .token-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .token-option {
+    height: 60px;
+  }
+
+  .game-main {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .board-container {
+    min-height: 250px;
+    padding: 8px;
+  }
+
+  .players-sidebar {
+    max-height: 120px;
+    padding: 8px;
+  }
+
+  .right-sidebar {
+    max-height: 180px;
+    padding: 8px;
+  }
+
+  .btn-roll {
+    padding: 10px 12px !important;
+    font-size: 0.85rem !important;
+  }
+}
