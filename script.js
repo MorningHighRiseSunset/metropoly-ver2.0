@@ -1310,26 +1310,31 @@ function initializeGame() {
 function updateCurrentPlayerUI() {
   updatePlayersList();
   updatePlayerMoney();
-  
+
   // Update roll dice button visibility
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  
+  const mobileRollDiceBtn = document.getElementById('mobileRollDiceBtn');
+
   // In multiplayer mode, only show button if it's the local player's turn
   if (gameState.gameMode === 'multiplayer') {
     const localPlayerIndex = gameState.isHost ? 0 : 1;
     if (gameState.currentPlayerIndex === localPlayerIndex && currentPlayer && currentPlayer.isHuman) {
       rollDiceBtn.style.display = 'block';
       rollDiceBtn.disabled = false;
+      if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'block';
     } else {
       rollDiceBtn.style.display = 'none';
+      if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'none';
     }
   } else {
     // Single player/AI mode
     if (currentPlayer && currentPlayer.isHuman) {
       rollDiceBtn.style.display = 'block';
       rollDiceBtn.disabled = false;
+      if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'block';
     } else {
       rollDiceBtn.style.display = 'none';
+      if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'none';
     }
   }
 }
@@ -2547,6 +2552,15 @@ function initThreeJS() {
   orbitControls.maxDistance = 20;
   orbitControls.target.set(0, 0, 0);
 
+  // Mobile detection only
+  window.isMobileView = window.innerWidth <= 768;
+  window.cameraFollowMode = window.isMobileView;
+
+  // Only disable orbit controls on mobile
+  if (window.cameraFollowMode) {
+    orbitControls.enabled = false;
+  }
+
   // Mobile camera following mode
   window.isMobileView = window.innerWidth <= 768;
   window.cameraFollowMode = window.isMobileView;
@@ -3092,6 +3106,24 @@ function animateThreeJS() {
   // Update orbit controls
   if (orbitControls) {
     orbitControls.update();
+  }
+
+  // Mobile camera follow - ONLY on mobile
+  if (window.cameraFollowMode && gameState.gameStarted) {
+    const currentPlayerIndex = gameState.currentPlayerIndex;
+    const tokenData = playerTokenModels.find(t => t.playerIndex === currentPlayerIndex);
+
+    if (tokenData && tokenData.model) {
+      const tokenPos = tokenData.model.position;
+      const targetX = tokenPos.x;
+      const targetZ = tokenPos.z + 3;
+      const targetY = 8;
+
+      threeCamera.position.x += (targetX - threeCamera.position.x) * 0.05;
+      threeCamera.position.z += (targetZ - threeCamera.position.z) * 0.05;
+      threeCamera.position.y += (targetY - threeCamera.position.y) * 0.05;
+      threeCamera.lookAt(tokenPos.x, 0, tokenPos.z);
+    }
   }
 
   // Mobile camera follow mode - follow current player token
