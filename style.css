@@ -1901,6 +1901,11 @@ body {
     display: block !important;
   }
 
+  /* Show mobile roll dice button */
+  .mobile-roll-dice-btn {
+    display: block !important;
+  }
+
   /* Show mobile menu */
   .mobile-menu {
     display: block !important;
