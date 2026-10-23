@@ -1052,7 +1052,7 @@ function roll3DDicePhysics(onComplete) {
                     else if (lastChip === 1000) chipClass = 'chip-1000';
                     
                     chip.className = `table-chip ${chipClass}`;
-                    chip.textContent = `$${amount}`;
+                    chip.textContent = `$${amount.toLocaleString()}`;
                     
                     // Position chip in the betting area
                     const svgId = idMap[areaId] || areaId;
@@ -1090,9 +1090,9 @@ function roll3DDicePhysics(onComplete) {
         }
         
         function updateBalance() {
-            balanceEl.textContent = balance;
+            balanceEl.textContent = balance.toLocaleString();
             const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
-            totalBetEl.textContent = totalBet;
+            totalBetEl.textContent = totalBet.toLocaleString();
             
             // Update point indicator
             if (isPointPhase && point) {
@@ -1429,7 +1429,7 @@ function roll3DDicePhysics(onComplete) {
                     rollBtn.textContent = 'Roll Again';
                     if (winnings > 0) {
                         balance += winnings;
-                        addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                        addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
                     }
                     updateBalance();
                     syncBalanceToParent();
@@ -1453,7 +1453,7 @@ function roll3DDicePhysics(onComplete) {
                     }
                     winnings += resolvePlaceAndBig(die1, die2, true);
                     balance += winnings;
-                    addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                    addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
                     updateBalance();
                     syncBalanceToParent();
                     renderTableChips();
@@ -1468,7 +1468,7 @@ function roll3DDicePhysics(onComplete) {
                     loseBet("don't-pass-bar", `❌ Don't Pass lost because the point ${point} was made.`);
                     winnings += resolvePlaceAndBig(die1, die2, false);
                     balance += winnings;
-                    addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                    addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
                     updateBalance();
                     syncBalanceToParent();
                     renderTableChips();
@@ -1483,7 +1483,7 @@ function roll3DDicePhysics(onComplete) {
                     winnings += resolvePlaceAndBig(die1, die2, false);
                     if (winnings > 0) {
                         balance += winnings;
-                        addLogEntry(`💰 Paid $${winnings} this roll. Balance: $${balance}`, 'win');
+                        addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
                         updateBalance();
                         syncBalanceToParent();
                     }
@@ -1515,9 +1515,9 @@ function roll3DDicePhysics(onComplete) {
                 diceResultEl.textContent += ` - ${message}`;
             }
             if (winnings > 0) {
-                addLogEntry(`💰 Returned $${winnings} this roll. Balance: $${balance}`, 'win');
+                addLogEntry(`💰 Returned $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
             } else if (roundOver) {
-                addLogEntry(`Balance: $${balance}`, 'info');
+                addLogEntry(`Balance: $${balance.toLocaleString()}`, 'info');
             }
         }
         
