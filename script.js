@@ -1840,7 +1840,7 @@ function loadWalkModel(player, index, baseModel) {
           const walkClip = clip.clone();
           walkClip.name = 'Walk';
           const walkAction = playerAnimations[index].mixer.clipAction(walkClip, baseModel);
-          walkAction.timeScale = 3.2; // Faster walk animation speed
+          walkAction.timeScale = 1.0; // Normal walk animation speed
           playerAnimations[index].animations['Walk'] = walkAction;
         });
       }
@@ -2173,24 +2173,10 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
       
       // Wait 2 seconds to show idle animation, then return camera and show UI
       setTimeout(() => {
-        // Return camera to appropriate view based on mode
-        if (window.cameraFollowMode) {
-          // Mobile: restore to follow mode
-          if (window.savedCameraPosition) {
-            threeCamera.position.set(
-              window.savedCameraPosition.x,
-              window.savedCameraPosition.y,
-              window.savedCameraPosition.z
-            );
-            window.savedCameraPosition = null;
-          }
-          orbitControls.enabled = false; // Keep orbit disabled in follow mode
-        } else {
-          // Desktop: return to top-down view
-          threeCamera.position.set(0, 9, 0);
-          threeCamera.lookAt(0, 0, 0);
-          orbitControls.enabled = true;
-        }
+        // Return camera to top-down view
+        threeCamera.position.set(0, 9, 0);
+        threeCamera.lookAt(0, 0, 0);
+        orbitControls.enabled = true;
         
         if (callback) callback();
       }, 2000);
@@ -2517,7 +2503,7 @@ boardConfig = [
   { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, position: 25, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Little%20White%20Wedding%20Chapel2.mp4'], address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
   { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], image: 'Images/LasVegasSphere.jpg', address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
-  { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water%20works.png', address: '', rent: [] },
+  { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water works.png', address: '', rent: [] },
   { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, isCasino: true, casinoGame: 'poker', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
   { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
   { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
@@ -2568,7 +2554,7 @@ function initThreeJS() {
 
   // Mobile detection only
   window.isMobileView = window.innerWidth <= 768;
-  window.cameraFollowMode = window.isMobileView;
+  window.cameraFollowMode = false; // Disabled - keep board centered on mobile
 
   // Only disable orbit controls on mobile
   if (window.cameraFollowMode) {
@@ -2577,7 +2563,7 @@ function initThreeJS() {
 
   // Mobile camera following mode
   window.isMobileView = window.innerWidth <= 768;
-  window.cameraFollowMode = window.isMobileView;
+  window.cameraFollowMode = false; // Disabled - keep board centered on mobile
 
   // Disable orbit controls on mobile for camera follow mode
   if (window.cameraFollowMode) {
@@ -3248,17 +3234,6 @@ function roll3DDice() {
   window.turnCompleting = true;
   window.diceProcessed = false;
 
-  // Mobile: switch camera to dice POV when rolling
-  if (window.cameraFollowMode) {
-    window.savedCameraPosition = {
-      x: threeCamera.position.x,
-      y: threeCamera.position.y,
-      z: threeCamera.position.z
-    };
-    threeCamera.position.set(0, 15, 8);
-    threeCamera.lookAt(0, 0, 0);
-  }
-
   // Increment roll ID to prevent stale callbacks from processing
   window.currentRollId = (window.currentRollId || 0) + 1;
   const thisRollId = window.currentRollId;
@@ -3508,16 +3483,6 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
       isRolling = false;
       diceModel1.visible = false;
       diceModel2.visible = false;
-
-      // Mobile: restore camera
-      if (window.cameraFollowMode && window.savedCameraPosition) {
-        threeCamera.position.set(
-          window.savedCameraPosition.x,
-          window.savedCameraPosition.y,
-          window.savedCameraPosition.z
-        );
-        window.savedCameraPosition = null;
-      }
 
       // Process dice results even if they didn't settle properly
       const currentPlayer = rollingPlayer;
@@ -4322,18 +4287,17 @@ function showTaxUI(tile, player, canRollAgain = false) {
   }
   
   document.getElementById('taxMessage').textContent = `Pay $${amount}`;
-  
+
   // Show image if available
-  // Commented out for now until proper tax images are available
-  // const taxImageContainer = document.getElementById('taxImageContainer');
-  // const taxImage = document.getElementById('taxImage');
-  // if (tile.image) {
-  //   taxImage.src = `Images/${tile.image}`;
-  //   taxImageContainer.classList.add('has-image');
-  // } else {
-  //   taxImageContainer.classList.remove('has-image');
-  // }
-  
+  const taxImageContainer = document.getElementById('taxImageContainer');
+  const taxImage = document.getElementById('taxImage');
+  if (tile.image) {
+    taxImage.src = `Images/${tile.image}`;
+    taxImageContainer.classList.add('has-image');
+  } else {
+    taxImageContainer.classList.remove('has-image');
+  }
+
   document.getElementById('taxOverlay').style.display = 'flex';
 
   // Disable roll dice button while tax UI is open
@@ -4762,18 +4726,26 @@ function playTileMedia(tile, isCasinoMinigame) {
   }
 
   const videos = (tile.videos || []).filter(Boolean);
-  const canPlayVideo = videos.length > 0 && !isCasinoMinigame;
+  // For utilities and tax, prefer image over video if image is available
+  const preferImage = (tile.type === 'utility' || tile.type === 'tax') && tile.image;
+  const canPlayVideo = videos.length > 0 && !isCasinoMinigame && !preferImage;
 
   function showImageFallback(src) {
     propertyVideo.pause();
     propertyVideo.removeAttribute('src');
     propertyVideo.load();
     propertyVideo.style.display = 'none';
-    if (!src) return;
+    if (!src) {
+      console.log('No image source provided, using generic fallback');
+      src = 'Images/images_generic.jpg';
+    }
     const img = document.createElement('img');
     img.src = src;
     img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
     img.id = 'propertyImageFallback';
+    img.onload = function() {
+      console.log(`Successfully loaded image: ${src}`);
+    };
     img.onerror = function() {
       console.log(`Failed to load image: ${src}, using fallback`);
       this.src = 'Images/images_generic.jpg';
@@ -5483,7 +5455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.isMobileView = window.innerWidth <= 768;
 
     if (wasMobile !== window.isMobileView) {
-      window.cameraFollowMode = window.isMobileView;
+      window.cameraFollowMode = false; // Disabled - keep board centered on mobile
       if (orbitControls) {
         orbitControls.enabled = !window.cameraFollowMode;
       }
