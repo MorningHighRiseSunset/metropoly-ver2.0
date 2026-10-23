@@ -2070,14 +2070,17 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     }
     const pos = getCellPosition(cellIndex);
     path.push({ x: pos.x, z: pos.z, index: cellIndex });
-    
+
     // Check if passed GO (when going from 39 to 0) or landed on GO
+    // TEMPORARILY DISABLED: Passing GO gives $200
+    /*
     if (cellIndex === 0 && i > 0 && !reverse) {
       const currentPlayer = gameState.players[playerIndex];
       currentPlayer.money += 200;
       console.log(`${currentPlayer.name} passed GO and collected $200`);
       updatePlayerMoney();
     }
+    */
     // Also pay $200 if landing on GO (i === 0)
     if (cellIndex === 0 && i === 0 && !reverse) {
       const currentPlayer = gameState.players[playerIndex];
@@ -3400,13 +3403,15 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
         // Calculate target position
         let newPosition = (currentPlayer.position + totalDice) % 40;
         console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
-        
+
         // Check if passed GO (if roll would go past position 39 and wrap around)
+        // TEMPORARILY DISABLED: Passing GO gives $200
+        /*
         if (currentPlayer.position + totalDice >= 40) {
           console.log(`${currentPlayer.name} passed GO, collecting $200`);
           currentPlayer.money += 200;
           updatePlayerMoney();
-          
+
           // In multiplayer mode, send money update to opponent
           if (gameState.gameMode === 'multiplayer' && gameState.conn) {
             gameState.conn.send({
@@ -3417,7 +3422,8 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
             });
           }
         }
-        
+        */
+
         // Check for Go To Jail (position 30)
         if (newPosition === 30) {
           console.log(`${currentPlayer.name} landed on Go To Jail, sending to position 10`);
@@ -3501,13 +3507,16 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
       console.log(`Fallback: Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
-      
+
       // Check if passed GO (if roll would go past position 39 and wrap around)
+      // TEMPORARILY DISABLED: Passing GO gives $200
+      /*
       if (currentPlayer.position + totalDice >= 40) {
         console.log(`${currentPlayer.name} passed GO, collecting $200`);
         currentPlayer.money += 200;
         updatePlayerMoney();
       }
+      */
 
       // Check for Go To Jail (position 30)
       if (newPosition === 30) {
@@ -3911,12 +3920,15 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       const useReverse = stepsBackward < stepsForward;
 
       // Check if passed GO (handles both forward and backward movement)
+      // TEMPORARILY DISABLED: Passing GO gives $200
+      /*
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
         player.money = Math.round((player.money + 200) * 100) / 100;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
+      */
 
       // Animate movement in shortest direction
       switchAnimation(playerIndex, 'walk');
@@ -3948,15 +3960,18 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
         nearestPosition = nearestRailroad;
         console.log(`AI Card: Advancing to nearest railroad at position ${nearestPosition}`);
       }
-      
+
       // Check if passed GO (handles both forward and backward movement)
+      // TEMPORARILY DISABLED: Passing GO gives $200
+      /*
       const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
       if (passedGoNearest) {
         player.money = Math.round((player.money + 200) * 100) / 100;
         updatePlayerMoney();
         addAIMove(player.name, 'passed GO and collected $200');
       }
-      
+      */
+
       // Animate forward movement
       switchAnimation(playerIndex, 'walk');
       animatePlayerMovement(playerIndex, oldPositionNearest, nearestPosition, () => {
@@ -4558,12 +4573,15 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       const useReverse = stepsBackward < stepsForward;
 
       // Check if passed GO (handles both forward and backward movement)
+      // TEMPORARILY DISABLED: Passing GO gives $200
+      /*
       const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
       if (passedGo) {
         currentPlayer.money += 200;
         updatePlayerMoney();
         console.log(`${currentPlayer.name} passed GO and collected $200`);
       }
+      */
 
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
@@ -4593,14 +4611,17 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         nearestPosition = nearestRailroad;
         console.log(`Card: Advancing to nearest railroad at position ${nearestPosition}`);
       }
-      
+
       // Check if passed GO (handles both forward and backward movement)
+      // TEMPORARILY DISABLED: Passing GO gives $200
+      /*
       const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
       if (passedGoNearest) {
         currentPlayer.money += 200;
         updatePlayerMoney();
         console.log(`${currentPlayer.name} passed GO and collected $200`);
       }
+      */
       
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPositionNearest, nearestPosition, () => {
