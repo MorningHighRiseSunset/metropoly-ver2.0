@@ -3129,9 +3129,10 @@ function animateThreeJS() {
 
     if (tokenData && tokenData.model) {
       const tokenPos = tokenData.model.position;
+      // Position camera in front of token so board is visible in background
       const targetX = tokenPos.x;
-      const targetZ = tokenPos.z + 3;
-      const targetY = 8;
+      const targetZ = tokenPos.z - 4;
+      const targetY = 10;
 
       threeCamera.position.x += (targetX - threeCamera.position.x) * 0.05;
       threeCamera.position.z += (targetZ - threeCamera.position.z) * 0.05;
