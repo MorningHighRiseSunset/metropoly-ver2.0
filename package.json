@@ -2,5 +2,8 @@
   "name": "metropoly",
   "version": "1.0.0",
   "description": "3D Vegas Board Game",
-  "scripts": {}
+  "scripts": {},
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
 }
