@@ -164,6 +164,7 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
       </div>
       <div class="acts">
         <button class="deal" id="deal">Deal</button>
+        <button class="ghost" id="clearBets">Clear Bets</button>
       </div>
       <p class="help">Place bets on Player (position 4) or Banker (position 4). Player pays even money. Banker pays 0.95 after 5% commission. Tie pays 9 for 1.</p>
     </aside>
@@ -342,55 +343,59 @@ function dealNextCard(){
       addLog(`You drew ${player[1].rank} of ${player[1].suit}. Your total: ${p}`);
       render();
       dealStep=2;
-      // Check if player needs third card
-      if(shouldPlayerDraw(p)){
-        addLog(`You have ${p} - must draw third card`);
-        dealStep=3; // Advance to step 3 for third card draw
-      } else {
-        addLog(`You have ${p} and stand. Dealer is dealing Banker's cards...`);
-        dealStep=4;
-        setTimeout(dealNextCard, 500);
-      }
-      render();
-      break;
-    case 3:
-      // Draw Player's third card
-      const playerThirdCard = draw();
-      player.push(playerThirdCard); state.playerHand=[...player]; state.shoe=deck;
-      p=handTotal(player);
-      addLog(`You drew third card: ${playerThirdCard.rank} of ${playerThirdCard.suit}. New total: ${p}. Dealer is dealing Banker's cards...`);
-      dealStep=4;
       setTimeout(dealNextCard, 500);
-      render();
       break;
-    case 4:
-      // Automatically deal Banker's cards
+    case 2:
+      // Deal Banker's two cards (show them after player's two cards)
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
       b=handTotal(banker);
       addLog(`Dealer dealt Banker two cards`);
       render();
+      dealStep=3;
+      setTimeout(dealNextCard, 500);
+      break;
+    case 3:
+      // Check if player needs third card
+      p=handTotal(player); b=handTotal(banker);
+      if(p>=8 || b>=8){
+        // Natural - no third cards needed
+        addLog(`Natural! You: ${p}, Banker: ${b}. Showing result...`);
+        dealStep=99;
+        setTimeout(dealNextCard, 500);
+      } else if(shouldPlayerDraw(p)){
+        addLog(`You have ${p} - must draw third card`);
+        dealStep=4; // Advance to step 4 for third card draw
+        setTimeout(dealNextCard, 500);
+      } else {
+        // Player stands, check if banker needs third card
+        addLog(`You have ${p} and stand`);
+        dealStep=5;
+        setTimeout(dealNextCard, 500);
+      }
+      break;
+    case 4:
+      // Draw Player's third card
+      const playerThirdCard = draw();
+      player.push(playerThirdCard); state.playerHand=[...player]; state.shoe=deck;
+      p=handTotal(player);
+      addLog(`You drew third card: ${playerThirdCard.rank} of ${playerThirdCard.suit}. New total: ${p}`);
+      render();
       dealStep=5;
       setTimeout(dealNextCard, 500);
       break;
     case 5:
-      // Check for naturals and Banker's third card
+      // Check if Banker needs third card
       p=handTotal(player); b=handTotal(banker);
-      if(p>=8 || b>=8){
-        addLog(`Natural! You: ${p}, Banker: ${b}. Showing result...`);
-        dealStep=99;
+      const playerThirdValue = player.length === 3 ? player[2].value : null;
+      if(shouldBankerDraw(b, playerThirdValue)){
+        banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+        b=handTotal(banker);
+        addLog(`Banker drew third card - New total: ${b}. Showing result...`);
       } else {
-        // Check if Banker needs third card
-        const playerThirdValue = player.length === 3 ? player[2].value : null;
-        if(shouldBankerDraw(b, playerThirdValue)){
-          banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
-          b=handTotal(banker);
-          addLog(`Banker drew third card - New total: ${b}. Showing result...`);
-        } else {
-          addLog(`Banker stands on ${b}. Showing result...`);
-        }
-        dealStep=99;
+        addLog(`Banker stands on ${b}. Showing result...`);
       }
+      dealStep=99;
       setTimeout(dealNextCard, 500);
       break;
     case 99:
@@ -454,13 +459,31 @@ function chipForeign(svg, x, y, amount){
   fo.setAttribute("width",40); fo.setAttribute("height",32);
   fo.style.overflow="visible"; fo.style.pointerEvents="none";
   const wrap=document.createElement("div"); wrap.style.position="relative"; wrap.style.width="40px"; wrap.style.height="32px";
-  const face=CHIP_FACE[chipForAmount(amount)];
+
+  // Use the largest chip value for the visual, but show total amount
+  const chipValue = chipForAmount(amount);
+  const face=CHIP_FACE[chipValue];
   const d=document.createElement("div"); d.className="chip-mark";
   d.style.background=`radial-gradient(circle at 35% 30%, ${face.face} 0%, ${face.face} 55%, color-mix(in srgb, ${face.face} 70%, black) 100%)`;
   d.style.border=`3px dashed ${face.ring}`;
   d.style.boxShadow=`inset 0 0 0 2px ${face.face}, 0 3px 8px rgba(0,0,0,.55)`;
-  d.textContent = amount>=1000 ? Math.round(amount/1000)+"k" : String(amount);
-  d.style.fontSize = amount>=1000 ? "10px" : "12px"; // Adjust font size for better display
+
+  // Show the total amount with appropriate formatting
+  if(amount>=1000){
+    d.textContent = (amount/1000).toFixed(1).replace('.0','')+"k";
+  } else {
+    d.textContent = String(amount);
+  }
+
+  // Adjust font size based on amount length
+  if(amount>=1000){
+    d.style.fontSize = "9px";
+  } else if(amount>=100){
+    d.style.fontSize = "10px";
+  } else {
+    d.style.fontSize = "12px";
+  }
+
   wrap.appendChild(d); fo.appendChild(wrap); svg.appendChild(fo);
 }
 
@@ -596,6 +619,10 @@ document.getElementById("deal").addEventListener("click",()=>{
     // Reset to betting after showing result
     state.phase="betting"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; syncBalanceToParent(); render();
   }
+});
+
+document.getElementById("clearBets").addEventListener("click",()=>{
+  clearBets();
 });
 
 // Initialize function for main game integration
