@@ -432,6 +432,32 @@
       .num-cell { height: 26px; font-size: 0.72rem; }
       .zero-cell { height: 30px; font-size: 0.85rem; }
     }
+
+    @media (max-width: 768px) {
+      .main { flex-direction: column; gap: 16px; }
+      .wheel-side { flex-direction: column; align-items: center; }
+      .wheel-container { width: min(60vw, 240px); height: min(60vw, 240px); }
+      .wheel-controls { margin-top: 12px; }
+      .spin-btn { padding: 10px 20px; font-size: 14px; }
+      .result { font-size: 14px; }
+      .table-side { max-width: 100%; }
+      .bet-grid { gap: 3px; }
+      .num-cell { height: 24px; font-size: 0.65rem; }
+      .zero-cell { height: 28px; font-size: 0.8rem; }
+      .outside-bet { padding: 8px 4px; font-size: 0.7rem; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .wheel-container { width: min(50vw, 200px); height: min(50vw, 200px); }
+      .wheel-controls { margin-top: 8px; }
+      .spin-btn { padding: 8px 16px; font-size: 12px; }
+      .result { font-size: 12px; }
+      .bet-grid { gap: 2px; }
+      .num-cell { height: 20px; font-size: 0.6rem; }
+      .zero-cell { height: 24px; font-size: 0.75rem; }
+      .outside-bet { padding: 6px 3px; font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>

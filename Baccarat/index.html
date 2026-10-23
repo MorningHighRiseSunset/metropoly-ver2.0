@@ -33,6 +33,40 @@ main {
 @media (min-width: 1024px) {
   main { flex-direction:row; align-items:center; }
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  main { padding: 8px; gap: 8px; }
+  .board svg { max-height: 45vh; }
+  .pcard { height: 3.5rem; width: 2.4rem; }
+  .pcard .rk { font-size: 10px; }
+  .pcard .su { font-size: 14px; }
+  .htot { font-size: 9px; }
+  .status { font-size: 0.8rem; }
+  .panel { padding: 8px; }
+  .panel h2 { font-size: 9px; }
+  .bead { width: 14px; height: 14px; font-size: 8px; }
+  .chip { width: 40px; height: 40px; font-size: 11px; }
+  .deal { padding: 10px 12px; font-size: 12px; }
+  .felt-amt { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  main { padding: 6px; gap: 6px; }
+  .board svg { max-height: 40vh; }
+  .pcard { height: 3rem; width: 2rem; }
+  .pcard .rk { font-size: 9px; }
+  .pcard .su { font-size: 12px; }
+  .htot { font-size: 8px; }
+  .status { font-size: 0.75rem; }
+  .panel { padding: 6px; }
+  .panel h2 { font-size: 8px; }
+  .bead { width: 12px; height: 12px; font-size: 7px; }
+  .chip { width: 36px; height: 36px; font-size: 10px; }
+  .deal { padding: 8px 10px; font-size: 11px; }
+  .felt-amt { font-size: 10px; }
+}
+
 .table-wrap { flex:1; min-width:0; }
 .board { position:relative; width:100%; overflow:hidden; border-radius:12px; }
 .board svg { display:block; width:100%; height:auto; max-height:min(64vh,540px); margin:0 auto; }

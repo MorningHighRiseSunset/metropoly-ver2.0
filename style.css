@@ -1990,7 +1990,16 @@ body {
   .jail-video-container,
   .property-video-container,
   .tax-image-container {
-    display: none !important;
+    height: 150px !important;
+    display: block !important;
+  }
+
+  .jail-video,
+  .property-video,
+  .tax-image {
+    max-height: 150px !important;
+    width: 100%;
+    object-fit: cover;
   }
 
   .jail-content,

@@ -434,6 +434,29 @@
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.4);
         }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .game-area { flex-direction: column; gap: 12px; margin-top: 10px; }
+            .craps-table { width: 100%; max-width: 400px; height: auto; }
+            .controls { width: 100%; max-width: 400px; }
+            .chip-selector { gap: 6px; }
+            .chip { width: 40px; height: 40px; font-size: 11px; }
+            .roll-btn { padding: 12px 24px; font-size: 14px; }
+            .info-panel { font-size: 12px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            .game-area { gap: 8px; }
+            .craps-table { max-width: 320px; }
+            .controls { max-width: 320px; }
+            .chip-selector { gap: 4px; }
+            .chip { width: 36px; height: 36px; font-size: 10px; }
+            .roll-btn { padding: 10px 20px; font-size: 12px; }
+            .info-panel { font-size: 11px; }
+        }
     </style>
 </head>
 <body>

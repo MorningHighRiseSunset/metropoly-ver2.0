@@ -3291,13 +3291,13 @@ function roll3DDice() {
       y: threeCamera.position.y,
       z: threeCamera.position.z
     };
-    // Position camera close up above the board, focused on dice area
-    threeCamera.position.set(0, 12, 5);
+    // Position camera close to board surface to see dice landing clearly
+    threeCamera.position.set(0, 6, 4);
     threeCamera.lookAt(0, 0, 0);
 
-    // Position dice high up so they fall into camera view
-    diceModel1.position.set(-0.1, 18, 0);
-    diceModel2.position.set(0.1, 18, 0);
+    // Position dice above so they fall into camera view
+    diceModel1.position.set(-0.1, 10, 0);
+    diceModel2.position.set(0.1, 10, 0);
 
     // Wait for camera to switch, then start physics
     setTimeout(() => {
@@ -3312,10 +3312,10 @@ function roll3DDice() {
 
 function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
   // Reset dice positions above the board (drop from much higher)
-  // Mobile: drop from higher position so they're visible in camera view
+  // Mobile: drop from lower position so they're visible in close-up camera
   if (window.cameraFollowMode) {
-    diceBody1.position.set(-0.1, 18, 0);
-    diceBody2.position.set(0.1, 18, 0);
+    diceBody1.position.set(-0.1, 10, 0);
+    diceBody2.position.set(0.1, 10, 0);
   } else {
     diceBody1.position.set(-0.1, 5, 0);
     diceBody2.position.set(0.1, 5, 0);
