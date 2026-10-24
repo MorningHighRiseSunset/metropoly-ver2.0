@@ -380,7 +380,7 @@ function dealNextCard(){
       setTimeout(dealNextCard, 500);
       break;
     case 2:
-      // Deal Banker's two cards (show them after player's two cards)
+      // Deal Banker's two cards
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
       banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
       b=handTotal(banker);
@@ -390,7 +390,7 @@ function dealNextCard(){
       setTimeout(dealNextCard, 500);
       break;
     case 3:
-      // Check if player needs third card
+      // Check for natural and if player needs third card
       p=handTotal(player); b=handTotal(banker);
       if(p>=8 || b>=8){
         // Natural - no third cards needed
@@ -399,10 +399,9 @@ function dealNextCard(){
         setTimeout(dealNextCard, 500);
       } else if(shouldPlayerDraw(p)){
         addLog(`You have ${p} - must draw third card`);
-        dealStep=4; // Advance to step 4 for third card draw
-        // DON'T auto-advance - wait for user to click button
+        dealStep=4; // Draw third card on next click
       } else {
-        // Player stands, check if banker needs third card
+        // Player stands, skip to banker check
         addLog(`You have ${p} and stand`);
         dealStep=5;
         setTimeout(dealNextCard, 500);
@@ -416,7 +415,7 @@ function dealNextCard(){
       addLog(`You drew third card: ${playerThirdCard.rank} of ${playerThirdCard.suit}. New total: ${p}`);
       render();
       dealStep=5;
-      // Don't auto-advance - wait for user to click to continue to banker check
+      setTimeout(dealNextCard, 500);
       break;
     case 5:
       // Check if Banker needs third card
@@ -600,18 +599,23 @@ function render(){
         document.getElementById("deal").textContent="Drawing...";
       }
     } else if(dealStep===3){
-      document.getElementById("deal").textContent="Draw Third Card";
+      const p=handTotal(state.playerHand);
+      if(shouldPlayerDraw(p)){
+        document.getElementById("deal").textContent="Draw Third Card";
+      } else {
+        document.getElementById("deal").textContent="Drawing...";
+      }
     } else if(dealStep===4){
-      document.getElementById("deal").textContent="Continue";
+      document.getElementById("deal").textContent="Draw Third Card";
     } else if(dealStep===99){
       document.getElementById("deal").textContent="Show Result";
     } else {
       document.getElementById("deal").textContent="Drawing...";
     }
     // Enable button for player draws (0, 1, 2, 3, 4, 5) and result (99)
-    const canClick = dealStep===0 || dealStep===1 || dealStep===2 || dealStep===3 || dealStep===4 || dealStep===5 || dealStep===99;
-    // For step 2 and 3, only enable if player needs third card
-    if(dealStep===2 || dealStep===3){
+    const canClick = dealStep===0 || dealStep===1 || dealStep===2 || dealStep===4 || dealStep===5 || dealStep===99;
+    // For step 3, only enable if player needs third card
+    if(dealStep===3){
       const p=handTotal(state.playerHand);
       document.getElementById("deal").disabled = !shouldPlayerDraw(p);
     } else {
