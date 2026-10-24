@@ -377,12 +377,13 @@ function dealNextCard(){
       addLog(`You drew ${player[1].rank} of ${player[1].suit}. Your total: ${p}`);
       render();
       dealStep=2;
+      setTimeout(dealNextCard, 500);
       break;
     case 2:
-      // Check if player needs third card
+      // Check if player needs third card (auto)
       p=handTotal(player);
       if(shouldPlayerDraw(p)){
-        addLog(`You have ${p} - draw third card`);
+        addLog(`You have ${p} - need third card`);
         dealStep=3; // Player draws third card on next click
       } else {
         // Player stands, auto-deal banker's 2 cards
@@ -586,13 +587,6 @@ function render(){
       document.getElementById("deal").textContent="Draw Card 1";
     } else if(dealStep===1){
       document.getElementById("deal").textContent="Draw Card 2";
-    } else if(dealStep===2){
-      const p=handTotal(state.playerHand);
-      if(shouldPlayerDraw(p)){
-        document.getElementById("deal").textContent="Draw Third Card";
-      } else {
-        document.getElementById("deal").textContent="Drawing...";
-      }
     } else if(dealStep===3){
       document.getElementById("deal").textContent="Draw Third Card";
     } else if(dealStep===99){
@@ -601,15 +595,9 @@ function render(){
       document.getElementById("deal").textContent="Drawing...";
     }
     // Enable button for player manual draws (0, 1, 3) and result (99)
-    // Banker draws (4, 5) are automatic
+    // Banker draws (4, 5) and step 2 check are automatic
     const canClick = dealStep===0 || dealStep===1 || dealStep===3 || dealStep===99;
-    // For step 2, only enable if player needs third card
-    if(dealStep===2){
-      const p=handTotal(state.playerHand);
-      document.getElementById("deal").disabled = !shouldPlayerDraw(p);
-    } else {
-      document.getElementById("deal").disabled = !canClick;
-    }
+    document.getElementById("deal").disabled = !canClick;
   }
   
   // Sync balance to parent window
