@@ -416,7 +416,7 @@ function dealNextCard(){
       addLog(`You drew third card: ${playerThirdCard.rank} of ${playerThirdCard.suit}. New total: ${p}`);
       render();
       dealStep=5;
-      setTimeout(dealNextCard, 500);
+      // Don't auto-advance - wait for user to click to continue to banker check
       break;
     case 5:
       // Check if Banker needs third card
@@ -601,15 +601,17 @@ function render(){
       }
     } else if(dealStep===3){
       document.getElementById("deal").textContent="Draw Third Card";
+    } else if(dealStep===4){
+      document.getElementById("deal").textContent="Continue";
     } else if(dealStep===99){
       document.getElementById("deal").textContent="Show Result";
     } else {
       document.getElementById("deal").textContent="Drawing...";
     }
-    // Enable button for player draws (0, 1, 2, 3) and result (99)
-    const canClick = dealStep===0 || dealStep===1 || dealStep===2 || dealStep===3 || dealStep===99;
-    // For step 2, only enable if player needs third card
-    if(dealStep===2){
+    // Enable button for player draws (0, 1, 2, 3, 4, 5) and result (99)
+    const canClick = dealStep===0 || dealStep===1 || dealStep===2 || dealStep===3 || dealStep===4 || dealStep===5 || dealStep===99;
+    // For step 2 and 3, only enable if player needs third card
+    if(dealStep===2 || dealStep===3){
       const p=handTotal(state.playerHand);
       document.getElementById("deal").disabled = !shouldPlayerDraw(p);
     } else {
