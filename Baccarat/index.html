@@ -400,7 +400,7 @@ function dealNextCard(){
       } else if(shouldPlayerDraw(p)){
         addLog(`You have ${p} - must draw third card`);
         dealStep=4; // Advance to step 4 for third card draw
-        setTimeout(dealNextCard, 500);
+        // DON'T auto-advance - wait for user to click button
       } else {
         // Player stands, check if banker needs third card
         addLog(`You have ${p} and stand`);
