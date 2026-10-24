@@ -608,6 +608,26 @@
     .card .suit-mid { font-size: 1.2rem; }
     .board { gap: 6px; padding: 8px 10px; }
   }
+
+  @media (max-width: 768px) {
+    .table-rail { border-radius: 18px; padding: 12px; }
+    .table-felt { border-radius: 14px; padding: 28px 16px; min-height: 450px; }
+    .table-felt::after { inset: 12px 14px; border-radius: 10px; }
+    .card, .board-slot { width: 58px; height: 84px; font-size: 1rem; }
+    .card .suit-mid { font-size: 1.3rem; }
+    .board { gap: 8px; padding: 10px 12px; }
+    .action-btn { padding: 10px 16px; font-size: 0.9rem; }
+  }
+
+  @media (max-width: 480px) {
+    .table-rail { border-radius: 14px; padding: 8px; }
+    .table-felt { border-radius: 10px; padding: 20px 12px; min-height: 350px; }
+    .table-felt::after { inset: 8px 10px; border-radius: 6px; }
+    .card, .board-slot { width: 46px; height: 68px; font-size: 0.85rem; }
+    .card .suit-mid { font-size: 1.1rem; }
+    .board { gap: 5px; padding: 6px 8px; }
+    .action-btn { padding: 8px 12px; font-size: 0.8rem; }
+  }
 </style>
 </head>
 <body>
