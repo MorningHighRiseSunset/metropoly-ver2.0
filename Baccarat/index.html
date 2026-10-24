@@ -454,7 +454,14 @@ function dealNextCard(){
         addLog(`BANKER WINS! You: ${p}, Banker: ${b}. Won: $${netWinnings.toLocaleString()}`, "banker-win");
       } else if(outcome==="tie" && tieBet>0){
         state.bets={};
-        addLog(`TIE! You: ${p}, Banker: ${b}. Won: $${netWinnings.toLocaleString()}`, "tie");
+        addLog(`TIE! You: ${p}, Banker: ${b}.`, "tie");
+        addLog(`Tie bet wins 9:1. Bet $${tieBet.toLocaleString()} → Won $${(tieBet * 9).toLocaleString()}.`, "tie");
+        addLog(`Player and Banker bets returned ($${(playerBet + bankerBet).toLocaleString()}).`, "info");
+        addLog(`Total payout: $${payout.toLocaleString()} (bet + winnings)`, "tie");
+      } else if(outcome==="tie"){
+        state.bets={};
+        addLog(`TIE! You: ${p}, Banker: ${b}.`, "tie");
+        addLog(`No tie bet. All bets returned (push). No winnings.`, "info");
       } else{
         state.bets={};
         addLog(`${outcome.toUpperCase()}! You: ${p}, Banker: ${b}. Lost: $${originalBet.toLocaleString()}`, outcome);
@@ -464,8 +471,10 @@ function dealNextCard(){
         addLog(`🎉 PLAYER WINS! You: ${p}, Banker: ${b}. Won: $${netWinnings.toLocaleString()}`, "player-win");
       } else if(outcome==="banker"){
         addLog(`🎉 BANKER WINS! You: ${p}, Banker: ${b}. Won: $${netWinnings.toLocaleString()}`, "banker-win");
-      } else {
-        addLog(`🎉 TIE! You: ${p}, Banker: ${b}. Won: $${netWinnings.toLocaleString()}`, "tie");
+      } else if(outcome==="tie" && tieBet>0){
+        addLog(`🎉 TIE! You: ${p}, Banker: ${b}. Tie bet pays 9:1.`, "tie");
+      } else if(outcome==="tie"){
+        addLog(`🎉 TIE! You: ${p}, Banker: ${b}. No tie bet - bets returned.`, "info");
       }
 
       render();
