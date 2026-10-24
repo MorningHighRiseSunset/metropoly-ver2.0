@@ -353,28 +353,8 @@ function startDeal(){
   if(playerBet+bankerBet+tieBet===0){ addLog("Put a wager on the felt first."); render(); return; }
   state.phase="dealing"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null;
   dealStep=0; player=[]; banker=[]; deck=state.shoe.slice();
-  addLog("Round started - dealer dealing...");
+  addLog("Round started - click to draw");
   render();
-  // Auto-deal 2 cards to player and 2 to banker
-  setTimeout(dealInitialCards, 300);
-}
-
-function dealInitialCards(){
-  // Deal 2 cards to player
-  player.push(deck.pop());
-  player.push(deck.pop());
-  // Deal 2 cards to banker
-  banker.push(deck.pop());
-  banker.push(deck.pop());
-  state.playerHand=[...player];
-  state.bankerHand=[...banker];
-  state.shoe=deck;
-  const p=handTotal(player);
-  const b=handTotal(banker);
-  addLog(`Dealt: You ${p}, Banker ${b}`);
-  dealStep=4;
-  render();
-  setTimeout(dealNextCard, 500);
 }
 
 function dealNextCard(){
@@ -383,6 +363,36 @@ function dealNextCard(){
   let p, b;
 
   switch(dealStep){
+    case 0:
+      // Player draws first card
+      player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
+      addLog(`You drew ${player[0].rank} of ${player[0].suit}`);
+      dealStep=1;
+      render();
+      break;
+    case 1:
+      // Player draws second card
+      player.push(draw()); state.playerHand=[...player]; state.shoe=deck;
+      p=handTotal(player);
+      addLog(`You drew ${player[1].rank} of ${player[1].suit}. Your total: ${p}`);
+      render();
+      dealStep=2;
+      break;
+    case 2:
+      // Banker draws first card
+      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+      addLog(`Banker drew first card`);
+      render();
+      dealStep=3;
+      break;
+    case 3:
+      // Banker draws second card
+      banker.push(draw()); state.bankerHand=[...banker]; state.shoe=deck;
+      b=handTotal(banker);
+      addLog(`Banker drew second card. Banker total: ${b}`);
+      render();
+      dealStep=4;
+      break;
     case 4:
       // Check for natural and if player needs third card
       p=handTotal(player); b=handTotal(banker);
@@ -402,7 +412,7 @@ function dealNextCard(){
       }
       break;
     case 5:
-      // Draw Player's third card
+      // Player draws third card
       const playerThirdCard = draw();
       player.push(playerThirdCard); state.playerHand=[...player]; state.shoe=deck;
       p=handTotal(player);
@@ -412,7 +422,7 @@ function dealNextCard(){
       setTimeout(dealNextCard, 500);
       break;
     case 6:
-      // Check if Banker needs third card
+      // Check if Banker needs third card (automatic)
       p=handTotal(player); b=handTotal(banker);
       const playerThirdValue = player.length === 3 ? player[2].value : null;
       if(shouldBankerDraw(b, playerThirdValue)){
@@ -580,7 +590,15 @@ function render(){
     document.getElementById("deal").textContent="Deal";
   } else if(state.phase==="dealing"){
     // Button text based on deal step
-    if(dealStep===4){
+    if(dealStep===0){
+      document.getElementById("deal").textContent="Draw Card 1";
+    } else if(dealStep===1){
+      document.getElementById("deal").textContent="Draw Card 2";
+    } else if(dealStep===2){
+      document.getElementById("deal").textContent="Banker Card 1";
+    } else if(dealStep===3){
+      document.getElementById("deal").textContent="Banker Card 2";
+    } else if(dealStep===4){
       const p=handTotal(state.playerHand);
       if(shouldPlayerDraw(p)){
         document.getElementById("deal").textContent="Draw Third Card";
@@ -594,9 +612,8 @@ function render(){
     } else {
       document.getElementById("deal").textContent="Drawing...";
     }
-    // Enable button for step 5 (draw third card) and step 99 (result)
-    // Step 4 is auto-checked, button only enabled if player needs third card
-    const canClick = dealStep===5 || dealStep===99;
+    // Enable button for player draws (0, 1) and banker draws (2, 3), player third card (5), and result (99)
+    const canClick = dealStep===0 || dealStep===1 || dealStep===2 || dealStep===3 || dealStep===5 || dealStep===99;
     // For step 4, only enable if player needs third card
     if(dealStep===4){
       const p=handTotal(state.playerHand);
