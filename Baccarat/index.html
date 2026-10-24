@@ -575,8 +575,8 @@ function render(){
   renderCards(document.getElementById("playerCards"), state.playerHand);
   renderCards(document.getElementById("bankerCards"), state.bankerHand);
   const pt=document.getElementById("playerTotal"), bt=document.getElementById("bankerTotal");
-  if(state.playerHand.length){ pt.hidden=false; pt.textContent="Player "+handTotal(state.playerHand); } else pt.hidden=true;
-  if(state.bankerHand.length){ bt.hidden=false; bt.textContent="Banker "+handTotal(state.bankerHand); } else bt.hidden=true;
+  if(state.playerHand.length){ pt.hidden=false; pt.textContent="Player Total: "+handTotal(state.playerHand); } else pt.hidden=true;
+  if(state.bankerHand.length){ bt.hidden=false; bt.textContent="Banker Total: "+handTotal(state.bankerHand); } else bt.hidden=true;
 
   // Update button text based on phase and deal step
   if(state.phase==="result"){
