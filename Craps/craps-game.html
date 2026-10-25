@@ -1001,7 +1001,7 @@ function roll3DDicePhysics(onComplete) {
         function placeBet(areaId, amount) {
             // CRITICAL: Check if this bet would exceed balance
             const totalBets = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
-            if (balance - totalBets < amount) {
+            if (balance < totalBets + amount) {
                 alert('Insufficient balance for this bet');
                 return;
             }
@@ -1090,7 +1090,7 @@ function roll3DDicePhysics(onComplete) {
         }
         
         function updateBalance() {
-            balanceEl.textContent = balance.toLocaleString();
+            balanceEl.textContent = Math.round(balance).toLocaleString();
             const totalBet = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
             totalBetEl.textContent = totalBet.toLocaleString();
             
@@ -1171,8 +1171,12 @@ function roll3DDicePhysics(onComplete) {
             clearBtn.disabled = true;
 
             // Play dice rolling sound
-            if (typeof playDiceRollSound === 'function') {
-                playDiceRollSound();
+            try {
+                const audio = new Audio('../Sounds/dice-roll.mp3');
+                audio.volume = 0.7;
+                audio.play().catch(e => console.warn('Could not play dice sound:', e));
+            } catch (e) {
+                console.warn('Could not play dice sound:', e);
             }
             
             // Log that dice are rolling
@@ -1452,11 +1456,6 @@ function roll3DDicePhysics(onComplete) {
                         loseBet('big-6-8', `❌ Big 6 & 8 lost on Seven Out`);
                     }
                     winnings += resolvePlaceAndBig(die1, die2, true);
-                    balance += winnings;
-                    addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
-                    updateBalance();
-                    syncBalanceToParent();
-                    renderTableChips();
                     message = 'Seven out! Pass Line loses.';
                     isPointPhase = false;
                     point = null;
@@ -1467,11 +1466,6 @@ function roll3DDicePhysics(onComplete) {
                     winnings += payBet('pass-line', 1, `🎉 POINT MADE! You hit ${point} before a 7. Pass Line wins 1:1.`);
                     loseBet("don't-pass-bar", `❌ Don't Pass lost because the point ${point} was made.`);
                     winnings += resolvePlaceAndBig(die1, die2, false);
-                    balance += winnings;
-                    addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
-                    updateBalance();
-                    syncBalanceToParent();
-                    renderTableChips();
                     message = `Point ${point} made! Pass Line wins.`;
                     isPointPhase = false;
                     point = null;
@@ -1481,20 +1475,21 @@ function roll3DDicePhysics(onComplete) {
                     // Continue rolling - no resolution of line bets
                     // But place bets can still win/lose based on the number
                     winnings += resolvePlaceAndBig(die1, die2, false);
-                    if (winnings > 0) {
-                        balance += winnings;
-                        addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
-                        updateBalance();
-                        syncBalanceToParent();
-                    }
                     message = `Point is still ${point}. Roll again!`;
                     addLogEntry(`🎲 ${die1}+${die2}=${total} does not hit the point (${point}) or 7. Pass Line is still live.`, 'info');
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
+                    if (winnings > 0) {
+                        balance += winnings;
+                        addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${Math.round(balance).toLocaleString()}`, 'win');
+                        updateBalance();
+                        syncBalanceToParent();
+                    }
                     return;
                 }
             }
 
+            // Add winnings to balance
             if (winnings > 0) {
                 balance += winnings;
             }
@@ -1504,7 +1499,6 @@ function roll3DDicePhysics(onComplete) {
                 return sum + bets[k];
             }, 0);
 
-            balance += winnings;
             bets = {}; // Clear bets after resolution
 
             updateBalance();
@@ -1515,9 +1509,9 @@ function roll3DDicePhysics(onComplete) {
                 diceResultEl.textContent += ` - ${message}`;
             }
             if (winnings > 0) {
-                addLogEntry(`💰 Returned $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
+                addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${Math.round(balance).toLocaleString()}`, 'win');
             } else if (roundOver) {
-                addLogEntry(`Balance: $${balance.toLocaleString()}`, 'info');
+                addLogEntry(`Balance: $${Math.round(balance).toLocaleString()}`, 'info');
             }
         }
         
