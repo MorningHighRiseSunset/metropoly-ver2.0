@@ -2526,9 +2526,10 @@ function initThreeJS() {
   // Scene (no background)
   threeScene = new THREE.Scene();
 
-  // Camera - top-down view (zoomed out)
+  // Camera - top-down view (zoomed out further on mobile)
   threeCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  threeCamera.position.set(0, 9, 0);
+  const cameraHeight = window.innerWidth <= 768 ? 13 : 9;
+  threeCamera.position.set(0, cameraHeight, 0);
   threeCamera.lookAt(0, 0, 0);
 
   // Renderer - optimized for performance
@@ -3220,6 +3221,9 @@ function onWindowResize() {
   threeCamera.aspect = window.innerWidth / window.innerHeight;
   threeCamera.updateProjectionMatrix();
   threeRenderer.setSize(window.innerWidth, window.innerHeight);
+  // Adjust camera height based on mobile/desktop
+  const cameraHeight = window.innerWidth <= 768 ? 13 : 9;
+  threeCamera.position.set(0, cameraHeight, 0);
   if (orbitControls) {
     orbitControls.update();
   }
@@ -5480,10 +5484,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (orbitControls) {
         orbitControls.enabled = !window.cameraFollowMode;
       }
+      // Adjust camera height when switching between mobile/desktop
+      const cameraHeight = window.innerWidth <= 768 ? 13 : 9;
+      threeCamera.position.set(0, cameraHeight, 0);
+      threeCamera.updateProjectionMatrix();
 
       // Reset camera when switching modes
       if (!window.cameraFollowMode) {
-        threeCamera.position.set(0, 9, 0);
+        threeCamera.position.set(0, cameraHeight, 0);
         threeCamera.lookAt(0, 0, 0);
         if (orbitControls) {
           orbitControls.target.set(0, 0, 0);
