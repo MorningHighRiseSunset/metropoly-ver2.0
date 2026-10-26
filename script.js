@@ -1840,7 +1840,7 @@ function loadWalkModel(player, index, baseModel) {
           const walkClip = clip.clone();
           walkClip.name = 'Walk';
           const walkAction = playerAnimations[index].mixer.clipAction(walkClip, baseModel);
-          walkAction.timeScale = 1.0; // Normal walk animation speed
+          walkAction.timeScale = 0.7; // Slower walk animation speed
           playerAnimations[index].animations['Walk'] = walkAction;
         });
       }
