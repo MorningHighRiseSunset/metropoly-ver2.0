@@ -26,6 +26,9 @@ window.turnCompleting = false;
 window.aiRollScheduled = false;
 window.diceProcessed = false;
 
+// Flag to prevent multiple game over overlays
+window.gameOverShown = false;
+
 // ===== PEERJS CONNECTION =====
 function connectPeer() {
   if (gameState.peer) return; // Already connected
@@ -321,6 +324,8 @@ function handleNetworkMessage(data) {
         console.log('Added guest as second player:', playerData);
 
         gameState.gameStarted = true;
+        window.gameOverShown = false;
+        startGameEndChecker();
         initializeGame();
       }
       break;
@@ -1267,6 +1272,12 @@ function updateStartButton() {
 function initializeGame() {
   gameState.gameStarted = true;
 
+  // Reset game over flag
+  window.gameOverShown = false;
+
+  // Start the periodic game end checker
+  startGameEndChecker();
+
   // Remove lobby helicopter when game starts
   removeLobbyHelicopter();
 
@@ -1463,6 +1474,7 @@ startGameBtn.addEventListener('click', () => {
   }
 
   gameState.gameStarted = true;
+  window.gameOverShown = false;
 
   // Call the shared initialization function
   initializeGame();
@@ -1581,28 +1593,62 @@ function updatePlayerMoney() {
 function checkGameEnd() {
   const winningAmount = 10000;
 
+  // Prevent multiple game over overlays
+  if (window.gameOverShown || !gameState.gameStarted) {
+    return;
+  }
+
   for (const player of gameState.players) {
     // Round money to 2 decimal places to avoid floating point issues
     player.money = Math.round(player.money * 100) / 100;
-    
+
     // Check if player won
     if (player.money >= winningAmount) {
+      window.gameOverShown = true;
       showGameOver(player, true);
       return;
     }
 
     // Check if player went bankrupt (zero or negative balance)
     if (player.money <= 0) {
+      window.gameOverShown = true;
       showGameOver(player, false);
       return;
     }
   }
 }
 
+// Periodic checker that runs every 2 seconds to check if player reached 10k+
+let gameEndInterval = null;
+
+function startGameEndChecker() {
+  // Clear any existing interval
+  if (gameEndInterval) {
+    clearInterval(gameEndInterval);
+  }
+
+  // Start checking every 2 seconds
+  gameEndInterval = setInterval(() => {
+    if (gameState.gameStarted && !window.gameOverShown) {
+      checkGameEnd();
+    }
+  }, 2000);
+}
+
+function stopGameEndChecker() {
+  if (gameEndInterval) {
+    clearInterval(gameEndInterval);
+    gameEndInterval = null;
+  }
+}
+
 // Show game over UI
 function showGameOver(winner, playerWon) {
   gameState.gameStarted = false;
-  
+
+  // Stop the periodic checker
+  stopGameEndChecker();
+
   const gameOverOverlay = document.createElement('div');
   gameOverOverlay.className = 'game-over-overlay';
   gameOverOverlay.style.cssText = `
@@ -1617,10 +1663,11 @@ function showGameOver(winner, playerWon) {
     justify-content: center;
     z-index: 5000;
   `;
-  
-  const player = gameState.players[gameState.currentPlayerIndex];
-  const youWon = playerWon && winner.name === player.name;
-  
+
+  // Find the human player (non-AI)
+  const humanPlayer = gameState.players.find(p => !p.isAI);
+  const youWon = playerWon && humanPlayer && winner.name === humanPlayer.name;
+
   gameOverOverlay.innerHTML = `
     <div class="game-over-container" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(74, 158, 255, 0.3); border-radius: 24px; padding: 64px; max-width: 500px; text-align: center; backdrop-filter: blur(20px);">
       <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 16px; background: ${youWon ? 'linear-gradient(135deg, #3dd68c 0%, #00ff88 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)'}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
@@ -1634,7 +1681,7 @@ function showGameOver(winner, playerWon) {
       </button>
     </div>
   `;
-  
+
   document.body.appendChild(gameOverOverlay);
 }
 
