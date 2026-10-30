@@ -2118,23 +2118,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     const pos = getCellPosition(cellIndex);
     path.push({ x: pos.x, z: pos.z, index: cellIndex });
 
-    // Check if passed GO (when going from 39 to 0) or landed on GO
-    // TEMPORARILY DISABLED: Passing GO gives $200
-    /*
-    if (cellIndex === 0 && i > 0 && !reverse) {
-      const currentPlayer = gameState.players[playerIndex];
-      currentPlayer.money += 200;
-      console.log(`${currentPlayer.name} passed GO and collected $200`);
-      updatePlayerMoney();
-    }
-    */
-    // Also pay $200 if landing on GO (i === 0)
-    if (cellIndex === 0 && i === 0 && !reverse) {
-      const currentPlayer = gameState.players[playerIndex];
-      currentPlayer.money += 200;
-      console.log(`${currentPlayer.name} landed on GO and collected $200`);
-      updatePlayerMoney();
-    }
+    // GO money removed - no longer collecting $200 for passing or landing on GO
   }
   
   const totalDuration = steps * 700; // 700ms per step for slower movement
@@ -3455,26 +3439,6 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
         let newPosition = (currentPlayer.position + totalDice) % 40;
         console.log(`Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
 
-        // Check if passed GO (if roll would go past position 39 and wrap around)
-        // TEMPORARILY DISABLED: Passing GO gives $200
-        /*
-        if (currentPlayer.position + totalDice >= 40) {
-          console.log(`${currentPlayer.name} passed GO, collecting $200`);
-          currentPlayer.money += 200;
-          updatePlayerMoney();
-
-          // In multiplayer mode, send money update to opponent
-          if (gameState.gameMode === 'multiplayer' && gameState.conn) {
-            gameState.conn.send({
-              type: 'PLAYER_ACTION',
-              action: 'MONEY_UPDATE',
-              money: currentPlayer.money,
-              playerIndex: rollingPlayerIndex
-            });
-          }
-        }
-        */
-
         // Check for Go To Jail (position 30)
         if (newPosition === 30) {
           console.log(`${currentPlayer.name} landed on Go To Jail, sending to position 10`);
@@ -3558,16 +3522,6 @@ function startDicePhysics(rollingPlayerIndex, rollingPlayer, thisRollId) {
       // Move current player token
       let newPosition = (currentPlayer.position + totalDice) % 40;
       console.log(`Fallback: Moving ${currentPlayer.name} from position ${currentPlayer.position} to ${newPosition} (roll: ${totalDice})`);
-
-      // Check if passed GO (if roll would go past position 39 and wrap around)
-      // TEMPORARILY DISABLED: Passing GO gives $200
-      /*
-      if (currentPlayer.position + totalDice >= 40) {
-        console.log(`${currentPlayer.name} passed GO, collecting $200`);
-        currentPlayer.money += 200;
-        updatePlayerMoney();
-      }
-      */
 
       // Check for Go To Jail (position 30)
       if (newPosition === 30) {
@@ -3896,7 +3850,6 @@ function handleLanding(player, position, canRollAgain = false) {
 
 // Chance and Community Chest card decks
 const chanceCards = [
-  { message: "Collect $200 and move to GO", action: "advance_to_go" },
   { message: "Move to Las Vegas Grand Prix", action: "advance_to", position: 3 },
   { message: "Move to Bellagio (Blackjack)", action: "advance_to", position: 15 },
   { message: "Move to The Cosmopolitan (Slots)", action: "advance_to", position: 36 },
@@ -3907,7 +3860,7 @@ const chanceCards = [
   { message: "Collect $50 casino dividend", action: "gain_money", amount: 50 },
   { message: "Get out of Jail Free - Keep this card", action: "get_out_of_jail" },
   { message: "Move back 3 spaces", action: "go_back", spaces: 3 },
-  { message: "🚔 Go to Jail! Move directly to Jail. Do not pass GO, do not collect $200.", action: "go_to_jail" },
+  { message: "🚔 Go to Jail! Move directly to Jail.", action: "go_to_jail" },
   { message: "Pay $25 per property for repairs", action: "pay_repairs", amount: 25 },
   { message: "Pay $150 speeding fine", action: "pay_fine", amount: 150 },
   { message: "Pay $50 to each player (Casino Chairman)", action: "pay_players", amount: 50 },
@@ -3916,12 +3869,11 @@ const chanceCards = [
 ];
 
 const communityChestCards = [
-  { message: "Collect $200 and move to GO", action: "advance_to_go" },
   { message: "Collect $400 casino jackpot", action: "gain_money", amount: 400 },
   { message: "Pay $200 doctor's fee", action: "pay_fine", amount: 200 },
   { message: "Collect $300 casino investment returns", action: "gain_money", amount: 300 },
   { message: "Get out of Jail Free - Keep this card", action: "get_out_of_jail" },
-  { message: "🚔 Go to Jail! Move directly to Jail. Do not pass GO, do not collect $200.", action: "go_to_jail" },
+  { message: "🚔 Go to Jail! Move directly to Jail.", action: "go_to_jail" },
   { message: "Collect $400 vacation fund", action: "gain_money", amount: 400 },
   { message: "Collect $480 tax refund", action: "gain_money", amount: 480 },
   { message: "Collect $50 from each player (birthday)", action: "collect_from_players", amount: 50 },
@@ -3945,22 +3897,6 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
   const type = card.type || '';
   
   switch (action) {
-    case 'advance_to_go':
-      const oldPositionGo = player.position;
-      if (oldPositionGo !== 0) {
-        player.money = Math.round((player.money + 200) * 100) / 100;
-        updatePlayerMoney();
-        addAIMove(player.name, 'advanced to GO and collected $200');
-      }
-      // Move player to position 0
-      switchAnimation(playerIndex, 'walk');
-      animatePlayerMovement(playerIndex, oldPositionGo, 0, () => {
-        player.position = 0;
-        addAIMove(player.name, 'moved to GO');
-        handleLanding(player, 0, canRollAgain);
-      }, false);
-      break;
-      
     case 'advance_to':
       const oldPosition = player.position;
       let newPosition = position;
@@ -3969,17 +3905,6 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       const stepsForward = (newPosition - oldPosition + 40) % 40;
       const stepsBackward = (oldPosition - newPosition + 40) % 40;
       const useReverse = stepsBackward < stepsForward;
-
-      // Check if passed GO (handles both forward and backward movement)
-      // TEMPORARILY DISABLED: Passing GO gives $200
-      /*
-      const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
-      if (passedGo) {
-        player.money = Math.round((player.money + 200) * 100) / 100;
-        updatePlayerMoney();
-        addAIMove(player.name, 'passed GO and collected $200');
-      }
-      */
 
       // Animate movement in shortest direction
       switchAnimation(playerIndex, 'walk');
@@ -4011,17 +3936,6 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
         nearestPosition = nearestRailroad;
         console.log(`AI Card: Advancing to nearest railroad at position ${nearestPosition}`);
       }
-
-      // Check if passed GO (handles both forward and backward movement)
-      // TEMPORARILY DISABLED: Passing GO gives $200
-      /*
-      const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
-      if (passedGoNearest) {
-        player.money = Math.round((player.money + 200) * 100) / 100;
-        updatePlayerMoney();
-        addAIMove(player.name, 'passed GO and collected $200');
-      }
-      */
 
       // Animate forward movement
       switchAnimation(playerIndex, 'walk');
@@ -4597,22 +4511,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
   
   // Execute card action
   switch (action) {
-    case 'advance_to_go':
-      // Move to position 0 (GO) and collect $200
-      const oldPositionGo = currentPlayer.position;
-      if (oldPositionGo !== 0) {
-        currentPlayer.money += 200;
-        updatePlayerMoney();
-        console.log(`${currentPlayer.name} advanced to GO and collected $200`);
-      }
-      // Move player to position 0
-      switchAnimation(gameState.currentPlayerIndex, 'walk');
-      animatePlayerMovement(gameState.currentPlayerIndex, oldPositionGo, 0, () => {
-        currentPlayer.position = 0;
-        handleLanding(currentPlayer, 0, canRollAgain);
-      }, false);
-      break;
-      
     case 'advance_to':
       // Move to specific position
       const oldPosition = currentPlayer.position;
@@ -4622,17 +4520,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
       const stepsForward = (newPosition - oldPosition + 40) % 40;
       const stepsBackward = (oldPosition - newPosition + 40) % 40;
       const useReverse = stepsBackward < stepsForward;
-
-      // Check if passed GO (handles both forward and backward movement)
-      // TEMPORARILY DISABLED: Passing GO gives $200
-      /*
-      const passedGo = (oldPosition < newPosition && newPosition > 30) || (oldPosition > newPosition && oldPosition > 30 && newPosition < 10);
-      if (passedGo) {
-        currentPlayer.money += 200;
-        updatePlayerMoney();
-        console.log(`${currentPlayer.name} passed GO and collected $200`);
-      }
-      */
 
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPosition, newPosition, () => {
@@ -4663,17 +4550,6 @@ document.getElementById('cardOkBtn').addEventListener('click', () => {
         console.log(`Card: Advancing to nearest railroad at position ${nearestPosition}`);
       }
 
-      // Check if passed GO (handles both forward and backward movement)
-      // TEMPORARILY DISABLED: Passing GO gives $200
-      /*
-      const passedGoNearest = (oldPositionNearest < nearestPosition && nearestPosition > 30) || (oldPositionNearest > nearestPosition && oldPositionNearest > 30 && nearestPosition < 10);
-      if (passedGoNearest) {
-        currentPlayer.money += 200;
-        updatePlayerMoney();
-        console.log(`${currentPlayer.name} passed GO and collected $200`);
-      }
-      */
-      
       switchAnimation(gameState.currentPlayerIndex, 'walk');
       animatePlayerMovement(gameState.currentPlayerIndex, oldPositionNearest, nearestPosition, () => {
         currentPlayer.position = nearestPosition;
