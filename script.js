@@ -1598,6 +1598,11 @@ function checkGameEnd() {
     return;
   }
 
+  // Don't check game end while casino game is open (player may have bet all chips but game not finished)
+  if (window.casinoGameOpen) {
+    return;
+  }
+
   for (const player of gameState.players) {
     // Round money to 2 decimal places to avoid floating point issues
     player.money = Math.round(player.money * 100) / 100;
@@ -4376,7 +4381,10 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   `;
   
   document.body.appendChild(casinoOverlay);
-  
+
+  // Set flag to prevent bankruptcy checks while casino is open
+  window.casinoGameOpen = true;
+
   // Store canRollAgain state for when casino closes
   window.currentCasinoCanRollAgain = canRollAgain;
   
@@ -4456,7 +4464,10 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
     }
 
     document.body.removeChild(casinoOverlay);
-    
+
+    // Clear flag to allow bankruptcy checks again
+    window.casinoGameOpen = false;
+
     // Check for game end after casino closes
     checkGameEnd();
     
