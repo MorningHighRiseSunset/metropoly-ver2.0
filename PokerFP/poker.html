@@ -799,23 +799,14 @@ const betValueDisplay = $('bet-value-display');
 function syncBetUI() {
   console.log('[POKER DEBUG] ===== SYNC BET UI =====');
   console.log('[POKER DEBUG] Current state.chips:', state.chips);
-  
-  // Calculate maximum allowed bet based on balance
-  const max = Math.max(10, state.chips);
-  console.log('[POKER DEBUG] Calculated max bet:', max);
-  
-  betSlider.max = max;
+
+  // Remove balance-based limit - let player bet their full balance
+  betSlider.max = Math.max(10, state.chips);
   console.log('[POKER DEBUG] Set slider max to:', betSlider.max);
-  
+
   // Ensure current value is within valid range
   let currentValue = parseInt(betSlider.value, 10) || 10;
   console.log('[POKER DEBUG] Current slider value:', currentValue);
-  
-  if (currentValue > max) {
-    currentValue = max;
-    betSlider.value = currentValue;
-    console.log('[POKER DEBUG] Adjusted current value to max:', currentValue);
-  }
   if (currentValue < 10) {
     currentValue = 10;
     betSlider.value = currentValue;
@@ -826,12 +817,11 @@ function syncBetUI() {
   console.log('[POKER DEBUG] Display value:', betValueDisplay.textContent);
 }
 
-// Prevent slider from exceeding balance in real-time
+// Update display in real-time
 betSlider.addEventListener('input', () => {
   let currentValue = parseInt(betSlider.value, 10) || 10;
   const max = Math.max(10, state.chips);
-  
-  // Prevent betting more than balance
+
   if (currentValue > max) {
     currentValue = max;
     betSlider.value = currentValue;
@@ -1010,16 +1000,8 @@ function next() {
 
     let bet = parseInt(betSlider.value, 10) || 10;
     console.log('[POKER DEBUG] Selected bet:', bet);
-    
-    // CRITICAL: Prevent betting more than balance
-    if (bet > state.chips) {
-      console.log('[POKER DEBUG] Bet exceeds balance, adjusting');
-      result.textContent = 'Insufficient balance for this bet';
-      syncBalanceToParent();
-      return;
-    }
-    
-    bet = Math.max(10, Math.min(bet, state.chips));
+
+    bet = Math.max(10, bet);
     console.log('[POKER DEBUG] Final bet amount:', bet);
 
     // player bet + AI matches

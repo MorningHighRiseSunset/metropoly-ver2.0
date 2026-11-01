@@ -999,13 +999,6 @@ function roll3DDicePhysics(onComplete) {
         });
         
         function placeBet(areaId, amount) {
-            // CRITICAL: Check if this bet would exceed balance
-            const totalBets = Object.keys(bets).filter(k => !k.includes('_lastChip')).reduce((sum, k) => sum + bets[k], 0);
-            if (balance < totalBets + amount) {
-                alert('Insufficient balance for this bet');
-                return;
-            }
-
             // Log what we're about to bet for debugging
             console.log(`Placing bet: areaId=${areaId}, amount=${amount}, selectedChip=${selectedChip}`);
 
