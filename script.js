@@ -697,7 +697,7 @@ function playHighHeelsWalkSound() {
   try {
     // Stop any existing sound first
     stopHighHeelsWalkSound();
-    
+
     // Create and play the high heels walking sound
     highHeelsWalkSound = new Audio('Sounds/steps-high-heels-beautiful-fashion-shopping-mall-walking-movie-and-tv-sound-effects.mp3');
     highHeelsWalkSound.volume = 0.5;
@@ -712,6 +712,54 @@ function stopHighHeelsWalkSound() {
   if (highHeelsWalkSound) {
     highHeelsWalkSound.pause();
     highHeelsWalkSound.currentTime = 0;
+  }
+}
+
+// Token-specific sound management
+const tokenSounds = {
+  'Helicopter': null,
+  'Football': null,
+  'Shoe': null,
+  'CoffeeCup': null,
+  'Cheeseburger': null,
+  'TopHat': null
+};
+
+const tokenSoundFiles = {
+  'Helicopter': 'Sounds/soundreality-helicopter-2-216633.mp3',
+  'Football': 'Sounds/footsteps-concrete-75.wav',
+  'Shoe': 'Sounds/sumaga123-shoe-steps-447693.mp3',
+  'CoffeeCup': 'Sounds/freesound_community-slurping-coffee-46191.mp3',
+  'Cheeseburger': 'Sounds/mixkit-chewing-something-crunchy-2244.wav',
+  'TopHat': 'Sounds/soumages-boing-bounce-sound-effect-427577.mp3'
+};
+
+function playTokenSound(token) {
+  try {
+    stopTokenSound(token);
+
+    const soundFile = tokenSoundFiles[token];
+    if (!soundFile) return;
+
+    tokenSounds[token] = new Audio(soundFile);
+    tokenSounds[token].volume = 0.5;
+    tokenSounds[token].loop = true;
+    tokenSounds[token].play().catch(e => console.warn(`Could not play ${token} sound:`, e));
+  } catch (e) {
+    console.warn(`Could not play ${token} sound:`, e);
+  }
+}
+
+function stopTokenSound(token) {
+  if (tokenSounds[token]) {
+    tokenSounds[token].pause();
+    tokenSounds[token].currentTime = 0;
+  }
+}
+
+function stopAllTokenSounds() {
+  Object.keys(tokenSounds).forEach(token => stopTokenSound(token));
+}
     highHeelsWalkSound = null;
   }
 }
@@ -1914,7 +1962,16 @@ function switchAnimation(playerIndex, animationType) {
   }
 
   const player = gameState.players[playerIndex];
-  
+
+  // Play/stop token sound based on animation type
+  if (player && tokenSoundFiles[player.token]) {
+    if (animationType === 'walk') {
+      playTokenSound(player.token);
+    } else if (animationType === 'idle') {
+      stopTokenSound(player.token);
+    }
+  }
+
   // Special handling for helicopter
   if (player && player.token === 'Helicopter') {
     if (animationType === 'walk') {
@@ -1927,7 +1984,7 @@ function switchAnimation(playerIndex, animationType) {
     }
     return; // Don't process standard animation switching for helicopter
   }
-  
+
   // Special handling for hopping tokens
   if (player && (player.token === 'Cheeseburger' || player.token === 'CoffeeCup' || player.token === 'Shoe' || player.token === 'TopHat')) {
     if (animationType === 'walk') {
@@ -1939,7 +1996,7 @@ function switchAnimation(playerIndex, animationType) {
     }
     return;
   }
-  
+
   // Special handling for football
   if (player && player.token === 'Football') {
     if (animationType === 'walk') {
