@@ -2628,6 +2628,19 @@ boardConfig = [
   { name: 'T-Mobile Arena', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/JoaoTennisWin.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] }
 ];
 
+let tileImageCache = {};
+
+// Preload tile images before board creation
+function preloadTileImages() {
+  boardConfig.forEach(space => {
+    if (space.image) {
+      const img = new Image();
+      img.src = space.image;
+      tileImageCache[space.image] = img;
+    }
+  });
+}
+
 function initThreeJS() {
   console.log('Initializing Three.js...');
 
@@ -2736,6 +2749,11 @@ function initThreeJS() {
 }
 
 function create3DBoard() {
+  if (!board3DGroup) {
+    console.error('board3DGroup is not initialized');
+    return;
+  }
+
   const boardSize = 11;
 
   // Calculate board dimensions to match tile positions
