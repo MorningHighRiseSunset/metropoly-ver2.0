@@ -1002,6 +1002,12 @@ function roll3DDicePhysics(onComplete) {
             // Log what we're about to bet for debugging
             console.log(`Placing bet: areaId=${areaId}, amount=${amount}, selectedChip=${selectedChip}`);
 
+            // Prevent betting more than current balance
+            if (balance < amount) {
+                alert('Insufficient balance for this bet');
+                return;
+            }
+
             if (!bets[areaId]) bets[areaId] = 0;
             bets[areaId] += amount;
             balance -= amount;

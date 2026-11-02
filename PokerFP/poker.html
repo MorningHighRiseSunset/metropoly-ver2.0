@@ -1001,6 +1001,12 @@ function next() {
     let bet = parseInt(betSlider.value, 10) || 10;
     console.log('[POKER DEBUG] Selected bet:', bet);
 
+    // Prevent betting more than current balance
+    if (bet > state.chips) {
+      console.log('[POKER DEBUG] Bet exceeds balance, adjusting to max');
+      bet = state.chips;
+    }
+
     bet = Math.max(10, bet);
     console.log('[POKER DEBUG] Final bet amount:', bet);
 
