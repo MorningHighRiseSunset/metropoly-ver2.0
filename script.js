@@ -2589,7 +2589,7 @@ boardConfig = [
   { name: 'GO', type: 'corner', position: 0, videos: [] },
   { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 140, position: 1, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaidersVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LVRaiders%205.mp4'], address: '3333 Al Davis Way, Las Vegas, NV 89118', rent: [38, 77, 220, 605, 825, 1045] },
   { name: 'Community Cards', type: 'community-chest', position: 2, videos: [] },
-  { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20Race.mp4'], image: 'Images/las_vegas_motor_speedway.webp', address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
+  { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 120, position: 3, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20End.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/LV%20Grand%20Prix%20Race.mp4'], address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115', rent: [33, 66, 198, 550, 770, 990] },
   { name: 'Income Tax', type: 'tax', amount: 150, position: 4, videos: [], image: '' },
   { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 5, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Monorail.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
   { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 150, position: 6, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Offroading%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Vegas%20Off-Road%20Experience%20at%20Speed%20Vegas%20Motorsport%20Park.mp4'], address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054', rent: [28, 55, 165, 495, 687, 825] },
@@ -4385,7 +4385,7 @@ function showTaxUI(tile, player, canRollAgain = false) {
   const taxImageContainer = document.getElementById('taxImageContainer');
   const taxImage = document.getElementById('taxImage');
   if (tile.image) {
-    taxImage.src = `Images/${tile.image}`;
+    taxImage.src = tile.image; // Use full path directly
     taxImageContainer.classList.add('has-image');
   } else {
     taxImageContainer.classList.remove('has-image');
