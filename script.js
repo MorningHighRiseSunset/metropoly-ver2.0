@@ -2943,19 +2943,6 @@ function createTile(spaceData, row, col) {
       }
     );
   }
-          animateFerrisWheel();
-          
-          console.log(`Added spinning animation for ${spaceData.name}`);
-        }
-        
-        console.log(`Loaded 3D model for ${spaceData.name}`);
-      },
-      undefined,
-      (error) => {
-        console.error(`Error loading 3D model for ${spaceData.name}:`, error);
-      }
-    );
-  }
 
   return group;
 }
