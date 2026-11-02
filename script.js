@@ -727,7 +727,7 @@ const tokenSounds = {
 
 const tokenSoundFiles = {
   'Helicopter': 'Sounds/soundreality-helicopter-2-216633.mp3',
-  'Football': 'Sounds/footsteps-concrete-75.wav',
+  'Football': 'Sounds/dragon-studio-simple-whoosh-02-433006.mp3',
   'Shoe': 'Sounds/sumaga123-shoe-steps-447693.mp3',
   'CoffeeCup': 'Sounds/freesound_community-slurping-coffee-46191.mp3',
   'Cheeseburger': 'Sounds/mixkit-chewing-something-crunchy-2244.wav',
@@ -751,7 +751,12 @@ function playTokenSound(token) {
 
     const audio = preloadedAudio[token] || new Audio(soundFile);
     audio.volume = 1.0;
-    audio.loop = true;
+    // Don't loop for football (whoosh) and helicopter
+    if (token !== 'Football' && token !== 'Helicopter') {
+      audio.loop = true;
+    } else {
+      audio.loop = false;
+    }
     audio.currentTime = 0;
     audio.play().catch(e => console.warn(`Could not play ${token} sound:`, e));
     tokenSounds[token] = audio;
