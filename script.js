@@ -2894,20 +2894,55 @@ function createTile(spaceData, row, col) {
             countyFairWheelTopWorldY = Math.min(Math.max(wheelBounds.max.y, 0.7), 2.4);
           }
         }
-        
+
         // Add animation for spinning
         if (object.animations && object.animations.length > 0) {
           const mixer = new THREE.AnimationMixer(model);
           const action = mixer.clipAction(object.animations[0]);
           action.play();
           action.setLoop(THREE.LoopRepeat);
-          
+
           // Animate the mixer
           const clock = new THREE.Clock();
           function animateFerrisWheel() {
             requestAnimationFrame(animateFerrisWheel);
             mixer.update(clock.getDelta());
           }
+          animateFerrisWheel();
+        }
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading 3D model:', error);
+      }
+    );
+  }
+
+  // Load image for utilities/tax if specified
+  if (spaceData.image && (spaceData.type === 'utility' || spaceData.type === 'tax')) {
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+      spaceData.image,
+      (texture) => {
+        const imageMat = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: true
+        });
+        const imageFace = new THREE.Mesh(
+          new THREE.PlaneGeometry(tileSize * 0.85, tileSize * 0.85),
+          imageMat
+        );
+        imageFace.rotation.x = -Math.PI / 2;
+        imageFace.position.y = tileHeight / 2 + 0.005;
+        group.add(imageFace);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading tile image:', error);
+      }
+    );
+  }
           animateFerrisWheel();
           
           console.log(`Added spinning animation for ${spaceData.name}`);
