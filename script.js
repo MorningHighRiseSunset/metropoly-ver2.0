@@ -734,6 +734,14 @@ const tokenSoundFiles = {
   'TopHat': 'Sounds/soumages-boing-bounce-sound-effect-427577.mp3'
 };
 
+// Preload audio files
+const preloadedAudio = {};
+Object.keys(tokenSoundFiles).forEach(token => {
+  const audio = new Audio(tokenSoundFiles[token]);
+  audio.load();
+  preloadedAudio[token] = audio;
+});
+
 function playTokenSound(token) {
   try {
     stopTokenSound(token);
@@ -741,10 +749,12 @@ function playTokenSound(token) {
     const soundFile = tokenSoundFiles[token];
     if (!soundFile) return;
 
-    tokenSounds[token] = new Audio(soundFile);
-    tokenSounds[token].volume = 0.5;
-    tokenSounds[token].loop = true;
-    tokenSounds[token].play().catch(e => console.warn(`Could not play ${token} sound:`, e));
+    const audio = preloadedAudio[token] || new Audio(soundFile);
+    audio.volume = 1.0;
+    audio.loop = true;
+    audio.currentTime = 0;
+    audio.play().catch(e => console.warn(`Could not play ${token} sound:`, e));
+    tokenSounds[token] = audio;
   } catch (e) {
     console.warn(`Could not play ${token} sound:`, e);
   }
@@ -1397,6 +1407,10 @@ function updateCurrentPlayerUI() {
 
 // Start game
 startGameBtn.addEventListener('click', () => {
+  // Unlock audio on start game
+  const unlockAudio = new Audio();
+  unlockAudio.play().catch(() => {});
+
   if (startGameBtn.disabled) return;
 
   // In multiplayer mode, only host can start
@@ -1952,21 +1966,21 @@ function loadWalkModel(player, index, baseModel) {
 }
 
 function switchAnimation(playerIndex, animationType) {
-  const animData = playerAnimations[playerIndex];
-  if (!animData || !animData.mixer) {
-    console.log(`No animation data for player ${playerIndex}`);
-    return;
-  }
-
   const player = gameState.players[playerIndex];
 
-  // Play/stop token sound based on animation type
-  if (player && tokenSoundFiles[player.token]) {
+  // Play/stop token sound based on animation type (moved before animation check)
+  if (player) {
     if (animationType === 'walk') {
       playTokenSound(player.token);
     } else if (animationType === 'idle') {
       stopTokenSound(player.token);
     }
+  }
+
+  const animData = playerAnimations[playerIndex];
+  if (!animData || !animData.mixer) {
+    console.log(`No animation data for player ${playerIndex}`);
+    return;
   }
 
   // Special handling for helicopter
@@ -2281,6 +2295,10 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
 
 // ===== DICE ROLLING =====
 rollDiceBtn.addEventListener('click', () => {
+  // Unlock audio on first dice roll
+  const unlockAudio = new Audio();
+  unlockAudio.play().catch(() => {});
+
   if (!gameState.gameStarted) return;
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
@@ -2612,6 +2630,9 @@ boardConfig = [
 
 function initThreeJS() {
   console.log('Initializing Three.js...');
+
+  // Preload tile images
+  preloadTileImages();
 
   // Scene (no background)
   threeScene = new THREE.Scene();
@@ -2946,6 +2967,18 @@ function createMonopolyFaceTexture(spaceData, row, col) {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  // Draw image if specified and preloaded (for utilities like Electric Company and Water Works)
+  if (spaceData.image && tileImageCache[spaceData.image] && tileImageCache[spaceData.image].complete) {
+    ctx.save();
+    roundRectPath(ctx, pad, pad, W - pad * 2, H - pad * 2, cornerR);
+    ctx.clip();
+    const imgSize = Math.min(inner.w, inner.h - stripThick - 20);
+    const imgX = (W - imgSize) / 2;
+    const imgY = inner.y + stripThick + 10;
+    ctx.drawImage(tileImageCache[spaceData.image], imgX, imgY, imgSize, imgSize);
+    ctx.restore();
+  }
 
   if (spaceData.type === 'chance') {
     ctx.fillStyle = '#f8fbff';
