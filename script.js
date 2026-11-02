@@ -3337,10 +3337,13 @@ function animateThreeJS() {
   });
 
   // Render
-  threeRenderer.render(threeScene, threeCamera);
+  if (threeRenderer && threeScene && threeCamera) {
+    threeRenderer.render(threeScene, threeCamera);
+  }
 }
 
 function onWindowResize() {
+  if (!threeCamera || !threeRenderer) return;
   threeCamera.aspect = window.innerWidth / window.innerHeight;
   threeCamera.updateProjectionMatrix();
   threeRenderer.setSize(window.innerWidth, window.innerHeight);
