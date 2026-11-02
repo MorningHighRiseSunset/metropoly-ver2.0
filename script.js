@@ -760,9 +760,6 @@ function stopTokenSound(token) {
 function stopAllTokenSounds() {
   Object.keys(tokenSounds).forEach(token => stopTokenSound(token));
 }
-    highHeelsWalkSound = null;
-  }
-}
 
 // ===== DOM ELEMENTS =====
 const scene = document.querySelector('.scene');
