@@ -1282,6 +1282,8 @@ body {
   width: 100%;
   height: 500px;
   background: rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .property-video {
@@ -1292,12 +1294,14 @@ body {
 }
 
 #propertyImageFallback {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
   background: #000;
-  display: block;
 }
 
 .property-content {

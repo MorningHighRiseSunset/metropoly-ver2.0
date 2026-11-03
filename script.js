@@ -4928,12 +4928,6 @@ function playTileMedia(tile, isCasinoMinigame) {
       const img = document.createElement('img');
       img.id = 'propertyImageFallback';
       img.src = tile.image;
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
-      img.style.objectPosition = 'center';
-      img.style.position = 'relative';
-      img.style.display = 'block';
 
       // Add R2 fallback on error
       img.onerror = function() {
