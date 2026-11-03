@@ -2372,6 +2372,7 @@ const baseImages = [
   'Images/ShrinersChildrens-18-hole-2022.jpg',
   'Images/SpeedVegasOffroading.jpg',
   'Images/welcome_fabulous_las_vegas_sign.jpg',
+  'Images/MGM Models.png',
   'Images/wynn_2_2.jpg',
   'Images/bellagio.jpg',
   'Images/cityracing.jpg',
@@ -2483,7 +2484,12 @@ function createCarouselPlane() {
 function loadCarouselTexture(imagePath, callback) {
   const encodedPath = encodeCarouselPath(imagePath);
   const fullUrl = encodedPath; // Use local path
-  
+
+  // Fallback R2 URL for MGM Models image
+  const r2Fallback = imagePath === 'Images/MGM Models.png'
+    ? 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/MGM%20Models.png'
+    : null;
+
   textureLoader.load(
     fullUrl,
     (texture) => {
@@ -2495,7 +2501,24 @@ function loadCarouselTexture(imagePath, callback) {
     },
     undefined,
     (error) => {
-      callback(error, null);
+      // Try R2 fallback if available
+      if (r2Fallback) {
+        textureLoader.load(
+          r2Fallback,
+          (texture) => {
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.anisotropy = 16;
+            callback(null, texture);
+          },
+          undefined,
+          (fallbackError) => {
+            callback(fallbackError, null);
+          }
+        );
+      } else {
+        callback(error, null);
+      }
     }
   );
 }
