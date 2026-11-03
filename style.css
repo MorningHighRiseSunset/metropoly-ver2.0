@@ -1291,6 +1291,14 @@ body {
   background: #000;
 }
 
+#propertyImageFallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: #000;
+}
+
 .property-content {
   padding: 24px;
   display: flex;
@@ -1996,10 +2004,12 @@ body {
 
   .jail-video,
   .property-video,
-  .tax-image {
+  .tax-image,
+  #propertyImageFallback {
     max-height: 150px !important;
     width: 100%;
     object-fit: cover;
+    object-position: center;
   }
 
   .jail-content,
