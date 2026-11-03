@@ -2666,6 +2666,36 @@ boardConfig = [
 ];
 
 let tileImageCache = {};
+let videoPreloadCache = {}; // Cache for preloaded video URLs
+
+// Preload videos in background to reduce buffering
+function preloadVideos() {
+  const allVideos = new Set();
+  boardConfig.forEach(space => {
+    if (space.videos && space.videos.length > 0) {
+      space.videos.forEach(video => allVideos.add(video));
+    }
+  });
+
+  // Create hidden video elements to preload
+  allVideos.forEach(videoUrl => {
+    if (!videoPreloadCache[videoUrl]) {
+      const preloadVideo = document.createElement('video');
+      preloadVideo.preload = 'auto';
+      preloadVideo.muted = true;
+      preloadVideo.style.display = 'none';
+      preloadVideo.src = videoUrl;
+      document.body.appendChild(preloadVideo);
+      videoPreloadCache[videoUrl] = preloadVideo;
+
+      // Remove from DOM after loading to free memory, browser keeps cached
+      preloadVideo.onloadeddata = () => {
+        console.log(`Preloaded video: ${videoUrl}`);
+        preloadVideo.remove();
+      };
+    }
+  });
+}
 
 // Preload tile images before board creation
 function preloadTileImages() {
@@ -2712,6 +2742,9 @@ function initThreeJS() {
 
   // Preload tile images
   preloadTileImages();
+
+  // Preload videos in background to reduce buffering
+  preloadVideos();
 
   // Scene (no background)
   threeScene = new THREE.Scene();
@@ -5019,6 +5052,7 @@ function playTileMedia(tile, isCasinoMinigame) {
     propertyVideo.style.display = 'block';
     propertyVideo.muted = true; // Start muted to ensure autoplay works
     propertyVideo.volume = 1.0;
+    propertyVideo.preload = 'auto'; // Ensure auto preloading for better buffering
 
     let failHandled = false;
     const failOver = (error) => {
@@ -5066,7 +5100,7 @@ function playTileMedia(tile, isCasinoMinigame) {
       if (document.getElementById('propertyOverlay').style.display === 'none') return;
       console.log(`Video loading timeout for: ${videoUrl}`);
       failOver(new Error('Video loading timeout'));
-    }, 15000); // Increased to 15 seconds
+    }, 30000); // Increased to 30 seconds for R2 CDN
 
     propertyVideo.src = videoUrl;
     propertyVideo.load();
@@ -5103,8 +5137,8 @@ function playTileMedia(tile, isCasinoMinigame) {
     propertyVideo.onwaiting = () => {
       bufferingCount++;
       console.log(`Video buffering: ${videoUrl} (buffering count: ${bufferingCount})`);
-      // Only treat excessive buffering as error
-      if (bufferingCount > 5 && videoHasStarted) {
+      // Only treat excessive buffering as error - increased threshold to be more lenient
+      if (bufferingCount > 10 && videoHasStarted) {
         console.log(`Video buffering threshold exceeded: ${videoUrl}`);
         failOver(new Error('Excessive buffering'));
       }
@@ -5115,8 +5149,8 @@ function playTileMedia(tile, isCasinoMinigame) {
       console.log(`Video stalled: ${videoUrl} (stall count: ${stallCount})`);
 
       // Only treat stall as error if video hasn't started playing yet OR if it stalls excessively
-      // Once playing, allow some stalls for normal network buffering
-      if (!videoHasStarted || stallCount > 3) {
+      // Once playing, allow many more stalls for normal network buffering - increased threshold
+      if (!videoHasStarted || stallCount > 8) {
         console.log(`Video stall threshold exceeded: ${videoUrl}`);
         failOver(e);
       }
