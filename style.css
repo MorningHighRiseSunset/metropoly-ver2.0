@@ -1297,6 +1297,7 @@ body {
   object-fit: cover;
   object-position: center;
   background: #000;
+  display: block;
 }
 
 .property-content {

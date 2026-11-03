@@ -4932,9 +4932,8 @@ function playTileMedia(tile, isCasinoMinigame) {
       img.style.height = '100%';
       img.style.objectFit = 'cover';
       img.style.objectPosition = 'center';
-      img.style.position = 'absolute';
-      img.style.top = '0';
-      img.style.left = '0';
+      img.style.position = 'relative';
+      img.style.display = 'block';
 
       // Add R2 fallback on error
       img.onerror = function() {
