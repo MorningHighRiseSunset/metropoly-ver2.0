@@ -2631,12 +2631,12 @@ boardConfig = [
   { name: 'JAIL', type: 'corner', position: 10, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
   { name: 'Brothel', type: 'property', color: '#FF69B4', price: 120, position: 11, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/brothelVideo5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/BrothelVid5.mp4'], address: 'Nevada Brothel', rent: [22, 44, 132, 396, 550, 660] },
   { name: 'Electric Company', type: 'utility', price: 100, position: 12, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Electric%20Company.mp4'], image: 'Images/yellow_light_bulb.jpg', address: 'Las Vegas, NV', rent: [] },
-  { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, /*isCasino: true, casinoGame: 'baccarat',*/ videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/baccaratsmiling.jpg', address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'Venetian', type: 'property', color: '#FF69B4', price: 210, position: 13, /*isCasino: true, casinoGame: 'baccarat',*/ videos: [], image: 'Images/baccaratsmiling.jpg', address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'Las Vegas Monorail', type: 'railroad', price: 150, position: 14, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Las%20Vegas%20Monorail2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Monorail.mp4'], address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [28, 55, 110, 220] },
-  { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, /*isCasino: true, casinoGame: 'blackjack',*/ videos: [], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/blackjacksmiling.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
+  { name: 'Bellagio', type: 'property', color: '#FFA500', price: 240, position: 15, /*isCasino: true, casinoGame: 'blackjack',*/ videos: [], image: 'Images/blackjacksmiling.jpg', address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 180, position: 16, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBA.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/WNBAHL4.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Community Cards', type: 'community-chest', position: 17, videos: [] },
-  { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, /*isCasino: true, casinoGame: 'poker',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/pokersmiling.jpg', address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
+  { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', price: 156, position: 18, /*isCasino: true, casinoGame: 'poker',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Santa%20Fe%20Hotel%20And%20Casino2.mp4'], image: 'Images/pokersmiling.jpg', address: '4949 N Rancho Dr, Las Vegas, NV 89130', rent: [29, 57, 171, 514, 715, 858] },
   { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 210, position: 19, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Resorts%20World%20Theatre4.mp4'], address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
   { name: 'FREE PARKING', type: 'corner', position: 20, videos: [] },
   { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 168, position: 21, /*isCasino: true, casinoGame: 'roulette',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Hard%20Rock%20Hotel.mp4'], image: 'Images/roulette_photo.jpg', address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [34, 67, 201, 605, 840, 1008] },
@@ -2647,14 +2647,14 @@ boardConfig = [
   { name: 'Community Cards', type: 'community-chest', position: 26, videos: [] },
   { name: 'Sphere', type: 'property', color: '#008000', price: 240, position: 27, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Sphere2.mp4'], address: '255 Sands Ave, Las Vegas, NV 89169', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Water Works', type: 'utility', price: 120, position: 28, videos: [], image: 'Images/water works.png', address: 'Las Vegas, NV', rent: [] },
-  { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, /*isCasino: true, casinoGame: 'poker',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/pokersmiling.jpg', address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
+  { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 180, position: 29, /*isCasino: true, casinoGame: 'poker',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Caesars%20Palace4.mp4'], image: 'Images/pokersmiling.jpg', address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [46, 92, 277, 831, 1155, 1386] },
   { name: 'GO TO JAIL', type: 'corner', position: 30, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Imgoingtojail.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip4.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailclip5.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailclip6.mp4_1743296163946.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Jailmoment2%28cropped%29.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/jailmoment3%28cropped%29.mp4'] },
   { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31, videos: [], image: '' },
   { name: 'Chance', type: 'chance', position: 32, videos: [] },
   { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, position: 33, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/House%20Of%20Blues3.mp4'], address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119', rent: [33, 66, 198, 594, 825, 990] },
   { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, position: 34, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGM%20Model%201.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGM%20Model%202.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGM%20Model%203.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGM%20Model%204.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/MGM%20Model%205.mp4'], address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-  { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, /*isCasino: true, casinoGame: 'craps',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/crapssmiling.jpg', address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
-  { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, /*isCasino: true, casinoGame: 'slots',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], image: 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/slotssmiling.jpg', address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
+  { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, position: 35, /*isCasino: true, casinoGame: 'craps',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Wynn%20Las%20Vegas3.mp4'], image: 'Images/crapssmiling.jpg', address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [38, 77, 231, 693, 962, 1155] },
+  { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, position: 36, /*isCasino: true, casinoGame: 'slots',*/ videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan1.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan2.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/The%20Cosmopolitan3.mp4'], image: 'Images/slotssmiling.jpg', address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [31, 61, 181, 544, 770, 935] },
   { name: 'The Mirage', type: 'property', color: '#FFA500', price: 400, position: 37, videos: [], address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', rent: [44, 88, 264, 792, 1100, 1320] },
   { name: 'Horseback Riding', type: 'property', color: '#4B0082', price: 165, position: 38, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/horse6.mp4'], address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV', rent: [29, 57, 171, 514, 715, 858] },
   { name: 'T-Mobile Arena', type: 'property', color: '#4B0082', price: 165, position: 39, videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/JoaoTennisWin.mp4'], address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158', rent: [31, 61, 181, 544, 770, 935] }
@@ -2677,6 +2677,16 @@ function preloadTileImages() {
           r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png';
         } else if (space.image === 'Images/yellow_light_bulb.jpg') {
           r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg';
+        } else if (space.image === 'Images/baccaratsmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/baccaratsmiling.jpg';
+        } else if (space.image === 'Images/blackjacksmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/blackjacksmiling.jpg';
+        } else if (space.image === 'Images/pokersmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/pokersmiling.jpg';
+        } else if (space.image === 'Images/crapssmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/crapssmiling.jpg';
+        } else if (space.image === 'Images/slotssmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/slotssmiling.jpg';
         }
 
         if (r2Fallback) {
@@ -2904,62 +2914,20 @@ function createTile(spaceData, row, col) {
   );
   group.add(slab);
 
-  // For R2 images, load directly as texture to avoid CORS canvas issues
-  if (spaceData.image && spaceData.image.startsWith('http')) {
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = 'anonymous';
-    loader.load(
-      spaceData.image,
-      (texture) => {
-        texture.minFilter = THREE.LinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        const faceMat = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          depthWrite: true
-        });
-        const face = new THREE.Mesh(
-          new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
-          faceMat
-        );
-        face.rotation.x = -Math.PI / 2;
-        face.position.y = tileHeight / 2 + 0.004;
-        group.add(face);
-      },
-      undefined,
-      (error) => {
-        console.log(`Failed to load image for ${spaceData.name}, falling back to canvas texture`);
-        const tex = createMonopolyFaceTexture(spaceData, row, col);
-        const faceMat = new THREE.MeshBasicMaterial({
-          map: tex,
-          transparent: true,
-          depthWrite: true
-        });
-        const face = new THREE.Mesh(
-          new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
-          faceMat
-        );
-        face.rotation.x = -Math.PI / 2;
-        face.position.y = tileHeight / 2 + 0.004;
-        group.add(face);
-      }
-    );
-  } else {
-    const tex = createMonopolyFaceTexture(spaceData, row, col);
+  const tex = createMonopolyFaceTexture(spaceData, row, col);
 
-    const faceMat = new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      depthWrite: true
-    });
-    const face = new THREE.Mesh(
-      new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
-      faceMat
-    );
-    face.rotation.x = -Math.PI / 2;
-    face.position.y = tileHeight / 2 + 0.004;
-    group.add(face);
-  }
+  const faceMat = new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: true
+  });
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
+    faceMat
+  );
+  face.rotation.x = -Math.PI / 2;
+  face.position.y = tileHeight / 2 + 0.004;
+  group.add(face);
 
   const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(tileSize * 0.99, tileHeight + 0.004, tileSize * 0.99));
   const edgeLines = new THREE.LineSegments(
@@ -3102,8 +3070,7 @@ function createMonopolyFaceTexture(spaceData, row, col) {
   ctx.textBaseline = 'middle';
 
   // Draw image if specified and preloaded (for utilities like Electric Company and Water Works)
-  // Only draw if it's a local image to avoid CORS issues with canvas
-  if (spaceData.image && tileImageCache[spaceData.image] && tileImageCache[spaceData.image].complete && !spaceData.image.startsWith('http')) {
+  if (spaceData.image && tileImageCache[spaceData.image] && tileImageCache[spaceData.image].complete) {
     ctx.save();
     roundRectPath(ctx, pad, pad, W - pad * 2, H - pad * 2, cornerR);
     ctx.clip();
@@ -4514,6 +4481,16 @@ function showTaxUI(tile, player, canRollAgain = false) {
         r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png';
       } else if (tile.image === 'Images/yellow_light_bulb.jpg') {
         r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg';
+      } else if (tile.image === 'Images/baccaratsmiling.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/baccaratsmiling.jpg';
+      } else if (tile.image === 'Images/blackjacksmiling.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/blackjacksmiling.jpg';
+      } else if (tile.image === 'Images/pokersmiling.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/pokersmiling.jpg';
+      } else if (tile.image === 'Images/crapssmiling.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/crapssmiling.jpg';
+      } else if (tile.image === 'Images/slotssmiling.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/slotssmiling.jpg';
       }
 
       if (r2Fallback) {
@@ -4952,6 +4929,33 @@ function playTileMedia(tile, isCasinoMinigame) {
       img.style.position = 'absolute';
       img.style.top = '0';
       img.style.left = '0';
+
+      // Add R2 fallback on error
+      img.onerror = function() {
+        let r2Fallback = null;
+        if (tile.image === 'Images/water works.png') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png';
+        } else if (tile.image === 'Images/yellow_light_bulb.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg';
+        } else if (tile.image === 'Images/baccaratsmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/baccaratsmiling.jpg';
+        } else if (tile.image === 'Images/blackjacksmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/blackjacksmiling.jpg';
+        } else if (tile.image === 'Images/pokersmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/pokersmiling.jpg';
+        } else if (tile.image === 'Images/crapssmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/crapssmiling.jpg';
+        } else if (tile.image === 'Images/slotssmiling.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/minigameImages/slotssmiling.jpg';
+        }
+
+        if (r2Fallback) {
+          console.log(`Local property image failed, trying R2 fallback: ${r2Fallback}`);
+          img.src = r2Fallback;
+          img.onerror = null;
+        }
+      };
+
       propertyVideoContainer.appendChild(img);
     }
     return;
