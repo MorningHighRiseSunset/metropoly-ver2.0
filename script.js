@@ -2490,7 +2490,11 @@ function loadCarouselTexture(imagePath, callback) {
     ? 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/MGM%20Models.png'
     : null;
 
-  textureLoader.load(
+  // Create a new TextureLoader with CORS enabled for R2 URLs
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+
+  loader.load(
     fullUrl,
     (texture) => {
       // Use higher quality filtering for carousel images
@@ -2503,7 +2507,7 @@ function loadCarouselTexture(imagePath, callback) {
     (error) => {
       // Try R2 fallback if available
       if (r2Fallback) {
-        textureLoader.load(
+        loader.load(
           r2Fallback,
           (texture) => {
             texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -2663,6 +2667,7 @@ function preloadTileImages() {
   boardConfig.forEach(space => {
     if (space.image) {
       const img = new Image();
+      img.crossOrigin = 'anonymous'; // Enable CORS for WebGL
       img.src = space.image;
 
       // Add R2 fallback on error (only for local images)
@@ -2676,6 +2681,7 @@ function preloadTileImages() {
 
         if (r2Fallback) {
           console.log(`Local tile image failed, trying R2 fallback: ${r2Fallback}`);
+          img.crossOrigin = 'anonymous';
           img.src = r2Fallback;
           img.onerror = null; // Clear error handler after fallback
         }
@@ -2898,20 +2904,62 @@ function createTile(spaceData, row, col) {
   );
   group.add(slab);
 
-  const tex = createMonopolyFaceTexture(spaceData, row, col);
+  // For R2 images, load directly as texture to avoid CORS canvas issues
+  if (spaceData.image && spaceData.image.startsWith('http')) {
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+    loader.load(
+      spaceData.image,
+      (texture) => {
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        const faceMat = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: true
+        });
+        const face = new THREE.Mesh(
+          new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
+          faceMat
+        );
+        face.rotation.x = -Math.PI / 2;
+        face.position.y = tileHeight / 2 + 0.004;
+        group.add(face);
+      },
+      undefined,
+      (error) => {
+        console.log(`Failed to load image for ${spaceData.name}, falling back to canvas texture`);
+        const tex = createMonopolyFaceTexture(spaceData, row, col);
+        const faceMat = new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          depthWrite: true
+        });
+        const face = new THREE.Mesh(
+          new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
+          faceMat
+        );
+        face.rotation.x = -Math.PI / 2;
+        face.position.y = tileHeight / 2 + 0.004;
+        group.add(face);
+      }
+    );
+  } else {
+    const tex = createMonopolyFaceTexture(spaceData, row, col);
 
-  const faceMat = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: true
-  });
-  const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
-    faceMat
-  );
-  face.rotation.x = -Math.PI / 2;
-  face.position.y = tileHeight / 2 + 0.004;
-  group.add(face);
+    const faceMat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: true
+    });
+    const face = new THREE.Mesh(
+      new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
+      faceMat
+    );
+    face.rotation.x = -Math.PI / 2;
+    face.position.y = tileHeight / 2 + 0.004;
+    group.add(face);
+  }
 
   const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(tileSize * 0.99, tileHeight + 0.004, tileSize * 0.99));
   const edgeLines = new THREE.LineSegments(
@@ -3054,7 +3102,8 @@ function createMonopolyFaceTexture(spaceData, row, col) {
   ctx.textBaseline = 'middle';
 
   // Draw image if specified and preloaded (for utilities like Electric Company and Water Works)
-  if (spaceData.image && tileImageCache[spaceData.image] && tileImageCache[spaceData.image].complete) {
+  // Only draw if it's a local image to avoid CORS issues with canvas
+  if (spaceData.image && tileImageCache[spaceData.image] && tileImageCache[spaceData.image].complete && !spaceData.image.startsWith('http')) {
     ctx.save();
     roundRectPath(ctx, pad, pad, W - pad * 2, H - pad * 2, cornerR);
     ctx.clip();
@@ -3080,23 +3129,26 @@ function createMonopolyFaceTexture(spaceData, row, col) {
     ctx.fillText('COMMUNITY', W / 2, H / 2 - 60);
     ctx.fillText('CHEST', W / 2, H / 2 + 45);
   } else {
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#f5f8fc';
-    ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-    const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
-    const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
-    const sub = tileSubLabel(spaceData);
-    const lineH = 62;
-    const extra = sub ? 1 : 0;
-    let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 12;
-    bodyLines.forEach((ln) => {
-      ctx.fillText(ln, W / 2, ty);
-      ty += lineH;
-    });
-    if (sub) {
-      ctx.font = '900 50px "Arial Black", "Impact", sans-serif';
-      ctx.fillStyle = 'rgba(190, 210, 235, 0.95)';
-      ctx.fillText(sub, W / 2, ty + 10);
+    // Comment out text for utilities and minigame squares (they have images)
+    if (!spaceData.image || (spaceData.type !== 'utility' && !spaceData.casinoGame)) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#f5f8fc';
+      ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
+      const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
+      const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
+      const sub = tileSubLabel(spaceData);
+      const lineH = 62;
+      const extra = sub ? 1 : 0;
+      let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 12;
+      bodyLines.forEach((ln) => {
+        ctx.fillText(ln, W / 2, ty);
+        ty += lineH;
+      });
+      if (sub) {
+        ctx.font = '900 50px "Arial Black", "Impact", sans-serif';
+        ctx.fillStyle = 'rgba(190, 210, 235, 0.95)';
+        ctx.fillText(sub, W / 2, ty + 10);
+      }
     }
   }
 
