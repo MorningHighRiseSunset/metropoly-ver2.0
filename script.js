@@ -2664,6 +2664,23 @@ function preloadTileImages() {
     if (space.image) {
       const img = new Image();
       img.src = space.image;
+
+      // Add R2 fallback on error
+      img.onerror = function() {
+        let r2Fallback = null;
+        if (space.image === 'Images/water works.png') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png';
+        } else if (space.image === 'Images/yellow_light_bulb.jpg') {
+          r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg';
+        }
+
+        if (r2Fallback) {
+          console.log(`Local tile image failed, trying R2 fallback: ${r2Fallback}`);
+          img.src = r2Fallback;
+          img.onerror = null; // Clear error handler after fallback
+        }
+      };
+
       tileImageCache[space.image] = img;
     }
   });
@@ -4437,6 +4454,22 @@ function showTaxUI(tile, player, canRollAgain = false) {
   if (tile.image) {
     taxImage.src = tile.image; // Use full path directly
     taxImageContainer.classList.add('has-image');
+
+    // Add R2 fallback on error
+    taxImage.onerror = function() {
+      let r2Fallback = null;
+      if (tile.image === 'Images/water works.png') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/water%20works.png';
+      } else if (tile.image === 'Images/yellow_light_bulb.jpg') {
+        r2Fallback = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg';
+      }
+
+      if (r2Fallback) {
+        console.log(`Local image failed, trying R2 fallback: ${r2Fallback}`);
+        taxImage.src = r2Fallback;
+        taxImage.onerror = null; // Clear error handler after fallback
+      }
+    };
   } else {
     taxImageContainer.classList.remove('has-image');
   }
