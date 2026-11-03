@@ -1355,6 +1355,9 @@ function initializeGame() {
   // Create the 3D board
   create3DBoard();
 
+  // Start smart video preloading from position 0 (GO)
+  preloadVideosAhead(0);
+
   // Load 3D token models asynchronously to improve button responsiveness
   setTimeout(() => {
     // Only load the tokens that are actually in the game (human + selected AI tokens)
@@ -2666,6 +2669,84 @@ boardConfig = [
 ];
 
 let tileImageCache = {};
+let videoPreloadCache = {}; // Cache for preloaded video elements
+let preloadedPositions = new Set(); // Track which positions have been preloaded
+
+// Smart video preloading - preload videos for squares ahead of player
+function preloadVideosAhead(currentPosition) {
+  if (!currentPosition && currentPosition !== 0) return;
+
+  // Preload next 6-12 positions that have videos
+  const preloadRange = 12;
+  const positionsToPreload = [];
+
+  for (let i = 1; i <= preloadRange; i++) {
+    const nextPos = (currentPosition + i) % 40;
+    if (!preloadedPositions.has(nextPos)) {
+      const tile = boardConfig.find(t => t.position === nextPos);
+      if (tile && tile.videos && tile.videos.length > 0) {
+        positionsToPreload.push(nextPos);
+      }
+    }
+  }
+
+  // Limit concurrent preloads to avoid network congestion
+  const maxConcurrent = 2;
+  positionsToPreload.slice(0, maxConcurrent).forEach(pos => {
+    preloadVideoForPosition(pos);
+  });
+}
+
+// Preload a single video for a position
+function preloadVideoForPosition(position) {
+  if (preloadedPositions.has(position)) return;
+
+  const tile = boardConfig.find(t => t.position === position);
+  if (!tile || !tile.videos || tile.videos.length === 0) return;
+
+  // Pick first video for preloading
+  const videoUrl = tile.videos[0];
+
+  // Create hidden video element for preloading
+  const video = document.createElement('video');
+  video.preload = 'auto';
+  video.muted = true;
+  video.style.display = 'none';
+  video.crossOrigin = 'anonymous';
+
+  video.oncanplay = () => {
+    console.log(`Preloaded video for position ${position}: ${videoUrl}`);
+    videoPreloadCache[position] = video;
+    preloadedPositions.add(position);
+  };
+
+  video.onerror = () => {
+    console.log(`Failed to preload video for position ${position}: ${videoUrl}`);
+  };
+
+  video.src = videoUrl;
+  document.body.appendChild(video);
+
+  // Remove video from DOM after a delay (browser keeps it cached)
+  setTimeout(() => {
+    if (video.parentNode) {
+      video.parentNode.removeChild(video);
+    }
+  }, 30000);
+}
+
+// Clear preloaded videos that are behind the player
+function clearOldPreloads(currentPosition) {
+  const clearRange = 6;
+  for (let i = 1; i <= clearRange; i++) {
+    const prevPos = (currentPosition - i + 40) % 40;
+    if (preloadedPositions.has(prevPos)) {
+      preloadedPositions.delete(prevPos);
+      delete videoPreloadCache[prevPos];
+      console.log(`Cleared preload for position ${prevPos}`);
+    }
+  }
+}
 
 // Preload tile images before board creation
 function preloadTileImages() {
@@ -3868,20 +3949,25 @@ function handleLanding(player, position, canRollAgain = false) {
   canRollAgain = false;
   // Get the tile configuration
   const tile = boardConfig.find(t => t.position === position);
-  
+
   if (!tile) {
     endTurn();
     return;
   }
-  
+
   // Position 10 is Jail - "Just Visiting", no jail penalty
   if (position === 10) {
     console.log(`${player.name} is just visiting Jail (position 10) - no penalty`);
     endTurn();
     return;
   }
-  
+
   console.log(`Landed on position ${position} (${tile.name}), type: ${tile.type}`);
+
+  // Preload videos for upcoming positions (smart preloading)
+  preloadVideosAhead(position);
+  // Clear old preloads that are behind the player
+  clearOldPreloads(position);
   
   // Handle property tiles and railroads
   if (tile.type === 'property' || tile.type === 'railroad') {
@@ -5014,6 +5100,18 @@ function playTileMedia(tile, isCasinoMinigame) {
     propertyVideo.muted = true; // Start muted to ensure autoplay works
     propertyVideo.volume = 1.0;
     propertyVideo.preload = 'auto'; // Ensure auto preloading for better buffering
+
+    // Check if this video was preloaded
+    if (videoPreloadCache[tile.position] && videoPreloadCache[tile.position].src === videoUrl) {
+      console.log(`Using preloaded video for position ${tile.position}: ${videoUrl}`);
+      const preloadedVideo = videoPreloadCache[tile.position];
+      // Copy the buffered data from preloaded video
+      propertyVideo.src = preloadedVideo.src;
+      propertyVideo.load();
+      // Clear the cache since we're using it now
+      delete videoPreloadCache[tile.position];
+      preloadedPositions.delete(tile.position);
+    }
 
     let failHandled = false;
     const failOver = (error) => {
