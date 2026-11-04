@@ -2158,12 +2158,96 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Animate football throw in arc directly to destination
+function animateFootballThrow(playerIndex, oldPosition, newPosition, callback) {
+  const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
+  if (!tokenData) {
+    console.log(`No token data for player ${playerIndex}`);
+    if (callback) callback();
+    return;
+  }
+
+  const player = gameState.players[playerIndex];
+  const startPos = getCellPosition(oldPosition);
+  const endPos = getCellPosition(newPosition);
+  const startY = getTokenBoardY(player, oldPosition);
+  const endY = getTokenBoardY(player, newPosition);
+
+  // Calculate arc parameters
+  const distance = Math.sqrt(
+    Math.pow(endPos.x - startPos.x, 2) +
+    Math.pow(endPos.z - startPos.z, 2)
+  );
+  const arcHeight = Math.max(2, distance * 0.5); // Higher arc for longer throws
+  const duration = Math.max(1000, distance * 300); // Adjust duration based on distance
+
+  const startTime = Date.now();
+
+  // Play whoosh sound
+  playTokenSound(player.token);
+
+  function animate() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Linear interpolation for X and Z
+    tokenData.model.position.x = startPos.x + (endPos.x - startPos.x) * progress;
+    tokenData.model.position.z = startPos.z + (endPos.z - startPos.z) * progress;
+
+    // Parabolic arc for Y (height)
+    const arcProgress = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+    tokenData.model.position.y = startY + (endY - startY) * progress + arcHeight * arcProgress;
+
+    // Spiral rotation during flight
+    const spiralSpeed = 20;
+    tokenData.model.rotation.x = progress * spiralSpeed;
+    tokenData.model.rotation.z = progress * (spiralSpeed * 0.5);
+    tokenData.model.rotation.y = progress * (spiralSpeed * 1.5);
+
+    // Camera follows token
+    orbitControls.enabled = false;
+    threeCamera.position.set(
+      tokenData.model.position.x,
+      tokenData.model.position.y + 0.5,
+      tokenData.model.position.z + 0.3
+    );
+    threeCamera.lookAt(tokenData.model.position);
+    threeCamera.updateProjectionMatrix();
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // Land at final position
+      tokenData.model.position.set(endPos.x, endY, endPos.z);
+      tokenData.model.rotation.set(0, 0, 0);
+      tokenData.position = newPosition;
+      player.position = newPosition;
+      setHelicopterHoverHeight(playerIndex, newPosition);
+
+      // Stop whoosh sound
+      stopTokenSound(player.token);
+
+      if (callback) callback();
+    }
+  }
+
+  animate();
+}
+
 // Animate player movement between cells (continuous smooth movement following board perimeter)
 function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, reverse = false) {
   const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
   if (!tokenData) {
     console.log(`No token data for player ${playerIndex}`);
     if (callback) callback();
+    return;
+  }
+
+  const player = gameState.players[playerIndex];
+
+  // Special handling for football - throw in arc directly to destination
+  if (player && player.token === 'Football') {
+    animateFootballThrow(playerIndex, oldPosition, newPosition, callback);
     return;
   }
 
@@ -2184,9 +2268,9 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
     steps = newPosition - oldPosition;
     if (steps < 0) steps += 40;
   }
-  
+
   // console.log(`Steps to move: ${steps}`);
-  
+
   // Build path following board perimeter
   const path = [];
   for (let i = 0; i <= steps; i++) {
@@ -2201,10 +2285,10 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
 
     // GO money removed - no longer collecting $200 for passing or landing on GO
   }
-  
+
   const totalDuration = steps * 700; // 700ms per step for slower movement
   const startTime = Date.now();
-  
+
   // Calculate initial direction
   const firstPos = path[0];
   const lastPos = path[path.length - 1];
