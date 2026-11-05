@@ -718,7 +718,8 @@ function endRound(isNatural = false) {
   btnDeal.disabled = false;
   betSlider.disabled = false;
 
-  if (!isNatural || !isBlackjack(playerHand) || !isBlackjack(dealerHand)) {
+  // Dealer only draws if player doesn't have a natural blackjack
+  if (!isNatural || !isBlackjack(playerHand)) {
     while (handScore(dealerHand) < 17) {
       dealerHand.push(deck.pop());
     }
