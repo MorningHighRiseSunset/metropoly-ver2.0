@@ -737,7 +737,7 @@ function endRound(isNatural = false) {
     msg = 'Push — Both Blackjack — Bet returned';
     type = 'push';
   } else if (playerBJ) {
-    const netWin = Math.floor(currentBet * 1.5); // 3:2 payout: win 1.5x bet
+    const netWin = Math.round(currentBet * 1.5); // 3:2 payout: win 1.5x bet (rounded to nearest)
     payout = currentBet + netWin; // Total returned = bet + winnings
     msg = 'Blackjack! Bet $' + currentBet + ' - Won $' + netWin + ' (Total: $' + payout + ')';
     type = 'blackjack';
