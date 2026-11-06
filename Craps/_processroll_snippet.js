@@ -193,7 +193,6 @@
                         addLogEntry(`💰 Won $${winnings} this roll. New balance: $${balance}`, 'win');
                     }
                     updateBalance();
-                    syncBalanceToParent();
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return;
@@ -282,7 +281,6 @@
                     message = `Point is still ${point}. Roll again.`;
                     addLogEntry(`🎲 No line resolution. Point is still ${point}.`, 'info');
                     updateBalance();
-                    syncBalanceToParent();
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return;

@@ -681,8 +681,6 @@ function deal() {
   balance -= currentBet;
   console.log('[BLACKJACK DEBUG] Deducted bet:', currentBet, 'New balance:', balance);
   updateBalanceDisplay();
-  syncBalanceToParent();
-  console.log('[BLACKJACK DEBUG] Balance synced to parent');
   createDeck();
   playerHand = [deck.pop(), deck.pop()];
   dealerHand = [deck.pop(), deck.pop()];

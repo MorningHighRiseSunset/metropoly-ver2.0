@@ -4150,7 +4150,7 @@ function handleLanding(player, position, canRollAgain = false) {
     }
   } else if (tile.type === 'utility') {
     const owner = gameState.players.find(p => p.properties && p.properties.includes(position));
-    
+
     if (!owner) {
       if (!player.isAI) {
         showPropertyPurchaseUI(tile, player, position, canRollAgain);
@@ -4170,17 +4170,19 @@ function handleLanding(player, position, canRollAgain = false) {
       }
     } else if (owner !== player) {
       const rent = Math.floor(tile.price * 0.1);
-      player.money -= rent;
-      owner.money += rent;
-      console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
-      
-      if (player.isAI) {
+
+      if (!player.isAI) {
+        // Show rent payment UI for human player
+        showRentPaymentUI(tile, owner, rent, canRollAgain);
+      } else {
+        player.money -= rent;
+        owner.money += rent;
+        console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
         addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
+        updatePlayerMoney();
+        checkGameEnd();
+        endTurn();
       }
-      
-      updatePlayerMoney();
-      checkGameEnd();
-      endTurn();
     } else {
       if (player.isAI) {
         addAIMove(player.name, `landed on ${tile.name} (owned)`);

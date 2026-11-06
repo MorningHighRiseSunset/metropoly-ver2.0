@@ -786,18 +786,23 @@
     function updateUI() {
       console.log('[ROULETTE DEBUG] ===== UPDATE UI =====');
       console.log('[ROULETTE DEBUG] Current balance:', balance);
-      
+
       balanceEl.textContent = '$' + balance.toLocaleString();
       const total = Object.values(bets).reduce((a,b) => a+b, 0);
       totalBetEl.textContent = '$' + total;
       rebetBtn.disabled = Object.keys(lastBets).length === 0;
 
-      // Update exposed balance for main game to read
+      // Update exposed balance for main game to read (but don't sync yet)
       window.__casinoBalance = balance;
       window.playerBalance = balance;
       console.log('[ROULETTE DEBUG] Updated exposed balance variables');
+    }
 
-      // Sync balance with main game
+    // Sync balance to main game (call this only when game round ends)
+    function syncBalanceToParent() {
+      console.log('[ROULETTE DEBUG] ===== SYNC BALANCE TO PARENT =====');
+      console.log('[ROULETTE DEBUG] Syncing balance:', balance);
+
       if (typeof window.balanceCallback === 'function') {
         console.log('[ROULETTE DEBUG] Calling balanceCallback with:', balance);
         window.balanceCallback(balance);
@@ -1160,6 +1165,9 @@
           updateUI();
           renderChips();
           updateSliderLimits();
+
+          // Sync final balance to main game after spin completes
+          syncBalanceToParent();
 
           isSpinning = false;
           spinBtn.disabled = false;

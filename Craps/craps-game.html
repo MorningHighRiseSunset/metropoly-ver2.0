@@ -1016,7 +1016,6 @@ function roll3DDicePhysics(onComplete) {
             bets[areaId + '_lastChip'] = selectedChip;
 
             updateBalance();
-            syncBalanceToParent();
             renderTableChips();
 
             // Log the bet placement
@@ -1435,7 +1434,6 @@ function roll3DDicePhysics(onComplete) {
                         addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${balance.toLocaleString()}`, 'win');
                     }
                     updateBalance();
-                    syncBalanceToParent();
                     renderTableChips();
                     diceResultEl.textContent += ` - ${message}`;
                     return;
@@ -1482,7 +1480,6 @@ function roll3DDicePhysics(onComplete) {
                         balance += winnings;
                         addLogEntry(`💰 Paid $${winnings.toLocaleString()} this roll. Balance: $${Math.round(balance).toLocaleString()}`, 'win');
                         updateBalance();
-                        syncBalanceToParent();
                     }
                     return;
                 }
@@ -1501,7 +1498,7 @@ function roll3DDicePhysics(onComplete) {
             bets = {}; // Clear bets after resolution
 
             updateBalance();
-            syncBalanceToParent();
+            syncBalanceToParent(); // Sync final balance at end of round
             renderTableChips();
 
             if (message) {
@@ -1528,6 +1525,7 @@ function roll3DDicePhysics(onComplete) {
             rollBtn.textContent = 'Roll Dice';
 
             updateBalance();
+            syncBalanceToParent(); // Sync refunded balance
             renderTableChips();
             diceResultEl.textContent = '';
             clearLog();

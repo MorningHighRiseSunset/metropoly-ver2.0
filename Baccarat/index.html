@@ -332,16 +332,14 @@ function place(spot){
   state.bets={...state.bets, [spot]:(state.bets[spot]??0)+state.chip};
   state.bankroll-=state.chip; state.outcome=null;
   state.playerHand=[]; state.bankerHand=[];
-  syncBalanceToParent();
   render();
 }
 function clearBets(){
   if(state.phase!=="betting") return;
   const returned=Object.values(state.bets).reduce((s,n)=>s+(n??0),0);
   state.bets={}; state.bankroll+=returned; document.getElementById("deal").textContent="Deal"; addLog("Bets cleared"); render();
-  syncBalanceToParent();
 }
-function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.road=[]; state.bets={}; addLog("New eight-deck shoe"); render(); syncBalanceToParent(); }
+function newShoe(){ if(state.phase!=="betting") return; state.shoe=makeShoe(); state.road=[]; state.bets={}; addLog("New eight-deck shoe"); render(); }
 
 let dealStep = 0;
 let player=[], banker=[];
@@ -609,8 +607,6 @@ function render(){
     }
   }
   
-  // Sync balance to parent window
-  syncBalanceToParent();
   const road=document.getElementById("road");
   road.replaceChildren();
   for(let i=0;i<48;i++){
@@ -652,7 +648,7 @@ document.getElementById("deal").addEventListener("click",()=>{
     dealNextCard();
   } else if(state.phase==="result"){
     // Reset to betting after showing result
-    state.phase="betting"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; syncBalanceToParent(); render();
+    state.phase="betting"; state.playerHand=[]; state.bankerHand=[]; state.outcome=null; render();
   }
 });
 
