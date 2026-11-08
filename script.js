@@ -4776,6 +4776,15 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
       <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 0;"></iframe>
     </div>
   `;
+
+  // Move close button to bottom on mobile
+  if (window.innerWidth <= 768) {
+    const closeBtn = document.getElementById('closeCasinoBtn');
+    if (closeBtn) {
+      closeBtn.style.top = 'auto';
+      closeBtn.style.bottom = '10px';
+    }
+  }
   
   document.body.appendChild(casinoOverlay);
 
