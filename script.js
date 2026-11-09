@@ -4210,11 +4210,10 @@ function handleLanding(player, position, canRollAgain = false) {
       // AI draws and executes a random card
       const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
       const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
-      
+
       console.log(`AI ${player.name} drew a ${tile.type} card: ${randomCard.message}`);
-      addAIMove(player.name, `drew ${tile.type === 'chance' ? 'Chance' : 'Community Chest'} card: ${randomCard.message}`);
-      
-      // Execute card action for AI
+
+      // Execute card action for AI (which will add the specific action to moves)
       const playerIndex = gameState.players.findIndex(p => p === player);
       executeCardAction(randomCard, player, playerIndex, canRollAgain);
     }
@@ -4271,7 +4270,8 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
   const position = card.position || 0;
   const spaces = card.spaces || 0;
   const type = card.type || '';
-  
+  const message = card.message || '';
+
   switch (action) {
     case 'advance_to':
       const oldPosition = player.position;
@@ -4286,7 +4286,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       switchAnimation(playerIndex, 'walk');
       animatePlayerMovement(playerIndex, oldPosition, newPosition, () => {
         player.position = newPosition;
-        addAIMove(player.name, `advanced to position ${newPosition}`);
+        addAIMove(player.name, `${message} (position ${newPosition})`);
         handleLanding(player, newPosition, canRollAgain);
       }, useReverse); // Use reverse if it's shorter
       break;
@@ -4317,7 +4317,7 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       switchAnimation(playerIndex, 'walk');
       animatePlayerMovement(playerIndex, oldPositionNearest, nearestPosition, () => {
         player.position = nearestPosition;
-        addAIMove(player.name, `advanced to nearest railroad at position ${nearestPosition}`);
+        addAIMove(player.name, `${message} (position ${nearestPosition})`);
         handleLanding(player, nearestPosition, canRollAgain);
       }, false);
       break;
@@ -4325,18 +4325,18 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
     case 'gain_money':
       player.money = Math.round((player.money + amount) * 100) / 100;
       updatePlayerMoney();
-      addAIMove(player.name, `gained $${amount} from card`);
+      addAIMove(player.name, message);
       endTurn();
       break;
-      
+
     case 'pay_fine':
       player.money -= amount;
       updatePlayerMoney();
       checkGameEnd();
-      addAIMove(player.name, `paid $${amount} fine from card`);
+      addAIMove(player.name, message);
       endTurn();
       break;
-      
+
     case 'go_to_jail':
       // Animate movement to jail position
       switchAnimation(playerIndex, 'walk');
@@ -4345,30 +4345,30 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
         player.isInJail = true;
         player.jailTurns = 0;
         switchAnimation(playerIndex, 'idle');
-        addAIMove(player.name, 'sent to Jail');
+        addAIMove(player.name, message);
         showJailUI('Go directly to Jail!', () => {
           endTurn();
         });
       }, false); // false = forward direction
       break;
-      
+
     case 'go_back':
       let backPosition = (player.position - spaces + 40) % 40;
       // Animate backwards movement
       switchAnimation(playerIndex, 'walk');
       animatePlayerMovement(playerIndex, player.position, backPosition, () => {
         player.position = backPosition;
-        addAIMove(player.name, `went back ${spaces} spaces to position ${backPosition}`);
+        addAIMove(player.name, message);
         handleLanding(player, backPosition);
       }, true); // true = reverse direction
       break;
       
     case 'get_out_of_jail':
       player.getOutOfJailCards = (player.getOutOfJailCards || 0) + 1;
-      addAIMove(player.name, 'got a Get Out of Jail Free card');
+      addAIMove(player.name, message);
       endTurn();
       break;
-      
+
     case 'pay_players':
       gameState.players.forEach(otherPlayer => {
         if (otherPlayer !== player) {
@@ -4379,10 +4379,10 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       updatePlayerMoney();
       updatePlayersList();
       checkGameEnd();
-      addAIMove(player.name, `paid $${amount} to each player`);
+      addAIMove(player.name, message);
       endTurn();
       break;
-      
+
     case 'collect_from_players':
       gameState.players.forEach(otherPlayer => {
         if (otherPlayer !== player) {
@@ -4393,19 +4393,19 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
       updatePlayerMoney();
       updatePlayersList();
       checkGameEnd();
-      addAIMove(player.name, `collected $${amount} from each player`);
+      addAIMove(player.name, message);
       endTurn();
       break;
-      
+
     case 'pay_repairs':
       // Only charge if player has properties
       if (player.properties && player.properties.length > 0) {
         player.money -= amount;
         updatePlayerMoney();
         checkGameEnd();
-        addAIMove(player.name, `paid $${amount} for property repairs`);
+        addAIMove(player.name, message);
       } else {
-        addAIMove(player.name, `no properties to repair, no charge`);
+        addAIMove(player.name, 'no properties to repair, no charge');
       }
       endTurn();
       break;
