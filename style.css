@@ -2130,3 +2130,11 @@ body {
     height: 28px !important;
   }
 }
+
+/* ===== CASINO OVERLAY MOBILE ===== */
+@media (max-width: 768px) {
+  #closeCasinoBtn {
+    top: auto !important;
+    bottom: 10px !important;
+  }
+}

@@ -4777,15 +4777,6 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
     </div>
   `;
 
-  // Move close button to bottom on mobile
-  if (window.innerWidth <= 768) {
-    const closeBtn = document.getElementById('closeCasinoBtn');
-    if (closeBtn) {
-      closeBtn.style.top = 'auto';
-      closeBtn.style.bottom = '10px';
-    }
-  }
-  
   document.body.appendChild(casinoOverlay);
 
   // Set flag to prevent bankruptcy checks while casino is open
