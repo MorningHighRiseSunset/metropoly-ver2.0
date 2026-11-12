@@ -1856,6 +1856,7 @@ body {
   .board-container {
     flex: 1;
     width: 100%;
+    padding: 5px;
   }
 }
 
@@ -1930,6 +1931,7 @@ body {
   .board-container {
     width: 100% !important;
     flex: 1 !important;
+    padding: 5px !important;
   }
 
   /* Enable scroll on game UI for landscape */

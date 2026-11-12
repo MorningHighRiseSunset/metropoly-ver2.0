@@ -2882,8 +2882,9 @@ function initThreeJS() {
   threeScene = new THREE.Scene();
 
   // Camera - top-down view (zoomed out further on mobile)
-  threeCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  const cameraHeight = window.innerWidth <= 768 ? 13 : 9;
+  const fov = window.innerWidth <= 768 ? 75 : 60;
+  threeCamera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const cameraHeight = window.innerWidth <= 768 ? 17 : 9;
   threeCamera.position.set(0, cameraHeight, 0);
   threeCamera.lookAt(0, 0, 0);
 
@@ -3619,10 +3620,12 @@ function animateThreeJS() {
 function onWindowResize() {
   if (!threeCamera || !threeRenderer) return;
   threeCamera.aspect = window.innerWidth / window.innerHeight;
+  // Adjust FOV and camera height based on mobile/desktop
+  const fov = window.innerWidth <= 768 ? 75 : 60;
+  threeCamera.fov = fov;
   threeCamera.updateProjectionMatrix();
   threeRenderer.setSize(window.innerWidth, window.innerHeight);
-  // Adjust camera height based on mobile/desktop
-  const cameraHeight = window.innerWidth <= 768 ? 13 : 9;
+  const cameraHeight = window.innerWidth <= 768 ? 17 : 9;
   threeCamera.position.set(0, cameraHeight, 0);
   if (orbitControls) {
     orbitControls.update();
