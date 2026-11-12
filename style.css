@@ -1814,12 +1814,12 @@ body {
 
   /* Sidebar panels */
   .sidebar-panel--ai-moves {
-    height: 100px;
-    max-height: 100px;
+    height: 200px;
+    max-height: 200px;
   }
 
   .ai-moves.panel-scroll {
-    max-height: 80px;
+    max-height: 180px;
   }
 
   .chat-messages.panel-scroll {
@@ -2138,5 +2138,7 @@ body {
   #closeCasinoBtn {
     top: auto !important;
     bottom: 10px !important;
+    right: 10px !important;
+    position: fixed !important;
   }
 }

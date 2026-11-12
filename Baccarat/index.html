@@ -37,7 +37,7 @@ main {
 /* Mobile responsive styles */
 @media (max-width: 768px) {
   main { padding: 6px; gap: 6px; }
-  .board svg { max-height: 40vh; }
+  .board svg { max-height: 45vh; }
   .pcard { height: 2.8rem; width: 2rem; }
   .pcard .rk { font-size: 9px; }
   .pcard .su { font-size: 12px; }
@@ -49,11 +49,21 @@ main {
   .chip { width: 36px; height: 36px; font-size: 10px; }
   .deal { padding: 8px 10px; font-size: 11px; }
   .felt-amt { font-size: 10px; }
+
+  /* Mobile layout - acts already first in HTML */
+  aside { display: flex; flex-direction: column; gap: 6px; }
+  .acts { display: flex; flex-direction: column; gap: 4px; }
+  .panel:nth-of-type(2) { max-height: 120px; overflow-y: auto; } /* Chip tray */
+  .panel:nth-of-type(3) { max-height: 120px; overflow-y: auto; } /* Bead plate */
+  .panel:nth-of-type(3) .beads { grid-template-rows: repeat(3, auto); }
+  .panel:nth-of-type(4) { max-height: 100px; } /* Game logs */
+  .panel:nth-of-type(4) .game-logs { max-height: 80px; overflow-y: auto; }
+  .help { display: none; }
 }
 
 @media (max-width: 480px) {
   main { padding: 4px; gap: 4px; }
-  .board svg { max-height: 35vh; }
+  .board svg { max-height: 42vh; }
   .pcard { height: 2.4rem; width: 1.7rem; }
   .pcard .rk { font-size: 8px; }
   .pcard .su { font-size: 10px; }
@@ -65,6 +75,16 @@ main {
   .chip { width: 36px; height: 36px; font-size: 10px; }
   .deal { padding: 8px 10px; font-size: 11px; }
   .felt-amt { font-size: 10px; }
+
+  /* Mobile layout - acts already first in HTML */
+  aside { display: flex; flex-direction: column; gap: 4px; }
+  .acts { display: flex; flex-direction: column; gap: 4px; }
+  .panel:nth-of-type(2) { max-height: 100px; overflow-y: auto; } /* Chip tray */
+  .panel:nth-of-type(3) { max-height: 100px; overflow-y: auto; } /* Bead plate */
+  .panel:nth-of-type(3) .beads { grid-template-rows: repeat(3, auto); }
+  .panel:nth-of-type(4) { max-height: 80px; } /* Game logs */
+  .panel:nth-of-type(4) .game-logs { max-height: 60px; overflow-y: auto; }
+  .help { display: none; }
 }
 
 .table-wrap { flex:1; min-width:0; }
@@ -126,6 +146,9 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 .game-logs .log-entry {
   padding: 4px 6px;
@@ -155,6 +178,22 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+
+/* Close button positioning for iframe mode */
+body.iframe-mode .close-btn {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  body.iframe-mode .close-btn {
+    position: fixed !important;
+    bottom: 10px !important;
+    right: 10px !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -183,9 +222,9 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
       </div>
     </div>
     <aside>
-      <div class="panel">
-        <h2>Bead plate</h2>
-        <div class="beads" id="road"></div>
+      <div class="acts">
+        <button class="deal" id="deal">Deal</button>
+        <button class="ghost" id="clearBets">Clear Bets</button>
       </div>
       <div class="panel">
         <h2>Chip tray</h2>
@@ -193,12 +232,12 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
         <p class="felt-amt" id="wagered">On felt $0</p>
       </div>
       <div class="panel">
+        <h2>Bead plate</h2>
+        <div class="beads" id="road"></div>
+      </div>
+      <div class="panel">
         <h2>Game logs</h2>
         <div class="game-logs" id="gameLogs"></div>
-      </div>
-      <div class="acts">
-        <button class="deal" id="deal">Deal</button>
-        <button class="ghost" id="clearBets">Clear Bets</button>
       </div>
       <p class="help">Place bets on Player (position 4) or Banker (position 4). Player pays even money. Banker pays 0.95 after 5% commission. Tie pays 9 for 1.</p>
     </aside>
