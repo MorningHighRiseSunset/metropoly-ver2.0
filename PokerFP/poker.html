@@ -1031,7 +1031,7 @@ function next() {
     result.textContent = '';
     result.className = 'result';
     betSlider.disabled = true;
-    btn.textContent = 'Flop';
+    btn.textContent = 'Click to Flop';
     render();
     syncBalanceToParent(); // Sync bet deduction immediately
     return;
@@ -1043,7 +1043,7 @@ function next() {
     state.deck.pop();
     state.community.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
     state.stage = 'flop';
-    btn.textContent = 'Turn';
+    btn.textContent = 'Click to Turn';
     render();
     return;
   }
@@ -1054,7 +1054,7 @@ function next() {
     state.deck.pop();
     state.community.push(state.deck.pop());
     state.stage = 'turn';
-    btn.textContent = 'River';
+    btn.textContent = 'Click to River';
     render();
     return;
   }
