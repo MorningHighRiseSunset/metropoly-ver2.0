@@ -4775,7 +4775,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   
   casinoOverlay.innerHTML = `
     <div class="casino-container" style="width: 95%; height: 95%; max-width: 1400px; position: relative;">
-      <button id="closeCasinoBtn" style="position: absolute; top: 10px; right: 10px; z-index: 10; padding: 10px 20px; background: #4a9eff; border: none; border-radius: 0; color: white; cursor: pointer; font-size: 14px;">Close</button>
+      <button id="closeCasinoBtn" style="position: absolute; top: 10px; right: 10px; z-index: 10; padding: 10px 15px; background: #4a9eff; border: none; border-radius: 50%; color: white; cursor: pointer; font-size: 18px; font-weight: bold; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">✕</button>
       <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 0;"></iframe>
     </div>
   `;
