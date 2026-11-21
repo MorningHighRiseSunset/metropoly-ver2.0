@@ -2489,7 +2489,8 @@ const baseImages = [
   'Images/helicopters.webp',
   'Images/house_of_blues_sunset.webp',
   'Images/yellow_light_bulb.jpg',
-  'Images/tennis.jpg'
+  'Images/tennis.jpg',
+  'Images/county_fair.png'
 ];
 
 const casinoGameImages = [
