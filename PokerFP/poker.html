@@ -874,6 +874,17 @@ function createDeck() {
   for (const s of SUITS)
     for (const r of RANKS)
       d.push({ rank: r, suit: s });
+
+  // Validate deck has exactly 52 unique cards
+  const cardStrings = d.map(c => c.rank + c.suit);
+  const uniqueCards = new Set(cardStrings);
+  if (cardStrings.length !== uniqueCards.size) {
+    console.error('[POKER ERROR] Deck has duplicate cards during creation!');
+  }
+  if (d.length !== 52) {
+    console.error('[POKER ERROR] Deck has wrong size:', d.length);
+  }
+
   return d;
 }
 
@@ -989,7 +1000,7 @@ function next() {
   console.log('[POKER DEBUG] ===== NEXT FUNCTION =====');
   console.log('[POKER DEBUG] Current stage:', state.stage);
   console.log('[POKER DEBUG] Current chips:', state.chips);
-  
+
   const btn = $('btn');
   const result = $('result');
 
@@ -1028,6 +1039,18 @@ function next() {
     state.community = [];
     state.stage = 'dealt';
 
+    // Validate no duplicate cards
+    const allCards = [...state.playerCards, ...state.aiCards];
+    const cardStrings = allCards.map(c => c.rank + c.suit);
+    const uniqueCards = new Set(cardStrings);
+    if (cardStrings.length !== uniqueCards.size) {
+      console.error('[POKER ERROR] Duplicate cards detected in hole cards:', cardStrings);
+      // Recreate deck and deal again if duplicates found
+      state.deck = shuffle(createDeck());
+      state.playerCards = [state.deck.pop(), state.deck.pop()];
+      state.aiCards = [state.deck.pop(), state.deck.pop()];
+    }
+
     result.textContent = '';
     result.className = 'result';
     betSlider.disabled = true;
@@ -1042,6 +1065,15 @@ function next() {
     console.log('[POKER DEBUG] DEALING FLOP');
     state.deck.pop();
     state.community.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
+
+    // Validate no duplicates after flop
+    const allCards = [...state.playerCards, ...state.aiCards, ...state.community];
+    const cardStrings = allCards.map(c => c.rank + c.suit);
+    const uniqueCards = new Set(cardStrings);
+    if (cardStrings.length !== uniqueCards.size) {
+      console.error('[POKER ERROR] Duplicate cards after flop:', cardStrings);
+    }
+
     state.stage = 'flop';
     btn.textContent = 'Click to Turn';
     render();
@@ -1053,6 +1085,15 @@ function next() {
     console.log('[POKER DEBUG] DEALING TURN');
     state.deck.pop();
     state.community.push(state.deck.pop());
+
+    // Validate no duplicates after turn
+    const allCards = [...state.playerCards, ...state.aiCards, ...state.community];
+    const cardStrings = allCards.map(c => c.rank + c.suit);
+    const uniqueCards = new Set(cardStrings);
+    if (cardStrings.length !== uniqueCards.size) {
+      console.error('[POKER ERROR] Duplicate cards after turn:', cardStrings);
+    }
+
     state.stage = 'turn';
     btn.textContent = 'Click to River';
     render();
@@ -1064,6 +1105,15 @@ function next() {
     console.log('[POKER DEBUG] DEALING RIVER');
     state.deck.pop();
     state.community.push(state.deck.pop());
+
+    // Validate no duplicates after river
+    const allCards = [...state.playerCards, ...state.aiCards, ...state.community];
+    const cardStrings = allCards.map(c => c.rank + c.suit);
+    const uniqueCards = new Set(cardStrings);
+    if (cardStrings.length !== uniqueCards.size) {
+      console.error('[POKER ERROR] Duplicate cards after river:', cardStrings);
+    }
+
     state.stage = 'river';
     btn.textContent = 'Results';
     render();
