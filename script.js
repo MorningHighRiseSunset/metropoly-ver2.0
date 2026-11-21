@@ -234,7 +234,7 @@ function handleNetworkMessage(data) {
             const hostTokenEmoji = document.getElementById('hostTokenEmoji');
             if (hostTokenImg && player.token) {
               const tokenImageMap = {
-                'RollsRoyce': 'rolls_royce',
+                'Bentley': 'bentley',
                 'Helicopter': 'helicopter',
                 'TopHat': 'top_hat',
                 'Shoe': 'shoe',
@@ -529,7 +529,7 @@ function updateOpponentToken(token) {
   // Update opponent's token in lobby
   const playerList = document.getElementById('playerList');
   const tokenImageMap = {
-    'RollsRoyce': 'rolls_royce',
+    'Bentley': 'bentley',
     'Helicopter': 'helicopter',
     'TopHat': 'top_hat',
     'Shoe': 'shoe',
@@ -570,7 +570,7 @@ function broadcastToAll(data) {
 function addPlayerToLobby(playerId, playerName, token) {
   const playerList = document.getElementById('playerList');
   const tokenImageMap = {
-    'RollsRoyce': 'rolls_royce',
+    'Bentley': 'bentley',
     'Helicopter': 'helicopter',
     'TopHat': 'top_hat',
     'Shoe': 'shoe',
@@ -717,6 +717,7 @@ function stopHighHeelsWalkSound() {
 
 // Token-specific sound management
 const tokenSounds = {
+  'Bentley': null,
   'Helicopter': null,
   'Football': null,
   'Shoe': null,
@@ -726,6 +727,7 @@ const tokenSounds = {
 };
 
 const tokenSoundFiles = {
+  'Bentley': 'Sounds/Bently SFX.m4a',
   'Helicopter': 'Sounds/soundreality-helicopter-2-216633.mp3',
   'Football': 'Sounds/dragon-studio-simple-whoosh-02-433006.mp3',
   'Shoe': 'Sounds/sumaga123-shoe-steps-447693.mp3',
@@ -751,8 +753,8 @@ function playTokenSound(token) {
 
     const audio = preloadedAudio[token] || new Audio(soundFile);
     audio.volume = 1.0;
-    // Don't loop for football (whoosh) and helicopter
-    if (token !== 'Football' && token !== 'Helicopter') {
+    // Don't loop for football (whoosh), helicopter, and Bentley (car engine)
+    if (token !== 'Football' && token !== 'Helicopter' && token !== 'Bentley') {
       audio.loop = true;
     } else {
       audio.loop = false;
@@ -1217,7 +1219,7 @@ function updatePlayerList() {
   existingAiPlayers.forEach(player => player.remove());
 
   // Available tokens (excluding player's selection)
-  const allTokens = ['RollsRoyce', 'Helicopter', 'TopHat', 'Shoe', 'Cheeseburger', 'CoffeeCup', 'Football', 'WhiteGirlIdle'];
+  const allTokens = ['Bentley', 'Helicopter', 'TopHat', 'Shoe', 'Cheeseburger', 'CoffeeCup', 'Football', 'WhiteGirlIdle'];
   const availableTokens = allTokens.filter(t => t !== gameState.selectedToken);
   
   // Shuffle and assign tokens to AI
@@ -1226,7 +1228,7 @@ function updatePlayerList() {
 
   // Add AI players to lobby UI
   const tokenImageMap = {
-    'RollsRoyce': 'rolls_royce',
+    'Bentley': 'bentley',
     'Helicopter': 'helicopter',
     'TopHat': 'top_hat',
     'Shoe': 'shoe',
@@ -1490,7 +1492,7 @@ startGameBtn.addEventListener('click', () => {
   // Add AI players if in AI mode
   if (gameState.aiCount > 0) {
     const allTokens = [
-      { token: 'RollsRoyce', model: 'Models/RollsRoyce/rollsRoyceCarAnim.glb' },
+      { token: 'Bentley', model: 'Models/2025_bentley_continental_gt_speed/scene.gltf' },
       { token: 'Helicopter', model: 'Models/Helicopter/helicopter.glb' },
       { token: 'TopHat', model: 'Models/TopHat/tophat.glb' },
       { token: 'Shoe', model: 'Models/Shoe/shoe.glb' },
@@ -1553,7 +1555,7 @@ function updatePlayersList() {
   playersList.innerHTML = '';
   
   const tokenImages = {
-    'RollsRoyce': 'tokenimages/rolls_royce.png',
+    'Bentley': 'tokenimages/bentley.png',
     'Helicopter': 'tokenimages/helicopter.png',
     'TopHat': 'tokenimages/top_hat.png',
     'Shoe': 'tokenimages/shoe.png',
@@ -1784,7 +1786,7 @@ function loadPlayerToken(player, index) {
         tokenModel.scale.set(0.00005, 0.00005, 0.00005); // Original scale that was good
       } else if (player.token === 'Helicopter') {
         tokenModel.scale.set(0.002, 0.002, 0.002); // Smaller helicopter
-      } else if (player.token === 'RollsRoyce') {
+      } else if (player.token === 'Bentley') {
         tokenModel.scale.set(0.1, 0.1, 0.1); // Much larger Rolls Royce
       } else if (player.token === 'TopHat') {
         tokenModel.scale.set(0.1, 0.1, 0.1); // Much larger Top Hat
@@ -1817,7 +1819,7 @@ function loadPlayerToken(player, index) {
         });
       } else if (player.token === 'Cheeseburger') {
         tokenModel.position.y = 0.2; // Raise a bit higher
-      } else if (player.token === 'RollsRoyce') {
+      } else if (player.token === 'Bentley') {
         tokenModel.rotation.y = -Math.PI / 2; // Face right
       }
 
@@ -6254,7 +6256,7 @@ window.teleportTo = (position) => {
 
 function getTokenModel(token) {
   const modelMap = {
-    'RollsRoyce': 'Models/RollsRoyce/rollsRoyceCarAnim.glb',
+    'Bentley': 'Models/2025_bentley_continental_gt_speed/scene.gltf',
     'Helicopter': 'Models/Helicopter/helicopter.glb',
     'TopHat': 'Models/TopHat/tophat.glb',
     'Shoe': 'Models/Shoe/shoe.glb',
