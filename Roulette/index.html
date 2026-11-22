@@ -467,14 +467,23 @@
     @media (max-width: 768px) {
       body.iframe-mode .main {
         align-items: flex-start;
-        justify-content: flex-start;
+        justify-content: center;
       }
       body.iframe-mode .wheel-container {
-        width: min(80vw, 340px);
-        height: min(80vw, 340px);
+        width: min(70vw, 300px);
+        height: min(70vw, 300px);
       }
       .wheel-container { width: min(60vw, 240px); height: min(60vw, 240px); }
       .main { gap: 10px; }
+      .table-side { margin-top: -20px; }
+      body.iframe-mode .wheel-side { width: 100%; }
+      body.iframe-mode .wheel-controls { margin: 0 auto; }
+      .balance-bar { padding: 4px 6px; gap: 4px; font-size: 0.75rem; }
+      .bet-slider-container { max-width: 140px; padding: 3px 6px; }
+      .bet-grid { gap: 2px; }
+      .num-cell { height: 18px; font-size: 0.55rem; }
+      .zero-cell { height: 22px; font-size: 0.65rem; }
+      .outside-bet { padding: 4px 2px; font-size: 0.55rem; }
     }
   </style>
 </head>
