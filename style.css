@@ -1997,9 +1997,28 @@ body {
     display: none !important;
   }
 
-  /* Hide desktop video panel on mobile */
-  .players-sidebar .sidebar-panel--video {
-    display: none !important;
+  /* Video chat in mobile menu */
+  .mobile-menu .sidebar-panel--video {
+    display: none;
+  }
+
+  .mobile-menu.video-call-active .sidebar-panel--video {
+    display: flex;
+  }
+
+  .mobile-menu .video-container {
+    flex-direction: column;
+  }
+
+  .mobile-menu .local-video,
+  .mobile-menu .remote-video {
+    height: 100px;
+  }
+
+  .mobile-menu .video-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   /* Show burger button */

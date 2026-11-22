@@ -126,12 +126,8 @@ function connectPeer() {
         }
         const startVideoCall = document.getElementById('startVideoCall');
         const endVideoCall = document.getElementById('endVideoCall');
-        const mobileStartVideoCall = document.getElementById('mobileStartVideoCall');
-        const mobileEndVideoCall = document.getElementById('mobileEndVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
-        if (mobileStartVideoCall) mobileStartVideoCall.style.display = 'block';
-        if (mobileEndVideoCall) mobileEndVideoCall.style.display = 'none';
         document.body.classList.remove('video-call-active');
         const mobileMenu = document.getElementById('mobileMenu');
         if (mobileMenu) mobileMenu.classList.remove('video-call-active');
@@ -216,12 +212,8 @@ function connectPeer() {
         }
         const startVideoCall = document.getElementById('startVideoCall');
         const endVideoCall = document.getElementById('endVideoCall');
-        const mobileStartVideoCall = document.getElementById('mobileStartVideoCall');
-        const mobileEndVideoCall = document.getElementById('mobileEndVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
-        if (mobileStartVideoCall) mobileStartVideoCall.style.display = 'block';
-        if (mobileEndVideoCall) mobileEndVideoCall.style.display = 'none';
         document.body.classList.remove('video-call-active');
         const mobileMenu = document.getElementById('mobileMenu');
         if (mobileMenu) mobileMenu.classList.remove('video-call-active');
@@ -934,13 +926,13 @@ function checkGameIdInURL() {
     gameState.opponentPeerId = gameId;
     console.log(`Joining game: ${gameId} as guest`);
     
-    // Hide invite section for guests
+    // Hide invite section for guests (they're joining, not hosting)
     const inviteSection = document.querySelector('.invite-section');
     if (inviteSection) {
       inviteSection.style.display = 'none';
     }
 
-    // Hide join section for guests
+    // Hide join section for guests (they're already joining via URL)
     const joinSection = document.querySelector('.join-section');
     if (joinSection) {
       joinSection.style.display = 'none';
@@ -974,12 +966,6 @@ function checkGameIdInURL() {
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     gameState.gameId = newGameId;
     console.log(`Creating new game: ${newGameId} as host`);
-
-    // Hide join section for hosts
-    const joinSection = document.querySelector('.join-section');
-    if (joinSection) {
-      joinSection.style.display = 'none';
-    }
 
     // Update invite link with the new game ID
     if (inviteLink) {
