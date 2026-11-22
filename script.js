@@ -79,7 +79,7 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
       const connectionStatus = document.getElementById('connectionStatus');
       if (connectionStatus) {
         if (err.type === 'peer-unavailable') {
-          connectionStatus.textContent = 'Error: This lobby ID is already in use. Refresh to get a new one.';
+          connectionStatus.textContent = 'Error: Could not register lobby. Please refresh.';
         } else if (err.type === 'network') {
           connectionStatus.textContent = 'Error: Network connection failed. Check your internet.';
         } else if (err.type === 'server-error') {
@@ -177,20 +177,6 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
           connectionStatus.textContent = 'Error: Could not connect to host. Make sure the host is online.';
         }
       });
-
-      // Add retry logic for connection timeout
-      let connectionTimeout = setTimeout(() => {
-        if (!gameState.conn || !gameState.conn.open) {
-          console.log('Connection timeout, retrying...');
-          const connectionStatus = document.getElementById('connectionStatus');
-          if (connectionStatus) {
-            connectionStatus.textContent = 'Retrying connection...';
-          }
-          gameState.conn.close();
-          gameState.conn = peer.connect(gameState.gameId);
-          setupConnectionHandlers();
-        }
-      }, 5000);
     });
     
     peer.on('error', (err) => {
@@ -198,7 +184,13 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
       const connectionStatus = document.getElementById('connectionStatus');
       if (connectionStatus) {
         if (err.type === 'peer-unavailable') {
-          connectionStatus.textContent = 'Error: Host not found. Make sure the host is online and try again.';
+          connectionStatus.textContent = 'Host not found. Retrying...';
+          // Retry connection - host might not be ready yet
+          setTimeout(() => {
+            console.log('Retrying connection to host...');
+            gameState.conn = peer.connect(gameState.gameId);
+            setupConnectionHandlers();
+          }, 2000);
         } else if (err.type === 'network') {
           connectionStatus.textContent = 'Error: Network connection failed. Check your internet.';
         } else if (err.type === 'server-error') {
