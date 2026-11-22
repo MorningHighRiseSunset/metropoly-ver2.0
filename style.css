@@ -1997,12 +1997,8 @@ body {
     display: none !important;
   }
 
-  /* Video chat in mobile menu */
+  /* Video chat in mobile menu - always visible */
   .mobile-menu .sidebar-panel--video {
-    display: none;
-  }
-
-  .mobile-menu.video-call-active .sidebar-panel--video {
     display: flex;
   }
 
@@ -2036,12 +2032,8 @@ body {
     display: block !important;
   }
 
-  /* Video chat in mobile menu */
+  /* Video chat in mobile menu - always visible */
   .mobile-menu .sidebar-panel--video {
-    display: none;
-  }
-
-  .mobile-menu.video-call-active .sidebar-panel--video {
     display: flex;
   }
 
