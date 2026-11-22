@@ -55,7 +55,7 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
       console.log('Host peer opened with ID:', id);
       gameState.myPeerId = id;
       document.getElementById('lobbyIdDisplay').textContent = id;
-      document.getElementById('connectionStatus').textContent = 'Waiting for opponent...';
+      document.getElementById('connectionStatus').textContent = 'Lobby ready! Share code with opponent.';
       document.getElementById('lobbyInfoPanel').classList.remove('hidden');
     });
 
@@ -79,16 +79,7 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
       const connectionStatus = document.getElementById('connectionStatus');
       if (connectionStatus) {
         if (err.type === 'peer-unavailable') {
-          if (retryCount < maxRetries) {
-            console.log('Lobby ID already in use, retrying with new ID...');
-            connectionStatus.textContent = 'Lobby ID taken, getting new one...';
-            gameState.peer = null;
-            setTimeout(() => {
-              generateUniqueGameId(retryCount + 1);
-            }, 500);
-          } else {
-            connectionStatus.textContent = 'Error: Could not create lobby after multiple attempts. Please refresh.';
-          }
+          connectionStatus.textContent = 'Error: This lobby ID is already in use. Refresh to get a new one.';
         } else if (err.type === 'network') {
           connectionStatus.textContent = 'Error: Network connection failed. Check your internet.';
         } else if (err.type === 'server-error') {
@@ -186,6 +177,20 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
           connectionStatus.textContent = 'Error: Could not connect to host. Make sure the host is online.';
         }
       });
+
+      // Add retry logic for connection timeout
+      let connectionTimeout = setTimeout(() => {
+        if (!gameState.conn || !gameState.conn.open) {
+          console.log('Connection timeout, retrying...');
+          const connectionStatus = document.getElementById('connectionStatus');
+          if (connectionStatus) {
+            connectionStatus.textContent = 'Retrying connection...';
+          }
+          gameState.conn.close();
+          gameState.conn = peer.connect(gameState.gameId);
+          setupConnectionHandlers();
+        }
+      }, 5000);
     });
     
     peer.on('error', (err) => {
