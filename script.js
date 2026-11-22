@@ -57,6 +57,7 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
       document.getElementById('lobbyIdDisplay').textContent = id;
       document.getElementById('connectionStatus').textContent = 'Lobby ready! Share code with opponent.';
       document.getElementById('lobbyInfoPanel').classList.remove('hidden');
+      console.log('Host lobby is now ready for connections');
     });
 
     peer.on('connection', (connection) => {
@@ -163,10 +164,12 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
     peer.on('open', (id) => {
       console.log('Guest peer opened with ID:', id);
       gameState.myPeerId = id;
+      console.log('Attempting to connect to host:', gameState.gameId);
       gameState.conn = peer.connect(gameState.gameId);
       setupConnectionHandlers();
 
       gameState.conn.on('open', () => {
+        console.log('Successfully connected to host');
         document.getElementById('connectionStatus').textContent = 'Connected to host!';
       });
 
@@ -1380,6 +1383,16 @@ function updateStartButton() {
   // In multiplayer mode, check if opponent has selected token and is ready
   const isMultiplayer = gameState.gameMode === 'multiplayer';
   let canStartMultiplayer = false;
+
+  // Check player count limit (8 players max)
+  const playerCount = document.getElementById('playerCount');
+  const currentCount = parseInt(playerCount.textContent);
+  if (currentCount >= 8) {
+    startGameBtn.textContent = 'Lobby Full';
+    startGameBtn.disabled = true;
+    startGameBtn.classList.remove('enabled');
+    return;
+  }
   
   if (isMultiplayer) {
     // For guest: enable button when token selected (to ready up)
