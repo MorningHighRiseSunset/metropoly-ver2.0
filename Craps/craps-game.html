@@ -94,6 +94,17 @@
             width: 100%;
             height: 100%;
         }
+
+        #svgContainer {
+            position: absolute;
+            inset: 0;
+        }
+
+        #svgContainer svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
         
         /* Chip styles - unified for both selector and table */
         .chip, .table-chip {
@@ -459,6 +470,69 @@
             .info-panel { font-size: 10px; }
             .instructions-btn { display: none; }
         }
+
+        /* ===== MOBILE FIXES (must stay last to win) ===== */
+        @media (max-width: 768px) {
+            body { overflow-x: hidden; }
+            .top-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .chip-selector {
+                gap: 4px;
+                margin: 0;
+                padding: 8px;
+            }
+            .chip-selector .chip {
+                width: 34px;
+                height: 34px;
+                font-size: 9px;
+            }
+            .info-panel {
+                min-width: 0;
+                gap: 8px;
+                padding: 6px 10px;
+                font-size: 11px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .balance-display { font-size: 13px; }
+            .bet-display { font-size: 11px; }
+            .dice-result { font-size: 12px; min-width: 0; }
+            .point-indicator { font-size: 11px; }
+            .controls button { padding: 6px 10px; font-size: 11px; }
+            .game-area {
+                flex-direction: column !important;
+                align-items: stretch;
+                width: 100%;
+                gap: 10px;
+                margin-top: 8px;
+            }
+            .game-container {
+                position: relative;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 150%;
+                height: auto;
+                aspect-ratio: 850 / 550;
+                min-height: 0;
+            }
+            .table-chip {
+                width: 18px;
+                height: 18px;
+                font-size: 6px;
+                border-width: 1px;
+            }
+            .table-chip::before { border-width: 1px; }
+            .table-chip::after { width: 7px; height: 7px; border-width: 1px; }
+        }
+
+        @media (max-width: 480px) {
+            .game-container { width: 160%; }
+            .chip-selector .chip { width: 30px; height: 30px; font-size: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -490,10 +564,6 @@
     <div class="game-area">
         <div class="game-container" id="gameContainer">
             <div id="svgContainer"></div>
-        </div>
-        
-        <div class="game-log" id="gameLog">
-            <div class="game-log-entry log-info">Welcome to Craps! Place your bets and roll the dice.</div>
         </div>
     </div>
     
@@ -1136,6 +1206,7 @@ function roll3DDicePhysics(onComplete) {
         }
         
         function addLogEntry(message, type = 'info') {
+            if (!gameLogEl) return;
             const entry = document.createElement('div');
             entry.className = `game-log-entry log-${type}`;
             entry.textContent = message;
@@ -1144,6 +1215,7 @@ function roll3DDicePhysics(onComplete) {
         }
         
         function clearLog() {
+            if (!gameLogEl) return;
             gameLogEl.innerHTML = '<div class="game-log-entry log-info">Game cleared. Place your bets!</div>';
         }
 

@@ -451,7 +451,7 @@
 
     @media (max-width: 480px) {
       body { padding: 4px; }
-      .wheel-container { width: min(45vw, 180px); height: min(45vw, 180px); }
+      .wheel-container { width: min(55vw, 200px); height: min(55vw, 200px); }
       .wheel-controls { margin-top: 2px; }
       .spin-btn { padding: 6px 12px; font-size: 10px; }
       .result { font-size: 10px; }
@@ -461,6 +461,20 @@
       .outside-bet { padding: 4px 2px; font-size: 0.55rem; }
       .balance-bar { padding: 4px 6px; gap: 4px; }
       .bet-slider-container { max-width: 120px; padding: 3px 6px; }
+    }
+
+    /* ===== MOBILE FIXES (must stay last to win) ===== */
+    @media (max-width: 768px) {
+      body.iframe-mode .main {
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+      body.iframe-mode .wheel-container {
+        width: min(80vw, 340px);
+        height: min(80vw, 340px);
+      }
+      .wheel-container { width: min(60vw, 240px); height: min(60vw, 240px); }
+      .main { gap: 10px; }
     }
   </style>
 </head>

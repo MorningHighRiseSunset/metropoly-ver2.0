@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Roulette — iPhone 17 Preview</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(120% 100% at 50% 0%, #1a1d29 0%, #0b0c12 60%, #05060a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    padding: 24px;
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .caption {
+    color: #8b90a3;
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  /* iPhone 17 device frame â€” screen is 402 x 874 pt */
+  .iphone {
+    width: 430px;
+    padding: 14px;
+    border-radius: 62px;
+    background: linear-gradient(145deg, #3a3d46 0%, #17181d 30%, #2c2e36 55%, #101116 100%);
+    box-shadow:
+      0 0 0 2px #4a4d57,
+      0 30px 80px rgba(0,0,0,.8),
+      inset 0 0 4px rgba(255,255,255,.15);
+    position: relative;
+  }
+
+  .iphone::before {
+    /* side buttons */
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 170px;
+    width: 3px;
+    height: 34px;
+    border-radius: 2px;
+    background: #4a4d57;
+  }
+
+  .iphone::after {
+    /* volume buttons */
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 120px;
+    width: 3px;
+    height: 60px;
+    border-radius: 2px;
+    background: #4a4d57;
+    box-shadow: 0 72px 0 #4a4d57;
+  }
+
+  .power-btn {
+    position: absolute;
+    right: -3px;
+    top: 200px;
+    width: 3px;
+    height: 90px;
+    border-radius: 2px;
+    background: #4a4d57;
+  }
+
+  .screen {
+    position: relative;
+    width: 402px;
+    height: 874px;
+    border-radius: 50px;
+    overflow: hidden;
+    background: #07060c;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+
+  .screen iframe {
+    position: absolute;
+    top: 54px;
+    left: 0;
+    width: 402px;
+    height: 820px;
+    border: 0;
+    display: block;
+    background: #07060c;
+  }
+
+  /* Dynamic Island */
+  .island {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 124px;
+    height: 36px;
+    border-radius: 20px;
+    background: #000;
+    z-index: 10;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04);
+  }
+
+  /* Status bar */
+  .statusbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 54px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 30px 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    z-index: 9;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+
+  .statusbar .icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="iphone">
+      <div class="power-btn"></div>
+      <div class="screen">
+        <iframe src="./index.html" title="Roulette"></iframe>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons">
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 9.6a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2zM8 5.6c1.8 0 3.4.7 4.6 1.9l-1.4 1.4A4.4 4.4 0 0 0 8 8a4.4 4.4 0 0 0-3.2 1.3L3.4 7.9A6.4 6.4 0 0 1 8 5.6zM8 1c3 0 5.7 1.2 7.7 3.1l-1.4 1.4A8.9 8.9 0 0 0 8 3.4a8.9 8.9 0 0 0-6.3 2.7L.3 4.7A11 11 0 0 1 8 1z" transform="translate(0 -1)"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="currentColor" opacity=".4"/></svg>
+          </span>
+        </div>
+        <div class="island"></div>
+      </div>
+    </div>
+    <div class="caption">Roulette &middot; iPhone 17 &middot; 402 &times; 874</div>
+  </div>
+</body>
+</html>

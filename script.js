@@ -87,6 +87,7 @@ function connectPeer() {
           const endVideoCall = document.getElementById('endVideoCall');
           if (startVideoCall) startVideoCall.style.display = 'none';
           if (endVideoCall) endVideoCall.style.display = 'block';
+          document.body.classList.add('video-call-active');
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -116,6 +117,7 @@ function connectPeer() {
         const endVideoCall = document.getElementById('endVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
+        document.body.classList.remove('video-call-active');
       });
     });
   } else {
@@ -158,6 +160,7 @@ function connectPeer() {
           const endVideoCall = document.getElementById('endVideoCall');
           if (startVideoCall) startVideoCall.style.display = 'none';
           if (endVideoCall) endVideoCall.style.display = 'block';
+          document.body.classList.add('video-call-active');
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -187,6 +190,7 @@ function connectPeer() {
         const endVideoCall = document.getElementById('endVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
+        document.body.classList.remove('video-call-active');
       });
     });
   }
@@ -6076,10 +6080,12 @@ if (startVideoCall) {
         }
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
+        document.body.classList.remove('video-call-active');
       });
 
       if (startVideoCall) startVideoCall.style.display = 'none';
       if (endVideoCall) endVideoCall.style.display = 'block';
+      document.body.classList.add('video-call-active');
       if (connectionStatus) connectionStatus.textContent = 'Calling...';
 
     } catch (err) {
@@ -6118,6 +6124,7 @@ if (endVideoCall) {
     }
     if (startVideoCall) startVideoCall.style.display = 'block';
     if (endVideoCall) endVideoCall.style.display = 'none';
+    document.body.classList.remove('video-call-active');
   });
 }
 

@@ -2142,3 +2142,55 @@ body {
     position: fixed !important;
   }
 }
+
+/* ===== VIDEO CALL MOBILE PIP ===== */
+@media (max-width: 768px) {
+  .video-call-active .sidebar-panel--video {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    width: 210px;
+    max-height: none;
+    z-index: 1000;
+    background: rgba(15, 15, 18, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .video-call-active .sidebar-panel--video .sidebar-panel-title {
+    display: none;
+  }
+
+  .video-call-active .video-container {
+    margin-bottom: 6px;
+  }
+
+  .video-call-active .remote-video {
+    height: 140px;
+    width: 100%;
+  }
+
+  .video-call-active .local-video {
+    display: none;
+  }
+
+  .video-call-active .video-chat-content {
+    padding: 0;
+  }
+
+  .video-call-active .video-controls {
+    gap: 4px;
+  }
+
+  .video-call-active .connection-status {
+    padding: 4px;
+    font-size: 0.65rem;
+  }
+
+  .video-call-active .btn {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+}

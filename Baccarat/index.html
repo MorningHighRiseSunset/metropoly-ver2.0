@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Baccarat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -15,19 +15,19 @@
   --sans:"Source Sans 3", ui-sans-serif, system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
-html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); font-family:var(--sans); }
+html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); font-family:var(--sans); overflow-x:hidden; }
 button:not(:disabled), [role=button]:not(:disabled) { cursor:pointer; }
 button:disabled { cursor:default; opacity:.4; }
-.app { display:flex; min-height:100dvh; flex-direction:column; }
+.app { display:flex; min-height:100dvh; flex-direction:column; padding-bottom:env(safe-area-inset-bottom, 0px); }
 header {
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  border-bottom:1px solid var(--border); padding:10px 16px;
+  border-bottom:1px solid var(--border); padding:calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
 }
 h1 { margin:0; font-family:var(--display); font-size:1.05rem; letter-spacing:.22em; color:var(--gold); text-transform:uppercase; }
 .bal-label { font-size:11px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; margin:0; }
 .bal { margin:0; font-family:var(--display); font-size:1.25rem; color:var(--gold-soft); }
 main {
-  margin:0 auto; width:100%; max-width:72rem; flex:1; display:flex; flex-direction:column; gap:12px;
+  margin:0 auto; width:100%; max-width:96rem; flex:1; display:flex; flex-direction:column; gap:12px;
   padding:12px;
 }
 @media (min-width: 1024px) {
@@ -37,8 +37,7 @@ main {
 /* Mobile responsive styles */
 @media (max-width: 768px) {
   main { padding: 6px; gap: 6px; }
-  .board svg { max-height: 45vh; }
-  .pcard { height: 2.8rem; width: 2rem; }
+  .pcard { height: 3.1rem; width: 2.2rem; }
   .pcard .rk { font-size: 9px; }
   .pcard .su { font-size: 12px; }
   .htot { font-size: 8px; }
@@ -46,25 +45,20 @@ main {
   .panel { padding: 6px; }
   .panel h2 { font-size: 8px; }
   .bead { width: 12px; height: 12px; font-size: 7px; }
-  .chip { width: 36px; height: 36px; font-size: 10px; }
+  .chip { width: 30px; height: 30px; font-size: 9px; }
   .deal { padding: 8px 10px; font-size: 11px; }
   .felt-amt { font-size: 10px; }
 
   /* Mobile layout - acts already first in HTML */
   aside { display: flex; flex-direction: column; gap: 6px; }
-  .acts { display: flex; flex-direction: column; gap: 4px; }
-  .panel:nth-of-type(2) { max-height: 120px; overflow-y: auto; } /* Chip tray */
-  .panel:nth-of-type(3) { max-height: 120px; overflow-y: auto; } /* Bead plate */
-  .panel:nth-of-type(3) .beads { grid-template-rows: repeat(3, auto); }
-  .panel:nth-of-type(4) { max-height: 100px; } /* Game logs */
-  .panel:nth-of-type(4) .game-logs { max-height: 80px; overflow-y: auto; }
+  .acts { display: flex; flex-direction: row; gap: 4px; }
+  .acts > button { flex: 1; }
   .help { display: none; }
 }
 
 @media (max-width: 480px) {
   main { padding: 4px; gap: 4px; }
-  .board svg { max-height: 42vh; }
-  .pcard { height: 2.4rem; width: 1.7rem; }
+  .pcard { height: 2.7rem; width: 1.9rem; }
   .pcard .rk { font-size: 8px; }
   .pcard .su { font-size: 10px; }
   .htot { font-size: 7px; }
@@ -72,24 +66,20 @@ main {
   .panel { padding: 4px; }
   .panel h2 { font-size: 7px; }
   .bead { width: 10px; height: 10px; font-size: 6px; }
-  .chip { width: 36px; height: 36px; font-size: 10px; }
+  .chip { width: 28px; height: 28px; font-size: 8px; }
   .deal { padding: 8px 10px; font-size: 11px; }
   .felt-amt { font-size: 10px; }
 
   /* Mobile layout - acts already first in HTML */
   aside { display: flex; flex-direction: column; gap: 4px; }
-  .acts { display: flex; flex-direction: column; gap: 4px; }
-  .panel:nth-of-type(2) { max-height: 100px; overflow-y: auto; } /* Chip tray */
-  .panel:nth-of-type(3) { max-height: 100px; overflow-y: auto; } /* Bead plate */
-  .panel:nth-of-type(3) .beads { grid-template-rows: repeat(3, auto); }
-  .panel:nth-of-type(4) { max-height: 80px; } /* Game logs */
-  .panel:nth-of-type(4) .game-logs { max-height: 60px; overflow-y: auto; }
+  .acts { display: flex; flex-direction: row; gap: 4px; }
+  .acts > button { flex: 1; }
   .help { display: none !important; }
 }
 
 .table-wrap { flex:1; min-width:0; }
 .board { position:relative; width:100%; overflow:hidden; border-radius:12px; }
-.board svg { display:block; width:100%; height:auto; max-height:min(64vh,540px); margin:0 auto; }
+.board svg { display:block; width:100%; height:auto; max-height:min(82vh,780px); margin:0 auto; }
 .hands {
   pointer-events:none; position:absolute; inset:7% 9% auto 9%;
   display:flex; justify-content:space-between;
@@ -111,25 +101,26 @@ main {
 .status { min-height:1.5rem; text-align:center; font-family:var(--display); font-size:.9rem; letter-spacing:.04em; margin:4px 0 0; }
 .status.result { color:var(--gold-soft); }
 aside { width:100%; display:flex; flex-direction:column; gap:12px; }
-@media (min-width: 1024px) { aside { width:14rem; } }
+@media (min-width: 1024px) { aside { width:12rem; } }
 .panel { border-radius:10px; border:1px solid var(--border); background:rgba(18,18,18,.9); padding:10px; }
 .panel h2 { margin:0 0 8px; font-family:var(--display); font-size:10px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
-.beads { display:grid; grid-auto-flow:column; grid-template-rows:repeat(6,auto); gap:4px; }
+.beads { display:grid; grid-auto-flow:column; grid-template-rows:repeat(6,auto); gap:4px; position:relative; overflow-x:auto; justify-content:center; scrollbar-width:thin; }
 .bead { width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:9px; font-weight:700; }
 .bead.empty { border:1px solid rgba(42,36,24,.7); }
 .bead.player { background:var(--player); color:var(--bg); }
 .bead.banker { background:var(--banker); color:var(--bg); }
 .bead.tie { background:var(--tie); color:var(--bg); }
-.tray { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.bead.latest { box-shadow:0 0 0 2px var(--gold), 0 0 8px rgba(201,162,39,.6); transform:scale(1.15); }
+.tray { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }
 .chip {
   position:relative; flex-shrink:0; border-radius:50%; font-family:var(--display);
-  font-size:13px; font-weight:700; color:var(--fg); width:48px; height:48px;
+  font-size:11px; font-weight:700; color:var(--fg); width:38px; height:38px;
 }
 .chip.sel { transform:scale(1.1); box-shadow:0 0 0 2px var(--gold); outline:2px solid var(--gold); outline-offset:2px; }
 .felt-amt { text-align:center; font-size:12px; color:var(--muted); margin:8px 0 0; }
 .acts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .deal {
-  grid-column:1 / -1; border:0; border-radius:10px; background:var(--gold); color:var(--bg);
+  border:0; border-radius:10px; background:var(--gold); color:var(--bg);
   padding:12px 16px; font-family:var(--display); font-size:14px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
 }
 .ghost {
@@ -137,28 +128,6 @@ aside { width:100%; display:flex; flex-direction:column; gap:12px; }
   border-radius:10px; padding:8px 12px; font-size:12px;
 }
 .help { font-size:11px; line-height:1.5; color:var(--muted); margin:0; }
-.game-logs {
-  max-height: 150px;
-  overflow-y: auto;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--muted);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-.game-logs .log-entry {
-  padding: 4px 6px;
-  background: rgba(18,18,18,0.5);
-  border-radius: 4px;
-  border-left: 2px solid var(--gold);
-}
-.game-logs .log-entry.player-win { border-left-color: var(--player); }
-.game-logs .log-entry.banker-win { border-left-color: var(--banker); }
-.game-logs .log-entry.tie { border-left-color: var(--tie); }
 .bet-spot { transition: fill .15s ease; }
 .bet-spot:hover { fill: rgba(201,162,39,.14); }
 .chip-mark {
@@ -193,6 +162,42 @@ body.iframe-mode .close-btn {
     bottom: 10px !important;
     right: 10px !important;
   }
+}
+
+/* ===== MOBILE OVERRIDES (must stay after base rules to win) ===== */
+@media (max-width: 768px) {
+  main { padding: 6px; gap: 6px; }
+  .board { width: 140%; margin-left: -20%; overflow: visible; }
+  .board svg { max-height: none; }
+  .pcard { height: 3.1rem; width: 2.2rem; }
+  .pcard .rk { font-size: 10px; }
+  .pcard .su { font-size: 14px; }
+  .htot { font-size: 9px; }
+  .status { font-size: .75rem; }
+  .panel { padding: 6px; }
+  .panel h2 { font-size: 8px; }
+  .beads { grid-template-rows: repeat(3, auto); }
+  .bead { width: 12px; height: 12px; font-size: 7px; }
+  .chip { width: 30px; height: 30px; font-size: 9px; }
+  .deal { padding: 8px 10px; font-size: 11px; }
+  .felt-amt { font-size: 10px; }
+  aside { display: flex; flex-direction: column; gap: 6px; }
+  .acts { display: flex; flex-direction: row; gap: 4px; }
+  .acts > button { flex: 1; }
+}
+
+@media (max-width: 480px) {
+  main { padding: 4px; gap: 4px; }
+  .pcard { height: 2.7rem; width: 1.9rem; }
+  .pcard .rk { font-size: 9px; }
+  .pcard .su { font-size: 12px; }
+  .htot { font-size: 8px; }
+  .status { font-size: .7rem; }
+  .panel { padding: 4px; }
+  .panel h2 { font-size: 7px; }
+  .bead { width: 10px; height: 10px; font-size: 6px; }
+  .chip { width: 28px; height: 28px; font-size: 8px; }
+  aside { gap: 4px; }
 }
 </style>
 </head>
@@ -234,10 +239,6 @@ body.iframe-mode .close-btn {
       <div class="panel">
         <h2>Bead plate</h2>
         <div class="beads" id="road"></div>
-      </div>
-      <div class="panel">
-        <h2>Game logs</h2>
-        <div class="game-logs" id="gameLogs"></div>
       </div>
       <p class="help">Place bets on Player (position 4) or Banker (position 4). Player pays even money. Banker pays 0.95 after 5% commission. Tie pays 9 for 1.</p>
     </aside>
@@ -652,17 +653,14 @@ function render(){
     const s=document.createElement("span");
     const item=state.road[i];
     s.className="bead "+(item||"empty");
+    if(item && i===state.road.length-1) s.classList.add("latest");
     s.textContent=item?{player:"P",banker:"B",tie:"T"}[item]:"";
     road.appendChild(s);
   }
-  const logs=document.getElementById("gameLogs");
-  logs.replaceChildren();
-  state.gameLogs.forEach(log=>{
-    const le=document.createElement("div");
-    le.className="log-entry "+log.type;
-    le.textContent=log.message;
-    logs.appendChild(le);
-  });
+  const latestBead=road.querySelector(".latest");
+  if(latestBead){
+    road.scrollLeft = latestBead.offsetLeft + latestBead.offsetWidth/2 - road.clientWidth/2;
+  }
   const tray=document.getElementById("tray");
   tray.replaceChildren();
   CHIP_VALUES.forEach(v=>{
@@ -671,7 +669,7 @@ function render(){
     b.type="button"; b.className="chip"+(state.chip===v?" sel":"");
     b.setAttribute("aria-label", v+" dollar chip");
     b.style.background=`radial-gradient(circle at 35% 30%, ${face.face} 0%, ${face.face} 55%, color-mix(in srgb, ${face.face} 70%, black) 100%)`;
-    b.style.border=`4px dashed ${face.ring}`;
+    b.style.border=`3px dashed ${face.ring}`;
     b.style.boxShadow=`inset 0 0 0 3px ${face.face}, 0 4px 10px rgba(0,0,0,.5)`;
     b.textContent=v>=1000?"1k":String(v);
     b.addEventListener("click",()=>{ state.chip=v; render(); });

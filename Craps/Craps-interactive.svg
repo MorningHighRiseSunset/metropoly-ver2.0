@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="850" height="550" version="1.0">
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="850" height="550" viewBox="0 0 850 550" version="1.0">
 <style>
     .betting-area { cursor: pointer; transition: all 0.2s ease; fill: rgba(255,255,255,0.1); }
     .betting-area:hover { fill: rgba(255,255,255,0.3); }
