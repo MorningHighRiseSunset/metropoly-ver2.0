@@ -110,7 +110,13 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
           if (endVideoCall) endVideoCall.style.display = 'block';
           document.body.classList.add('video-call-active');
           const mobileMenu = document.getElementById('mobileMenu');
-          if (mobileMenu) mobileMenu.classList.add('video-call-active');
+          if (mobileMenu) {
+            mobileMenu.classList.add('video-call-active');
+            mobileMenu.classList.remove('open'); // Close the menu
+          }
+          // Show minimize button
+          const minimizeVideoBtn = document.getElementById('minimizeVideoBtn');
+          if (minimizeVideoBtn) minimizeVideoBtn.style.display = 'flex';
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -223,7 +229,13 @@ function connectPeer(retryCount = 0, maxRetries = 5) {
           if (endVideoCall) endVideoCall.style.display = 'block';
           document.body.classList.add('video-call-active');
           const mobileMenu = document.getElementById('mobileMenu');
-          if (mobileMenu) mobileMenu.classList.add('video-call-active');
+          if (mobileMenu) {
+            mobileMenu.classList.add('video-call-active');
+            mobileMenu.classList.remove('open'); // Close the menu
+          }
+          // Show minimize button
+          const minimizeVideoBtn = document.getElementById('minimizeVideoBtn');
+          if (minimizeVideoBtn) minimizeVideoBtn.style.display = 'flex';
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -6205,8 +6217,15 @@ if (startVideoCall) {
       document.body.classList.add('video-call-active');
       // Also add to mobile menu
       const mobileMenu = document.getElementById('mobileMenu');
-      if (mobileMenu) mobileMenu.classList.add('video-call-active');
+      if (mobileMenu) {
+        mobileMenu.classList.add('video-call-active');
+        mobileMenu.classList.remove('open'); // Close the menu
+      }
       if (connectionStatus) connectionStatus.textContent = 'Calling...';
+
+      // Show minimize button
+      const minimizeVideoBtn = document.getElementById('minimizeVideoBtn');
+      if (minimizeVideoBtn) minimizeVideoBtn.style.display = 'flex';
 
     } catch (err) {
       console.error('Error starting video call:', err);
@@ -6247,6 +6266,23 @@ if (endVideoCall) {
     document.body.classList.remove('video-call-active');
     const mobileMenu = document.getElementById('mobileMenu');
     if (mobileMenu) mobileMenu.classList.remove('video-call-active');
+    mobileMenu.classList.remove('minimized');
+
+    // Hide minimize button
+    const minimizeVideoBtn = document.getElementById('minimizeVideoBtn');
+    if (minimizeVideoBtn) minimizeVideoBtn.style.display = 'none';
+  });
+}
+
+// Minimize video button
+const minimizeVideoBtn = document.getElementById('minimizeVideoBtn');
+if (minimizeVideoBtn) {
+  minimizeVideoBtn.addEventListener('click', () => {
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (mobileMenu) {
+      mobileMenu.classList.toggle('minimized');
+      minimizeVideoBtn.textContent = mobileMenu.classList.contains('minimized') ? '+' : '−';
+    }
   });
 }
 
