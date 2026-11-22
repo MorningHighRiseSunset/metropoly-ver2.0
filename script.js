@@ -30,11 +30,11 @@ window.diceProcessed = false;
 window.gameOverShown = false;
 
 // ===== PEERJS CONNECTION =====
-function connectPeer() {
+function connectPeer(retryCount = 0, maxRetries = 5) {
   if (gameState.peer) return; // Already connected
-  
+
   console.log('Initializing PeerJS...');
-  
+
   if (gameState.isHost) {
     // Host: create peer with game ID
     const peer = new Peer(gameState.gameId, {
@@ -58,13 +58,13 @@ function connectPeer() {
       document.getElementById('connectionStatus').textContent = 'Waiting for opponent...';
       document.getElementById('lobbyInfoPanel').classList.remove('hidden');
     });
-    
+
     peer.on('connection', (connection) => {
       console.log('Incoming connection from:', connection.peer);
       gameState.conn = connection;
       gameState.opponentPeerId = connection.peer;
       setupConnectionHandlers();
-      
+
       connection.on('open', () => {
         document.getElementById('connectionStatus').textContent = 'Opponent connected!';
         // Add guest to host's lobby
@@ -73,10 +73,30 @@ function connectPeer() {
         sendGameState();
       });
     });
-    
+
     peer.on('error', (err) => {
       console.error('PeerJS error:', err);
-      document.getElementById('connectionStatus').textContent = 'Error: ' + err.type;
+      const connectionStatus = document.getElementById('connectionStatus');
+      if (connectionStatus) {
+        if (err.type === 'peer-unavailable') {
+          if (retryCount < maxRetries) {
+            console.log('Lobby ID already in use, retrying with new ID...');
+            connectionStatus.textContent = 'Lobby ID taken, getting new one...';
+            gameState.peer = null;
+            setTimeout(() => {
+              generateUniqueGameId(retryCount + 1);
+            }, 500);
+          } else {
+            connectionStatus.textContent = 'Error: Could not create lobby after multiple attempts. Please refresh.';
+          }
+        } else if (err.type === 'network') {
+          connectionStatus.textContent = 'Error: Network connection failed. Check your internet.';
+        } else if (err.type === 'server-error') {
+          connectionStatus.textContent = 'Error: Server error. Please try again.';
+        } else {
+          connectionStatus.textContent = 'Error: ' + err.type;
+        }
+      }
     });
 
     // Handle incoming video calls
@@ -154,15 +174,34 @@ function connectPeer() {
       gameState.myPeerId = id;
       gameState.conn = peer.connect(gameState.gameId);
       setupConnectionHandlers();
-      
+
       gameState.conn.on('open', () => {
         document.getElementById('connectionStatus').textContent = 'Connected to host!';
+      });
+
+      gameState.conn.on('error', (err) => {
+        console.error('Connection error:', err);
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.textContent = 'Error: Could not connect to host. Make sure the host is online.';
+        }
       });
     });
     
     peer.on('error', (err) => {
       console.error('PeerJS error:', err);
-      document.getElementById('connectionStatus').textContent = 'Error: ' + err.type;
+      const connectionStatus = document.getElementById('connectionStatus');
+      if (connectionStatus) {
+        if (err.type === 'peer-unavailable') {
+          connectionStatus.textContent = 'Error: Host not found. Make sure the host is online and try again.';
+        } else if (err.type === 'network') {
+          connectionStatus.textContent = 'Error: Network connection failed. Check your internet.';
+        } else if (err.type === 'server-error') {
+          connectionStatus.textContent = 'Error: Server error. Please try again.';
+        } else {
+          connectionStatus.textContent = 'Error: ' + err.type;
+        }
+      }
     });
 
     // Handle incoming video calls
@@ -919,13 +958,14 @@ if (scene) {
 function checkGameIdInURL() {
   const urlParams = new URLSearchParams(window.location.search);
   const gameId = urlParams.get('game');
+  console.log('Checking URL for game ID:', gameId);
   if (gameId) {
     gameState.gameId = gameId;
     gameState.gameMode = 'multiplayer';
     gameState.isHost = false; // This player is joining, not hosting
     gameState.opponentPeerId = gameId;
     console.log(`Joining game: ${gameId} as guest`);
-    
+
     // Hide invite section for guests (they're joining, not hosting)
     const inviteSection = document.querySelector('.invite-section');
     if (inviteSection) {
@@ -937,50 +977,56 @@ function checkGameIdInURL() {
     if (joinSection) {
       joinSection.style.display = 'none';
     }
-    
+
     // Hide AI controls for guests
     const aiControls = document.querySelector('.ai-controls');
     if (aiControls) {
       aiControls.style.display = 'none';
     }
-    
+
     // Update hostPlayer name to "Host" for guests
     const hostPlayerName = document.querySelector('#hostPlayer .player-name');
     if (hostPlayerName) {
       hostPlayerName.textContent = 'Host';
     }
-    
+
     // Update UI to show joining
     const connectionStatus = document.getElementById('connectionStatus');
     if (connectionStatus) {
       connectionStatus.textContent = 'Connecting to host...';
     }
-    
+
     // Connect to PeerJS
     connectPeer();
   } else {
     // No game ID in URL, this is a new game - host mode
     gameState.isHost = true;
     gameState.gameMode = 'multiplayer'; // Set to multiplayer mode
-    // Generate a game ID for the host
-    const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    gameState.gameId = newGameId;
-    console.log(`Creating new game: ${newGameId} as host`);
-
-    // Update invite link with the new game ID
-    if (inviteLink) {
-      inviteLink.value = generateInviteLink();
-    }
-    
-    // Show lobby info
-    const lobbyInfoPanel = document.getElementById('lobbyInfoPanel');
-    if (lobbyInfoPanel) {
-      lobbyInfoPanel.classList.remove('hidden');
-    }
-    
-    // Connect to PeerJS
-    connectPeer();
+    // Generate a game ID for the host with retry logic
+    generateUniqueGameId();
   }
+}
+
+// Generate a unique game ID with retry logic
+function generateUniqueGameId(retryCount = 0) {
+  const maxRetries = 5;
+  const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  gameState.gameId = newGameId;
+  console.log(`Attempting to create game: ${newGameId} (attempt ${retryCount + 1}/${maxRetries})`);
+
+  // Update invite link with the new game ID
+  if (inviteLink) {
+    inviteLink.value = generateInviteLink();
+  }
+
+  // Show lobby info
+  const lobbyInfoPanel = document.getElementById('lobbyInfoPanel');
+  if (lobbyInfoPanel) {
+    lobbyInfoPanel.classList.remove('hidden');
+  }
+
+  // Connect to PeerJS
+  connectPeer(retryCount, maxRetries);
 }
 
 // Generate invite link
@@ -1065,6 +1111,7 @@ if (joinBtn && joinCodeInput) {
   joinBtn.addEventListener('click', () => {
     const lobbyCode = joinCodeInput.value.trim().toUpperCase();
     if (lobbyCode.length === 6) {
+      console.log('Joining lobby with code:', lobbyCode);
       // Navigate to the same page with the game parameter
       const baseUrl = window.location.origin + window.location.pathname;
       window.location.href = `${baseUrl}?game=${lobbyCode}`;
