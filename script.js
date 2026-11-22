@@ -38,7 +38,16 @@ function connectPeer() {
   if (gameState.isHost) {
     // Host: create peer with game ID
     const peer = new Peer(gameState.gameId, {
-      debug: 1
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' }
+        ]
+      }
     });
     gameState.peer = peer;
     
@@ -88,6 +97,8 @@ function connectPeer() {
           if (startVideoCall) startVideoCall.style.display = 'none';
           if (endVideoCall) endVideoCall.style.display = 'block';
           document.body.classList.add('video-call-active');
+          const mobileMenu = document.getElementById('mobileMenu');
+          if (mobileMenu) mobileMenu.classList.add('video-call-active');
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -115,15 +126,30 @@ function connectPeer() {
         }
         const startVideoCall = document.getElementById('startVideoCall');
         const endVideoCall = document.getElementById('endVideoCall');
+        const mobileStartVideoCall = document.getElementById('mobileStartVideoCall');
+        const mobileEndVideoCall = document.getElementById('mobileEndVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
+        if (mobileStartVideoCall) mobileStartVideoCall.style.display = 'block';
+        if (mobileEndVideoCall) mobileEndVideoCall.style.display = 'none';
         document.body.classList.remove('video-call-active');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) mobileMenu.classList.remove('video-call-active');
       });
     });
   } else {
     // Guest: create peer with null ID (auto-generated), then connect to host
     const peer = new Peer(null, {
-      debug: 1
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' }
+        ]
+      }
     });
     gameState.peer = peer;
     
@@ -161,6 +187,8 @@ function connectPeer() {
           if (startVideoCall) startVideoCall.style.display = 'none';
           if (endVideoCall) endVideoCall.style.display = 'block';
           document.body.classList.add('video-call-active');
+          const mobileMenu = document.getElementById('mobileMenu');
+          if (mobileMenu) mobileMenu.classList.add('video-call-active');
         })
         .catch((err) => {
           console.error('Error getting local stream:', err);
@@ -188,9 +216,15 @@ function connectPeer() {
         }
         const startVideoCall = document.getElementById('startVideoCall');
         const endVideoCall = document.getElementById('endVideoCall');
+        const mobileStartVideoCall = document.getElementById('mobileStartVideoCall');
+        const mobileEndVideoCall = document.getElementById('mobileEndVideoCall');
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
+        if (mobileStartVideoCall) mobileStartVideoCall.style.display = 'block';
+        if (mobileEndVideoCall) mobileEndVideoCall.style.display = 'none';
         document.body.classList.remove('video-call-active');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) mobileMenu.classList.remove('video-call-active');
       });
     });
   }
@@ -790,6 +824,8 @@ const tokenOptions = document.querySelectorAll('.token-option');
 const aiSection = document.getElementById('aiSection');
 const inviteLink = document.getElementById('inviteLink');
 const copyBtn = document.getElementById('copyBtn');
+const joinCodeInput = document.getElementById('joinCodeInput');
+const joinBtn = document.getElementById('joinBtn');
 const addAiBtn = document.getElementById('addAiBtn');
 const aiCount = document.getElementById('aiCount');
 const playerList = document.getElementById('playerList');
@@ -903,6 +939,12 @@ function checkGameIdInURL() {
     if (inviteSection) {
       inviteSection.style.display = 'none';
     }
+
+    // Hide join section for guests
+    const joinSection = document.querySelector('.join-section');
+    if (joinSection) {
+      joinSection.style.display = 'none';
+    }
     
     // Hide AI controls for guests
     const aiControls = document.querySelector('.ai-controls');
@@ -932,7 +974,13 @@ function checkGameIdInURL() {
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     gameState.gameId = newGameId;
     console.log(`Creating new game: ${newGameId} as host`);
-    
+
+    // Hide join section for hosts
+    const joinSection = document.querySelector('.join-section');
+    if (joinSection) {
+      joinSection.style.display = 'none';
+    }
+
     // Update invite link with the new game ID
     if (inviteLink) {
       inviteLink.value = generateInviteLink();
@@ -1023,6 +1071,30 @@ if (copyBtn && inviteLink) {
     setTimeout(() => {
       copyBtn.textContent = 'Copy';
     }, 2000);
+  });
+}
+
+// Join by lobby code
+if (joinBtn && joinCodeInput) {
+  joinBtn.addEventListener('click', () => {
+    const lobbyCode = joinCodeInput.value.trim().toUpperCase();
+    if (lobbyCode.length === 6) {
+      // Navigate to the same page with the game parameter
+      const baseUrl = window.location.origin + window.location.pathname;
+      window.location.href = `${baseUrl}?game=${lobbyCode}`;
+    } else {
+      joinCodeInput.style.borderColor = 'rgba(255, 100, 100, 0.5)';
+      setTimeout(() => {
+        joinCodeInput.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+      }, 2000);
+    }
+  });
+
+  // Allow pressing Enter to join
+  joinCodeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      joinBtn.click();
+    }
   });
 }
 
@@ -6081,11 +6153,16 @@ if (startVideoCall) {
         if (startVideoCall) startVideoCall.style.display = 'block';
         if (endVideoCall) endVideoCall.style.display = 'none';
         document.body.classList.remove('video-call-active');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) mobileMenu.classList.remove('video-call-active');
       });
 
       if (startVideoCall) startVideoCall.style.display = 'none';
       if (endVideoCall) endVideoCall.style.display = 'block';
       document.body.classList.add('video-call-active');
+      // Also add to mobile menu
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (mobileMenu) mobileMenu.classList.add('video-call-active');
       if (connectionStatus) connectionStatus.textContent = 'Calling...';
 
     } catch (err) {
@@ -6125,6 +6202,8 @@ if (endVideoCall) {
     if (startVideoCall) startVideoCall.style.display = 'block';
     if (endVideoCall) endVideoCall.style.display = 'none';
     document.body.classList.remove('video-call-active');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (mobileMenu) mobileMenu.classList.remove('video-call-active');
   });
 }
 

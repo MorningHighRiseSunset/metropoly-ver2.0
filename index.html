@@ -88,6 +88,14 @@
           </div>
         </div>
 
+        <div class="join-section">
+          <p class="join-label">Or join with lobby code</p>
+          <div class="join-code-container">
+            <input type="text" class="join-code-input" id="joinCodeInput" placeholder="Enter lobby code" maxlength="6">
+            <button class="join-btn" id="joinBtn">Join</button>
+          </div>
+        </div>
+
         <div class="ai-section" id="aiSection" style="display: block;">
           <div class="ai-controls">
             <button class="ai-add-btn" id="addAiBtn">+ Add AI</button>
@@ -232,6 +240,21 @@
         <div class="sidebar-panel sidebar-panel--properties">
           <h3 class="sidebar-panel-title">Properties</h3>
           <div id="mobilePropertiesList" class="properties-list panel-scroll">
+          </div>
+        </div>
+
+        <div class="sidebar-panel sidebar-panel--video">
+          <h3 class="sidebar-panel-title">Video Chat</h3>
+          <div class="video-chat-content">
+            <div class="video-container">
+              <video id="localVideo" class="local-video" muted playsinline autoplay></video>
+              <video id="remoteVideo" class="remote-video" playsinline autoplay></video>
+            </div>
+            <div class="video-controls">
+              <div id="connectionStatus" class="connection-status">Not connected</div>
+              <button id="startVideoCall" class="btn btn-primary btn-block">Start Call</button>
+              <button id="endVideoCall" class="btn btn-danger btn-block" style="display: none;">End Call</button>
+            </div>
           </div>
         </div>
 

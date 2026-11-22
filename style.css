@@ -297,6 +297,75 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.join-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.join-label {
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.join-code-container {
+  display: flex;
+  gap: 10px;
+}
+
+.join-code-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.join-code-input::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.join-code-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.join-btn {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.join-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+  transition: all 0.2s ease;
   font-size: 0.8rem;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -463,6 +532,9 @@ body {
   align-items: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .game-title h1 {
@@ -1621,6 +1693,14 @@ body {
     width: 100%;
   }
 
+  .join-code-container {
+    flex-direction: column;
+  }
+
+  .join-btn {
+    width: 100%;
+  }
+
   .player-list {
     max-height: 120px;
   }
@@ -1848,6 +1928,11 @@ body {
     display: none;
   }
 
+  /* Hide desktop video panel on mobile */
+  .players-sidebar .sidebar-panel--video {
+    display: none;
+  }
+
   /* Full width board on mobile */
   .game-main {
     flex-direction: column;
@@ -1912,6 +1997,11 @@ body {
     display: none !important;
   }
 
+  /* Hide desktop video panel on mobile */
+  .players-sidebar .sidebar-panel--video {
+    display: none !important;
+  }
+
   /* Show burger button */
   .burger-btn {
     display: block !important;
@@ -1925,6 +2015,45 @@ body {
   /* Show mobile menu */
   .mobile-menu {
     display: block !important;
+  }
+
+  /* Video chat in mobile menu */
+  .mobile-menu .sidebar-panel--video {
+    display: none;
+  }
+
+  .mobile-menu.video-call-active .sidebar-panel--video {
+    display: flex;
+  }
+
+  .mobile-menu .video-container {
+    flex-direction: column;
+  }
+
+  .mobile-menu .local-video,
+  .mobile-menu .remote-video {
+    height: 100px;
+  }
+
+  .mobile-menu .video-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-menu .video-container {
+    flex-direction: column;
+  }
+
+  .mobile-menu .local-video,
+  .mobile-menu .remote-video {
+    height: 100px;
+  }
+
+  .mobile-menu .video-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   /* Full width board */
@@ -2145,7 +2274,7 @@ body {
 
 /* ===== VIDEO CALL MOBILE PIP ===== */
 @media (max-width: 768px) {
-  .video-call-active .sidebar-panel--video {
+  .mobile-menu.video-call-active .sidebar-panel--video {
     position: fixed;
     right: 10px;
     bottom: 10px;
@@ -2159,24 +2288,24 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   }
 
-  .video-call-active .sidebar-panel--video .sidebar-panel-title {
+  .mobile-menu.video-call-active .sidebar-panel--video .sidebar-panel-title {
     display: none;
   }
 
-  .video-call-active .video-container {
+  .mobile-menu.video-call-active .video-container {
     margin-bottom: 6px;
   }
 
-  .video-call-active .remote-video {
+  .mobile-menu.video-call-active .remote-video {
     height: 140px;
     width: 100%;
   }
 
-  .video-call-active .local-video {
+  .mobile-menu.video-call-active .local-video {
     display: none;
   }
 
-  .video-call-active .video-chat-content {
+  .mobile-menu.video-call-active .video-chat-content {
     padding: 0;
   }
 
