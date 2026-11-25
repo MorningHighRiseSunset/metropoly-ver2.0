@@ -2923,8 +2923,14 @@ function preloadVideoForPosition(position) {
   const tile = boardConfig.find(t => t.position === position);
   if (!tile || !tile.videos || tile.videos.length === 0) return;
 
-  // Pick a random video for preloading to match the random selection during playback
-  const videoUrl = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+  // For The Mirage, always preload first video (since it plays first)
+  // For others, pick random to match playback logic
+  let videoUrl;
+  if (tile.name === 'The Mirage') {
+    videoUrl = tile.videos[0];
+  } else {
+    videoUrl = tile.videos[Math.floor(Math.random() * tile.videos.length)];
+  }
 
   // Create hidden video element for preloading
   const video = document.createElement('video');
@@ -4621,7 +4627,10 @@ function showJailUI(message, callback) {
 
   // Load and play random jail video
   const jailVideo = document.getElementById('jailVideo');
-  const jailTile = boardConfig.find(t => t.position === 10);
+  // Determine which jail tile to use based on current player position
+  // JAIL is position 10, GO TO JAIL is position 30 - both share jail videos
+  const jailPosition = currentPlayer.position === 30 ? 30 : 10;
+  const jailTile = boardConfig.find(t => t.position === jailPosition);
 
   if (jailTile && jailTile.videos && jailTile.videos.length > 0) {
     // Track last played jail video to avoid repeats
@@ -4629,7 +4638,9 @@ function showJailUI(message, callback) {
       window.lastPlayedVideos = {};
     }
 
-    const lastPlayed = window.lastPlayedVideos['jail'];
+    // Use position-specific key to avoid conflict between JAIL (10) and GO TO JAIL (30)
+    const jailKey = 'jail_' + jailTile.position;
+    const lastPlayed = window.lastPlayedVideos[jailKey];
     let randomVideo;
     let attempts = 0;
     do {
@@ -4637,7 +4648,7 @@ function showJailUI(message, callback) {
       attempts++;
     } while (lastPlayed === randomVideo && attempts < 10 && jailTile.videos.length > 1);
 
-    window.lastPlayedVideos['jail'] = randomVideo;
+    window.lastPlayedVideos[jailKey] = randomVideo;
     jailVideo.src = randomVideo;
     jailVideo.muted = false; // Ensure audio is not muted
     jailVideo.volume = 1.0; // Set volume to max
@@ -4671,7 +4682,7 @@ function showJailUI(message, callback) {
         const nextIndex = (currentIndex + 1) % jailTile.videos.length;
         const nextVideo = jailTile.videos[nextIndex];
         console.log(`Trying next jail video: ${nextVideo}`);
-        window.lastPlayedVideos['jail'] = nextVideo;
+        window.lastPlayedVideos[jailKey] = nextVideo;
         jailVideo.src = nextVideo;
         jailVideo.load();
         jailVideo.play().catch(err => console.log('Video play error:', err));
@@ -5304,8 +5315,21 @@ function playTileMedia(tile, isCasinoMinigame) {
   let randomVideo;
   let attempts = 0;
 
-  // Use preloaded video if available to leverage cache (unless it was the last played)
-  if (videoPreloadCache[tile.position] && videoPreloadCache[tile.position].src) {
+  // Special handling for The Mirage: play first video on first visit, then randomize
+  if (tile.name === 'The Mirage') {
+    if (!lastPlayed) {
+      randomVideo = videos[0]; // Always play TheMirage 1 first
+      console.log(`The Mirage first visit: playing ${randomVideo}`);
+    } else {
+      // Subsequent visits: randomize but avoid back-to-back repeats
+      do {
+        randomVideo = videos[Math.floor(Math.random() * videos.length)];
+        attempts++;
+      } while (lastPlayed === randomVideo && attempts < 10 && videos.length > 1);
+      console.log(`The Mirage subsequent visit: playing ${randomVideo}`);
+    }
+  } else if (videoPreloadCache[tile.position] && videoPreloadCache[tile.position].src) {
+    // Use preloaded video if available to leverage cache (unless it was the last played)
     const preloadedSrc = videoPreloadCache[tile.position].src;
     if (preloadedSrc !== lastPlayed || videos.length === 1) {
       randomVideo = preloadedSrc;
