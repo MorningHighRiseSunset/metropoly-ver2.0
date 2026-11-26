@@ -1470,13 +1470,13 @@ function startJoinedGame() {
   gameState.gameStarted = true;
   window.gameOverShown = false;
 
-  // Ensure the joining player is the current player
-  gameState.currentPlayerIndex = gameState.players.length - 1;
+  // Start turn at Player 1 (index 0) - turn order always starts from first player
+  gameState.currentPlayerIndex = 0;
 
   // If joining an in-progress game, randomize positions and money for realism
   if (currentJoinGameStatus === 'In Game') {
     gameState.players.forEach((player, index) => {
-      if (index > 0) { // Don't randomize the joining player
+      if (player.isAI) { // Only randomize AI players, not the human player
         player.position = Math.floor(Math.random() * 40);
         player.money = 1500 + Math.floor(Math.random() * 2000);
         player.properties = [];
