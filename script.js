@@ -735,26 +735,6 @@ function sendGameUpdate(data) {
   });
 }
 
-function handlePlayerAction(data) {
-  // Handle actions from other players
-  console.log('Received player action:', data);
-  
-  switch (data.action) {
-    case 'roll':
-      // Update dice display
-      break;
-    case 'move':
-      // Move other player's token
-      break;
-    case 'buy_property':
-      // Update property ownership
-      break;
-    case 'pay_rent':
-      // Update money
-      break;
-  }
-}
-
 function handleGameUpdate(data) {
   // Sync game state from server
   console.log('Received game update:', data);
@@ -6290,14 +6270,20 @@ function endTurn() {
     return;
   }
   window.turnEnded = true;
-  
+
   // Clear rolling and turn completion states
   isRolling = false;
   window.turnCompleting = false;
   window.diceProcessed = false;
-  
+  window.aiRollScheduled = false;
+
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+
+  // Reset turn-ended flag for the next player's turn
+  setTimeout(() => {
+    window.turnEnded = false;
+  }, 100);
 
   // In multiplayer mode, send turn change to opponent
   if (gameState.gameMode === 'multiplayer' && gameState.conn) {
