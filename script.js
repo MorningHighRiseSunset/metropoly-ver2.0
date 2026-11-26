@@ -869,6 +869,12 @@ const inviteLink = document.getElementById('inviteLink');
 const copyBtn = document.getElementById('copyBtn');
 const joinCodeInput = document.getElementById('joinCodeInput');
 const joinBtn = document.getElementById('joinBtn');
+const joinTokenOverlay = document.getElementById('joinTokenOverlay');
+const joinTokenGrid = document.getElementById('joinTokenGrid');
+const joinTokenCancelBtn = document.getElementById('joinTokenCancelBtn');
+const gamesProgressBtn = document.getElementById('gamesProgressBtn');
+const gamesProgressOverlay = document.getElementById('gamesProgressOverlay');
+const gamesProgressCloseBtn = document.getElementById('gamesProgressCloseBtn');
 const addAiBtn = document.getElementById('addAiBtn');
 const aiCount = document.getElementById('aiCount');
 const playerList = document.getElementById('playerList');
@@ -1143,6 +1149,374 @@ if (joinBtn && joinCodeInput) {
   });
 }
 
+// Fake game join functionality
+function setupGameJoinButtons() {
+  const gameJoinBtns = document.querySelectorAll('.game-join-btn:not(.game-join-btn-disabled)');
+  console.log('Setting up join buttons, found:', gameJoinBtns.length);
+  gameJoinBtns.forEach(btn => {
+    // Remove existing listeners to prevent duplicates
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    newBtn.addEventListener('click', () => {
+      console.log('Join button clicked');
+      const gameItem = newBtn.closest('.game-item');
+      const takenTokens = gameItem?.dataset.takenTokens || '';
+
+      // Store the specific game item
+      currentJoinGameItem = gameItem;
+
+      // Show token selection overlay
+      showTokenSelection(takenTokens);
+    });
+  });
+}
+
+function showTokenSelection(takenTokensStr) {
+  const takenTokens = takenTokensStr.split(',').map(t => t.trim()).filter(t => t);
+
+  // Reset all tokens
+  const joinTokenOptions = joinTokenGrid?.querySelectorAll('.token-option');
+  if (!joinTokenOptions) return;
+
+  joinTokenOptions.forEach(option => {
+    option.classList.remove('selected', 'disabled');
+    const token = option.dataset.token;
+
+    // Disable if token is taken
+    if (takenTokens.includes(token)) {
+      option.classList.add('disabled');
+    }
+  });
+
+  joinTokenOverlay.style.display = 'flex';
+}
+
+// Initial setup
+setupGameJoinButtons();
+
+// Handle token selection in join overlay
+if (joinTokenGrid) {
+  const joinTokenOptions = joinTokenGrid.querySelectorAll('.token-option');
+  joinTokenOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      // Don't allow clicking disabled tokens
+      if (option.classList.contains('disabled')) {
+        return;
+      }
+
+      // Remove selected class from all
+      joinTokenOptions.forEach(opt => opt.classList.remove('selected'));
+      // Add selected class to clicked
+      option.classList.add('selected');
+
+      const token = option.dataset.token;
+      const model = option.dataset.model;
+
+      // Hide overlays
+      joinTokenOverlay.style.display = 'none';
+      gamesProgressOverlay.style.display = 'none';
+
+      // Join the fake game
+      joinFakeGame(token, model);
+    });
+  });
+}
+
+// Store the currently joining game's data
+let currentJoinGameTakenTokens = [];
+let currentJoinGameStatus = 'In Lobby';
+let currentJoinGameItem = null;
+
+function joinFakeGame(selectedToken, selectedModel) {
+  // Get the taken tokens and status from the stored game item
+  if (currentJoinGameItem) {
+    const takenTokensStr = currentJoinGameItem.dataset.takenTokens;
+    const gameStatusStr = currentJoinGameItem.dataset.gameStatus;
+
+    currentJoinGameTakenTokens = takenTokensStr ? takenTokensStr.split(',').map(t => t.trim()).filter(t => t) : [];
+    currentJoinGameStatus = gameStatusStr || 'In Lobby';
+
+    console.log('Joining game with tokens:', currentJoinGameTakenTokens);
+    console.log('Game status:', currentJoinGameStatus);
+  }
+
+  // Create AI players for the fake players first
+  const allTokens = [
+    { token: 'Bentley', model: 'Models/2025_bentley_continental_gt_speed/scene.gltf' },
+    { token: 'Helicopter', model: 'Models/Helicopter/helicopter.glb' },
+    { token: 'TopHat', model: 'Models/TopHat/tophat.glb' },
+    { token: 'Shoe', model: 'Models/Shoe/shoe.glb' },
+    { token: 'Cheeseburger', model: 'Models/Cheeseburger/cheeseburger.glb' },
+    { token: 'CoffeeCup', model: 'Models/CoffeeCup/coffee.gltf' },
+    { token: 'Football', model: 'Models/Football/football.glb' },
+    { token: 'WhiteGirlIdle', model: 'Models/WhiteGirlIdle/Standing Idle.fbx' }
+  ];
+
+  gameState.players = [];
+
+  // Create AI players for each taken token
+  currentJoinGameTakenTokens.forEach((takenToken, index) => {
+    const tokenData = allTokens.find(t => t.token === takenToken);
+    if (tokenData) {
+      const aiPlayerData = {
+        name: `Player ${index + 1}`,
+        token: takenToken,
+        model: tokenData.model,
+        isHuman: false,
+        isAI: true,
+        position: 0,
+        money: 2500,
+        isInJail: false,
+        jailTurns: 0,
+        properties: [],
+        getOutOfJailCards: 0
+      };
+
+      // Add walk model for female AI character
+      if (takenToken === 'WhiteGirlIdle') {
+        aiPlayerData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+      }
+
+      gameState.players.push(aiPlayerData);
+    }
+  });
+
+  // Add the joining player last with correct player number
+  const joiningPlayerNumber = currentJoinGameTakenTokens.length + 1;
+  const playerData = {
+    name: `Player ${joiningPlayerNumber}`,
+    token: selectedToken,
+    model: selectedModel,
+    isHuman: true,
+    isAI: false,
+    position: 0,
+    money: 2500,
+    isInJail: false,
+    jailTurns: 0,
+    properties: [],
+    getOutOfJailCards: 0
+  };
+
+  // Add walk model for female character
+  if (selectedToken === 'WhiteGirlIdle') {
+    playerData.walkModel = 'Models/WhiteGirlWalk/Walking.fbx';
+  }
+
+  gameState.players.push(playerData);
+  gameState.selectedToken = selectedToken;
+  gameState.selectedModel = selectedModel;
+  gameState.gameMode = 'ai'; // Treat as AI mode since we're playing against fake players
+  gameState.aiCount = currentJoinGameTakenTokens.length;
+  gameState.isFakeGame = true; // Flag to identify fake games
+
+  // Start turn at Player 1 (index 0) - turn order always starts from first player
+  gameState.currentPlayerIndex = 0;
+
+  console.log('Joined fake game with players:', gameState.players.map(p => `${p.name} (${p.token})`));
+
+  // Check if game is already in progress
+  if (currentJoinGameStatus === 'In Game') {
+    // Start immediately if game is in progress
+    startJoinedGame();
+  } else {
+    // Show waiting lobby if game hasn't started
+    showJoinedLobby();
+  }
+}
+
+function showJoinedLobby() {
+  // Hide main lobby overlay
+  document.getElementById('lobbyOverlay').style.display = 'none';
+  gamesProgressOverlay.style.display = 'none';
+
+  // Show joined lobby overlay
+  const joinedLobbyOverlay = document.getElementById('joinedLobbyOverlay');
+  if (!joinedLobbyOverlay) {
+    // Create joined lobby overlay if it doesn't exist
+    createJoinedLobbyOverlay();
+  } else {
+    joinedLobbyOverlay.style.display = 'flex';
+  }
+
+  // Update player list in joined lobby
+  updateJoinedLobbyPlayers();
+
+  // Simulate waiting before game starts
+  setTimeout(() => {
+    if (currentJoinGameStatus !== 'In Game') {
+      startJoinedGame();
+    }
+  }, 3000 + Math.random() * 2000); // Wait 3-5 seconds
+}
+
+function createJoinedLobbyOverlay() {
+  const overlay = document.createElement('div');
+  overlay.id = 'joinedLobbyOverlay';
+  overlay.className = 'joined-lobby-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="joined-lobby-container">
+      <h2 class="joined-lobby-title">Waiting for game to start...</h2>
+      <div class="joined-lobby-players" id="joinedLobbyPlayers"></div>
+      <div class="joined-lobby-status">Game will start soon</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Add CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    .joined-lobby-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1600;
+      backdrop-filter: blur(10px);
+    }
+    .joined-lobby-container {
+      background: rgba(26, 26, 46, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .joined-lobby-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    .joined-lobby-players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .joined-lobby-player {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .joined-lobby-player img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .joined-lobby-status {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function updateJoinedLobbyPlayers() {
+  const playersContainer = document.getElementById('joinedLobbyPlayers');
+  if (!playersContainer) return;
+
+  const tokenImages = {
+    'Bentley': 'tokenimages/bentley.png',
+    'Helicopter': 'tokenimages/helicopter.png',
+    'TopHat': 'tokenimages/top_hat.png',
+    'Shoe': 'tokenimages/shoe.png',
+    'Cheeseburger': 'tokenimages/burger.png',
+    'CoffeeCup': 'tokenimages/coffee.png',
+    'Football': 'tokenimages/football.png',
+    'WhiteGirlIdle': 'tokenimages/whitegirlmodel.png'
+  };
+
+  playersContainer.innerHTML = gameState.players.map(player => {
+    const tokenImage = tokenImages[player.token] || '';
+    return `
+      <div class="joined-lobby-player">
+        <img src="${tokenImage}" alt="${player.token}">
+        <span>${player.name}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function startJoinedGame() {
+  // Hide joined lobby overlay
+  const joinedLobbyOverlay = document.getElementById('joinedLobbyOverlay');
+  if (joinedLobbyOverlay) {
+    joinedLobbyOverlay.style.display = 'none';
+  }
+
+  // Show game UI
+  document.getElementById('gameUI').style.display = 'flex';
+
+  gameState.gameStarted = true;
+  window.gameOverShown = false;
+
+  // Ensure the joining player is the current player
+  gameState.currentPlayerIndex = gameState.players.length - 1;
+
+  // If joining an in-progress game, randomize positions and money for realism
+  if (currentJoinGameStatus === 'In Game') {
+    gameState.players.forEach((player, index) => {
+      if (index > 0) { // Don't randomize the joining player
+        player.position = Math.floor(Math.random() * 40);
+        player.money = 1500 + Math.floor(Math.random() * 2000);
+        player.properties = [];
+        // Give them some random properties
+        const numProperties = Math.floor(Math.random() * 5);
+        for (let i = 0; i < numProperties; i++) {
+          const randomPropIndex = Math.floor(Math.random() * 40);
+          player.properties.push(randomPropIndex);
+        }
+      }
+    });
+  }
+
+  // Initialize the game
+  initializeGame();
+}
+
+// Cancel join token selection
+if (joinTokenCancelBtn) {
+  joinTokenCancelBtn.addEventListener('click', () => {
+    joinTokenOverlay.style.display = 'none';
+  });
+}
+
+// Games in Progress button
+if (gamesProgressBtn) {
+  gamesProgressBtn.addEventListener('click', () => {
+    gamesProgressOverlay.style.display = 'flex';
+    // Re-setup join buttons when overlay opens
+    setTimeout(() => setupGameJoinButtons(), 100);
+  });
+}
+
+// Close games progress overlay
+if (gamesProgressCloseBtn) {
+  gamesProgressCloseBtn.addEventListener('click', () => {
+    gamesProgressOverlay.style.display = 'none';
+  });
+}
+
 // Helicopter in lobby scene
 let lobbyHelicopterScene, lobbyHelicopterCamera, lobbyHelicopterRenderer;
 let lobbyHelicopter = null;
@@ -1245,6 +1619,25 @@ function initLobbyHelicopter() {
 
 function animateLobbyHelicopter() {
   if (!lobbyHelicopterInitialized) return;
+
+  // Pause animation when games overlay is open to reduce lag
+  if (gamesProgressOverlay && gamesProgressOverlay.style.display === 'flex') {
+    requestAnimationFrame(animateLobbyHelicopter);
+    return;
+  }
+
+  // Pause animation when join token overlay is open
+  if (joinTokenOverlay && joinTokenOverlay.style.display === 'flex') {
+    requestAnimationFrame(animateLobbyHelicopter);
+    return;
+  }
+
+  // Pause animation when joined lobby overlay is open
+  const joinedLobbyOverlay = document.getElementById('joinedLobbyOverlay');
+  if (joinedLobbyOverlay && joinedLobbyOverlay.style.display === 'flex') {
+    requestAnimationFrame(animateLobbyHelicopter);
+    return;
+  }
 
   requestAnimationFrame(animateLobbyHelicopter);
 
@@ -1468,6 +1861,16 @@ function initializeGame() {
   // Reset game over flag
   window.gameOverShown = false;
 
+  // Always start at index 0 (Player 1)
+  gameState.currentPlayerIndex = 0;
+
+  // For fake games, if first player is AI, trigger their turn immediately
+  if (gameState.isFakeGame && gameState.players[0] && gameState.players[0].isAI) {
+    setTimeout(() => {
+      roll3DDice();
+    }, 1500);
+  }
+
   // Start the periodic game end checker
   startGameEndChecker();
 
@@ -1480,6 +1883,23 @@ function initializeGame() {
     if (aiMovesTitle) {
       aiMovesTitle.textContent = 'Opponent Moves';
     }
+
+    // Show video chat panels for multiplayer games
+    const videoPanels = document.querySelectorAll('.sidebar-panel--video');
+    videoPanels.forEach(panel => {
+      panel.style.display = 'flex';
+    });
+  } else if (gameState.isFakeGame) {
+    const aiMovesTitle = document.getElementById('aiMovesTitle');
+    if (aiMovesTitle) {
+      aiMovesTitle.textContent = 'Player Moves';
+    }
+
+    // Hide video chat panels for fake games
+    const videoPanels = document.querySelectorAll('.sidebar-panel--video');
+    videoPanels.forEach(panel => {
+      panel.style.display = 'none';
+    });
   }
 
   // Start the animation loop
@@ -1544,10 +1964,18 @@ function updateCurrentPlayerUI() {
       if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'none';
     }
   }
+
+  // Immediately hide roll button if current player is AI
+  if (currentPlayer && currentPlayer.isAI) {
+    rollDiceBtn.style.display = 'none';
+    rollDiceBtn.disabled = true;
+    if (mobileRollDiceBtn) mobileRollDiceBtn.style.display = 'none';
+  }
 }
 
 // Start game
-startGameBtn.addEventListener('click', () => {
+if (startGameBtn) {
+  startGameBtn.addEventListener('click', () => {
   // Unlock audio on start game
   const unlockAudio = new Audio();
   unlockAudio.play().catch(() => {});
@@ -1678,7 +2106,8 @@ startGameBtn.addEventListener('click', () => {
 
   // Call the shared initialization function
   initializeGame();
-});
+  });
+}
 
 // Update players list in UI
 function updatePlayersList() {
@@ -1720,6 +2149,16 @@ function updatePlayersList() {
 // Update AI/Opponent moves display
 function addAIMove(playerName, action) {
   if (!aiMoves) return;
+
+  // For fake games, use player names like "Player 2", "Player 3" instead of generic AI messages
+  if (gameState.isFakeGame && playerName !== 'You') {
+    // If it's an AI name like "AI 1", convert to "Player X"
+    if (playerName.startsWith('AI ')) {
+      const aiIndex = parseInt(playerName.replace('AI ', ''));
+      playerName = `Player ${aiIndex + 1}`;
+    }
+  }
+
   const moveEntry = document.createElement('div');
   moveEntry.className = 'ai-move-entry';
   moveEntry.innerHTML = `
@@ -2380,7 +2819,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
 
   // Special handling for football - throw in arc directly to destination
   if (player && player.token === 'Football') {
-    animateFootballThrow(playerIndex, oldPosition, newPosition, callback);
+    animateFootballThrow(playerIndex, oldPosNREEition, newPosition, callback);
     return;
   }
 
@@ -4217,7 +4656,6 @@ function handleLanding(player, position, canRollAgain = false) {
           showPropertyPurchaseUI(tile, player, position, canRollAgain);
         }
       } else {
-        addAIMove(player.name, `landed on ${tile.name}`);
         if (player.money >= tile.price) {
           player.money -= tile.price;
           player.properties.push(tile.position);
@@ -4235,43 +4673,36 @@ function handleLanding(player, position, canRollAgain = false) {
           updatePlayersList();
           updatePropertiesList();
           checkGameEnd();
+        } else {
+          addAIMove(player.name, `passed on ${tile.name}`);
         }
         endTurn();
       }
     } else if (owner !== player) {
       let rent;
-      if (tile.rent && tile.rent.length > 0) {
-        rent = tile.rent[0];
-      } else {
-        rent = Math.floor(tile.price * 0.1);
-      }
 
-      // If it's a casino property and not disabled, launch game first, then pay rent
-      if (tile.isCasino && tile.casinoGame && !tile.disableCasino && !player.isAI) {
-        // console.log(`[CASINO DEBUG] Launching casino game before paying rent: ${tile.casinoGame} for ${tile.name}`);
-        launchCasinoGame(tile.casinoGame, tile, canRollAgain);
-        // After game closes, pay rent (handled in closeCasinoBtn)
-      } else {
-        // console.log(`[CASINO DEBUG] Paying rent directly for ${tile.name}`);
-        if (!player.isAI) {
-          // Show rent payment UI for human player
-          showRentPaymentUI(tile, owner, rent, canRollAgain);
+      if (!player.isAI) {
+        // If it's a casino property and not disabled, launch game first, then pay rent
+        if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
+          launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         } else {
-          player.money -= rent;
-          owner.money += rent;
-          console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
-          addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
-          updatePlayerMoney();
-          updatePlayersList();
-          checkGameEnd();
-          endTurn();
+          showRentPaymentUI(tile, owner, rent, canRollAgain);
         }
+      } else {
+        // AI pays rent
+        player.money -= rent;
+        owner.money += rent;
+        console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
+        addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
+        updatePlayerMoney();
+        updatePlayersList();
+        checkGameEnd();
+        endTurn();
       }
     } else {
       // Player owns the property - show UI
       if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
         if (!player.isAI) {
-          // console.log(`[CASINO DEBUG] Player owns ${tile.name}, launching casino game: ${tile.casinoGame}`);
           launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         } else {
           // AI plays casino game
@@ -4283,11 +4714,9 @@ function handleLanding(player, position, canRollAgain = false) {
           endTurn();
         }
       } else {
-        // console.log(`[CASINO DEBUG] Player owns ${tile.name}, showing owned property UI`);
         if (!player.isAI) {
           showOwnedPropertyUI(tile, canRollAgain);
         } else {
-          addAIMove(player.name, `landed on ${tile.name} (owned)`);
           endTurn();
         }
       }
@@ -4299,16 +4728,17 @@ function handleLanding(player, position, canRollAgain = false) {
       if (!player.isAI) {
         showPropertyPurchaseUI(tile, player, position, canRollAgain);
       } else {
-        addAIMove(player.name, `landed on ${tile.name}`);
         if (player.money >= tile.price) {
           player.money -= tile.price;
           player.properties.push(tile.position);
           console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
-          addAIMove(player.name, `bought ${tile.name} for $${tile.price}`);
+          addAIMove(player.name, `landed on ${tile.name}, bought for $${tile.price}`);
           updatePlayerMoney();
           updatePlayersList();
           updatePropertiesList();
           checkGameEnd();
+        } else {
+          addAIMove(player.name, `passed on ${tile.name}`);
         }
         endTurn();
       }
@@ -4329,7 +4759,6 @@ function handleLanding(player, position, canRollAgain = false) {
       }
     } else {
       if (player.isAI) {
-        addAIMove(player.name, `landed on ${tile.name} (owned)`);
         endTurn();
       } else {
         showOwnedPropertyUI(tile, canRollAgain);
