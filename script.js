@@ -2799,7 +2799,7 @@ function animatePlayerMovement(playerIndex, oldPosition, newPosition, callback, 
 
   // Special handling for football - throw in arc directly to destination
   if (player && player.token === 'Football') {
-    animateFootballThrow(playerIndex, oldPosNREEition, newPosition, callback);
+    animateFootballThrow(playerIndex, oldPosition, newPosition, callback);
     return;
   }
 
