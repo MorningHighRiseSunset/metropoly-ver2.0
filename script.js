@@ -1848,7 +1848,7 @@ function initializeGame() {
   if (gameState.isFakeGame && gameState.players[0] && gameState.players[0].isAI) {
     setTimeout(() => {
       roll3DDice();
-    }, 1500);
+    }, 400 + Math.random() * 600);
   }
 
   // Start the periodic game end checker
@@ -4660,6 +4660,11 @@ function handleLanding(player, position, canRollAgain = false) {
       }
     } else if (owner !== player) {
       let rent;
+      if (tile.rent && tile.rent.length > 0) {
+        rent = tile.rent[0];
+      } else {
+        rent = Math.floor(tile.price * 0.1);
+      }
 
       if (!player.isAI) {
         // If it's a casino property and not disabled, launch game first, then pay rent
@@ -6313,6 +6318,9 @@ function endTurn() {
     // Set flag to prevent multiple AI rolls
     window.aiRollScheduled = true;
 
+    // Small randomized delay so it feels human but still snappy
+    const aiRollDelay = 300 + Math.random() * 700;
+
     setTimeout(() => {
       // Double-check it's still the AI's turn and turn is not completing
       const currentPlayerCheck = gameState.players[gameState.currentPlayerIndex];
@@ -6330,7 +6338,7 @@ function endTurn() {
         window.aiRollScheduled = false;
         roll3DDice();
       } else {
-        console.log('Dice not ready yet, retrying in 1 second...');
+        console.log('Dice not ready yet, retrying shortly...');
         setTimeout(() => {
           // Triple-check it's still the AI's turn and turn is not completing
           const currentPlayerCheck2 = gameState.players[gameState.currentPlayerIndex];
@@ -6351,9 +6359,9 @@ function endTurn() {
             window.aiRollScheduled = false;
             roll3DDice();
           }
-        }, 1000);
+        }, 400);
       }
-    }, 2000);
+    }, aiRollDelay);
   } else if (nextPlayer && nextPlayer.isInJail && nextPlayer.isHuman) {
     // Human player in jail - show jail options UI immediately
     showJailOptionsUI();

@@ -592,11 +592,6 @@ body {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
 }
-  transition: all 0.2s ease;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
 
 .copy-btn:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -1129,14 +1124,14 @@ body {
 
 .sidebar-panel--ai-moves {
   flex: 0 0 auto;
-  height: 150px;
-  max-height: 150px;
+  height: 210px;
+  max-height: 210px;
 }
 
 .ai-moves.panel-scroll {
   flex: 1;
   min-height: 0;
-  max-height: 150px;
+  max-height: 210px;
   margin-bottom: 12px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 6px;
@@ -2309,12 +2304,12 @@ body {
 
   /* Sidebar panels */
   .sidebar-panel--ai-moves {
-    height: 200px;
-    max-height: 200px;
+    height: 240px;
+    max-height: 240px;
   }
 
   .ai-moves.panel-scroll {
-    max-height: 180px;
+    max-height: 220px;
   }
 
   .chat-messages.panel-scroll {
