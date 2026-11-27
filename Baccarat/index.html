@@ -334,7 +334,7 @@ function load(){
   try{
     const raw=localStorage.getItem(SAVE_KEY); if(!raw) return;
     const parsed=JSON.parse(raw);
-    if(typeof parsed.bankroll==="number" && parsed.bankroll>=0) state.bankroll=parsed.bankroll;
+    if(Number.isFinite(parsed.bankroll) && parsed.bankroll>=0) state.bankroll=parsed.bankroll;
     // Don't load road from localStorage when in iframe mode (main game integration)
     if(window.parent && window.parent !== window) return;
     // Don't load road - always start fresh
