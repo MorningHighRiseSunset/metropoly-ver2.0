@@ -18,6 +18,7 @@ const gameState = {
   opponentPeerId: null, // Opponent's peer ID
   opponentReady: false, // Track if opponent is ready
   opponentToken: null, // Track opponent's selected token
+  minigamePlayCounts: {}, // Track minigame play counts per player (playerIndex -> count)
   opponentModel: null // Track opponent's selected model
 };
 
@@ -360,7 +361,7 @@ function handleNetworkMessage(data) {
         // Add host as first player (they go first)
         if (gameState.opponentToken) {
           const hostData = {
-            name: 'Host',
+            name: 'Player 1',
             token: gameState.opponentToken,
             model: gameState.opponentModel || getTokenModel(gameState.opponentToken),
             isHuman: true,
@@ -383,7 +384,7 @@ function handleNetworkMessage(data) {
 
         // Add guest as second player
         const playerData = {
-          name: 'You',
+          name: 'Player 2',
           token: gameState.selectedToken,
           model: gameState.selectedModel,
           isHuman: true,
@@ -1735,12 +1736,12 @@ function updatePlayerList() {
   for (let i = 0; i < gameState.aiCount; i++) {
     const token = gameState.aiSelectedTokens[i];
     const tokenImage = tokenImageMap[token] || 'burger';
-    
+
     const aiPlayer = document.createElement('div');
     aiPlayer.className = 'player-item ai-player';
     aiPlayer.innerHTML = `
       <img src="tokenimages/${tokenImage}.png" class="player-token-img" alt="AI Token">
-      <span class="player-name">AI ${i + 1}</span>
+      <span class="player-name">Player ${i + 2}</span>
     `;
     playerList.appendChild(aiPlayer);
   }
@@ -1751,9 +1752,9 @@ function updatePlayerList() {
 
   // Update AI count text
   if (gameState.aiCount === 0) {
-    aiCount.textContent = 'Add AI opponents';
+    aiCount.textContent = 'Add opponents';
   } else {
-    aiCount.textContent = `${gameState.aiCount} AI opponent${gameState.aiCount > 1 ? 's' : ''}`;
+    aiCount.textContent = `${gameState.aiCount} opponent${gameState.aiCount > 1 ? 's' : ''}`;
   }
 }
 
@@ -1841,6 +1842,9 @@ function initializeGame() {
   // Reset game over flag
   window.gameOverShown = false;
 
+  // Reset minigame play counts
+  gameState.minigamePlayCounts = {};
+
   // Always start at index 0 (Player 1)
   gameState.currentPlayerIndex = 0;
 
@@ -1848,7 +1852,7 @@ function initializeGame() {
   if (gameState.isFakeGame && gameState.players[0] && gameState.players[0].isAI) {
     setTimeout(() => {
       roll3DDice();
-    }, 400 + Math.random() * 600);
+    }, 1500 + Math.random() * 2500);
   }
 
   // Start the periodic game end checker
@@ -1983,7 +1987,7 @@ if (startGameBtn) {
 
   // Initialize players
   let playerData = {
-    name: 'You',
+    name: 'Player 1',
     token: gameState.selectedToken,
     model: gameState.selectedModel,
     isHuman: true,
@@ -2057,9 +2061,9 @@ if (startGameBtn) {
       }
       
       console.log(`AI ${i + 1} selected:`, selectedToken.token);
-      
+
       let aiPlayerData = {
-        name: `AI ${i + 1}`,
+        name: `Player ${i + 2}`, // Start from Player 2 since Player 1 is the human
         token: selectedToken.token,
         model: selectedToken.model,
         isHuman: false,
@@ -2128,19 +2132,39 @@ function updatePlayersList() {
   });
   
   // console.log(`[BALANCE DEBUG] Updated players list, current player balance: $${gameState.players[gameState.currentPlayerIndex]?.money}`);
+
+  // Update player view indicator
+  updatePlayerViewIndicator();
+}
+
+// Update the player view indicator in the canvas
+function updatePlayerViewIndicator() {
+  const indicator = document.getElementById('playerViewIndicator');
+  if (!indicator) return;
+
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  if (!currentPlayer) {
+    indicator.style.display = 'none';
+    return;
+  }
+
+  indicator.style.display = 'block';
+  indicator.textContent = `${currentPlayer.name}'s Turn`;
 }
 
 // Update AI/Opponent moves display
 function addAIMove(playerName, action) {
   if (!aiMoves) return;
 
-  // For fake games, use player names like "Player 2", "Player 3" instead of generic AI messages
-  if (gameState.isFakeGame && playerName !== 'You') {
-    // If it's an AI name like "AI 1", convert to "Player X"
-    if (playerName.startsWith('AI ')) {
-      const aiIndex = parseInt(playerName.replace('AI ', ''));
-      playerName = `Player ${aiIndex + 1}`;
-    }
+  // Convert any remaining "AI X" names to "Player X" for consistency
+  if (playerName.startsWith('AI ')) {
+    const aiIndex = parseInt(playerName.replace('AI ', ''));
+    playerName = `Player ${aiIndex + 1}`;
+  }
+
+  // Convert "You" to "Player 1" for consistency in fake games
+  if (playerName === 'You' && gameState.isFakeGame) {
+    playerName = 'Player 1';
   }
 
   const moveEntry = document.createElement('div');
@@ -4645,13 +4669,21 @@ function handleLanding(player, position, canRollAgain = false) {
         if (player.money >= tile.price) {
           player.money -= tile.price;
           player.properties.push(tile.position);
-          console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
+          console.log(`${player.name} bought ${tile.name} for $${tile.price}`);
           
           // If it's a casino property, AI plays the game
           if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
-            const winAmount = Math.floor(Math.random() * 100) + 50; // Random win between 50-150
-            player.money = Math.round((player.money + winAmount) * 100) / 100;
-            addAIMove(player.name, `bought ${tile.name} for $${tile.price}, won $${winAmount} at ${tile.casinoGame}`);
+            launchAICasinoGame(tile.casinoGame, tile, player, () => {
+              const winAmount = Math.floor(Math.random() * 100) + 50; // Random win between 50-150
+              player.money = Math.round((player.money + winAmount) * 100) / 100;
+              addAIMove(player.name, `bought ${tile.name} for $${tile.price}, won $${winAmount} at ${tile.casinoGame}`);
+              updatePlayerMoney();
+              updatePlayersList();
+              updatePropertiesList();
+              checkGameEnd();
+              endTurn();
+            });
+            return; // Don't call endTurn here, it's called in the callback
           } else {
             addAIMove(player.name, `bought ${tile.name} for $${tile.price}`);
           }
@@ -4681,14 +4713,28 @@ function handleLanding(player, position, canRollAgain = false) {
         }
       } else {
         // AI pays rent
-        player.money -= rent;
-        owner.money += rent;
-        console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
-        addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
-        updatePlayerMoney();
-        updatePlayersList();
-        checkGameEnd();
-        endTurn();
+        if (tile.isCasino && tile.casinoGame && !tile.disableCasino) {
+          launchAICasinoGame(tile.casinoGame, tile, player, () => {
+            player.money -= rent;
+            owner.money += rent;
+            console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
+            addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
+            updatePlayerMoney();
+            updatePlayersList();
+            checkGameEnd();
+            endTurn();
+          });
+          return;
+        } else {
+          player.money -= rent;
+          owner.money += rent;
+          console.log(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
+          addAIMove(player.name, `paid $${rent} rent to ${owner.name} for ${tile.name}`);
+          updatePlayerMoney();
+          updatePlayersList();
+          checkGameEnd();
+          endTurn();
+        }
       }
     } else {
       // Player owns the property - show UI
@@ -4697,12 +4743,15 @@ function handleLanding(player, position, canRollAgain = false) {
           launchCasinoGame(tile.casinoGame, tile, canRollAgain);
         } else {
           // AI plays casino game
-          const winAmount = Math.floor(Math.random() * 100) + 50;
-          player.money = Math.round((player.money + winAmount) * 100) / 100;
-          addAIMove(player.name, `won $${winAmount} at ${tile.casinoGame}`);
-          updatePlayerMoney();
-          checkGameEnd();
-          endTurn();
+          launchAICasinoGame(tile.casinoGame, tile, player, () => {
+            const winAmount = Math.floor(Math.random() * 100) + 50;
+            player.money = Math.round((player.money + winAmount) * 100) / 100;
+            addAIMove(player.name, `won $${winAmount} at ${tile.casinoGame}`);
+            updatePlayerMoney();
+            checkGameEnd();
+            endTurn();
+          });
+          return;
         }
       } else {
         if (!player.isAI) {
@@ -4722,7 +4771,7 @@ function handleLanding(player, position, canRollAgain = false) {
         if (player.money >= tile.price) {
           player.money -= tile.price;
           player.properties.push(tile.position);
-          console.log(`AI ${player.name} bought ${tile.name} for $${tile.price}`);
+          console.log(`${player.name} bought ${tile.name} for $${tile.price}`);
           addAIMove(player.name, `landed on ${tile.name}, bought for $${tile.price}`);
           updatePlayerMoney();
           updatePlayersList();
@@ -4775,7 +4824,7 @@ function handleLanding(player, position, canRollAgain = false) {
       const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
       const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
 
-      console.log(`AI ${player.name} drew a ${tile.type} card: ${randomCard.message}`);
+      console.log(`${player.name} drew a ${tile.type} card: ${randomCard.message}`);
 
       // Execute card action for AI (which will add the specific action to moves)
       const playerIndex = gameState.players.findIndex(p => p === player);
@@ -4990,13 +5039,18 @@ function executeCardAction(card, player, playerIndex, canRollAgain = false) {
 
 // Show chance/community card UI
 function showCardUI(tile, canRollAgain = false) {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   const cardDeck = tile.type === 'chance' ? chanceCards : communityChestCards;
   const randomCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
-  
+
   document.getElementById('cardTitle').textContent = tile.type === 'chance' ? 'Chance' : 'Community Chest';
   document.getElementById('cardMessage').textContent = randomCard.message;
   document.getElementById('cardOverlay').style.display = 'flex';
-  
+
   // Store the card action for when OK is clicked
   document.getElementById('cardOverlay').dataset.cardAction = randomCard.action;
   document.getElementById('cardOverlay').dataset.cardAmount = randomCard.amount || 0;
@@ -5169,6 +5223,11 @@ function showJailUI(message, callback) {
 
 // Show jail options UI (pay, roll for doubles, or skip turn)
 function showJailOptionsUI() {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   if (!currentPlayer) return;
 
@@ -5226,15 +5285,20 @@ function handleAIInJail(aiPlayer) {
 
 // Show tax/utility UI
 function showTaxUI(tile, player, canRollAgain = false) {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   document.getElementById('taxTitle').textContent = tile.name;
-  
+
   let amount;
   if (tile.type === 'tax') {
     amount = tile.amount;
   } else if (tile.type === 'utility') {
     amount = Math.floor(tile.price * 0.1);
   }
-  
+
   document.getElementById('taxMessage').textContent = `Pay $${amount}`;
 
   // Show image if available
@@ -5327,13 +5391,54 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   // console.log(`[CASINO DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
   // console.log(`[CASINO DEBUG] Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}`);
   // console.log(`[CASINO DEBUG] Game started: ${gameState.gameStarted}`);
-  
+
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const owner = gameState.players.find(p => p.properties && p.properties.includes(tile.position));
-  
+
+  // Security check: ensure the player trying to play is actually the current player
+  if (currentPlayer.isAI) {
+    console.error('Security: AI player attempted to launch interactive casino game');
+    return;
+  }
+
+  // Security check: in multiplayer mode, ensure it's the local player's turn
+  if (gameState.gameMode === 'multiplayer') {
+    const localPlayerIndex = gameState.isHost ? 0 : 1;
+    if (gameState.currentPlayerIndex !== localPlayerIndex) {
+      console.error('Security: Player attempted to launch casino game on opponent\'s turn');
+      return;
+    }
+  }
+
+  // Check minigame play limit (max 5 per player)
+  if (!gameState.minigamePlayCounts[gameState.currentPlayerIndex]) {
+    gameState.minigamePlayCounts[gameState.currentPlayerIndex] = 0;
+  }
+  if (gameState.minigamePlayCounts[gameState.currentPlayerIndex] >= 5) {
+    console.log(`Player ${currentPlayer.name} has reached minigame play limit (5)`);
+    // Skip minigame and proceed with normal flow
+    if (!owner) {
+      showPropertyPurchaseUI(tile, currentPlayer, tile.position, canRollAgain);
+    } else if (owner !== currentPlayer) {
+      let rent;
+      if (tile.rent && tile.rent.length > 0) {
+        rent = tile.rent[0];
+      } else {
+        rent = Math.floor(tile.price * 0.1);
+      }
+      showRentPaymentUI(tile, owner, rent, canRollAgain);
+    } else {
+      showOwnedPropertyUI(tile, canRollAgain);
+    }
+    return;
+  }
+
+  // Increment play count
+  gameState.minigamePlayCounts[gameState.currentPlayerIndex]++;
+
   // console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
   // console.log(`[CASINO DEBUG] Player balance: ${currentPlayer?.money}`);
-  
+
   // Create casino game overlay
   const casinoOverlay = document.createElement('div');
   casinoOverlay.className = 'casino-overlay';
@@ -5441,7 +5546,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
     }
     }, 100); // Small delay to ensure scripts are loaded
   };
-  
+
   // Close button handler
   document.getElementById('closeCasinoBtn').addEventListener('click', () => {
     // console.log(`[CASINO DEBUG] Close button clicked for ${gameType}`);
@@ -5464,41 +5569,104 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
 
     // Check for game end after casino closes
     checkGameEnd();
-    
+
     // After casino game, handle the rest of the flow
     if (!owner) {
       // Property is unowned - show purchase UI
       // console.log(`[CASINO DEBUG] Property unowned, showing purchase UI`);
-      showPropertyPurchaseUI(tile, currentPlayer, tile.position, window.currentCasinoCanRollAgain);
+      showPropertyPurchaseUI(tile, currentPlayer, tile.position, canRollAgain);
     } else if (owner !== currentPlayer) {
-      // Property is owned by someone else - pay rent
+      // Property owned by another player - show rent payment UI
+      // console.log(`[CASINO DEBUG] Property owned by ${owner.name}, showing rent UI`);
       let rent;
       if (tile.rent && tile.rent.length > 0) {
         rent = tile.rent[0];
       } else {
         rent = Math.floor(tile.price * 0.1);
       }
-      currentPlayer.money -= rent;
-      owner.money += rent;
-      console.log(`${currentPlayer.name} paid $${rent} rent to ${owner.name} for ${tile.name}`);
-      updatePlayerMoney();
-      // checkGameEnd() already called when casino closes (line 3110)
-      
-      // Only end turn if player can't roll again (no doubles)
-      if (!window.currentCasinoCanRollAgain) {
-        endTurn();
-      } else {
-        // Re-enable roll button for player to roll again
-        if (rollDiceBtn) {
-          rollDiceBtn.disabled = false;
-        }
-      }
+      showRentPaymentUI(tile, owner, rent, canRollAgain);
     } else {
-      // Player owns the property
-      // console.log(`[CASINO DEBUG] Player owns property, showing owned property UI`);
-      showOwnedPropertyUI(tile, window.currentCasinoCanRollAgain);
+      // Player owns the property - show owned property UI
+      // console.log(`[CASINO DEBUG] Player owns property, showing owned UI`);
+      showOwnedPropertyUI(tile, canRollAgain);
     }
   });
+}
+
+// Launch casino game for AI players (visual only, auto-plays)
+function launchAICasinoGame(gameType, tile, player, callback) {
+  // Create casino game overlay for AI
+  const casinoOverlay = document.createElement('div');
+  casinoOverlay.className = 'casino-overlay';
+  casinoOverlay.id = 'casinoOverlay';
+  casinoOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+  `;
+
+  const gamePaths = {
+    'baccarat': 'Baccarat/index.html',
+    'blackjack': 'Blackjack/blackjack.html',
+    'poker': 'PokerFP/poker.html',
+    'roulette': 'Roulette/index.html',
+    'craps': 'Craps/craps-game.html',
+    'slots': 'slotMachine/slot-machine.html'
+  };
+
+  const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
+
+  casinoOverlay.innerHTML = `
+    <div class="casino-container" style="width: 95%; height: 95%; max-width: 1400px; position: relative;">
+      <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 24px; font-weight: bold; z-index: 10; text-align: center;">
+        ${player.name} is playing ${gameType.charAt(0).toUpperCase() + gameType.slice(1)}...
+      </div>
+      <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 0; pointer-events: none;"></iframe>
+    </div>
+  `;
+
+  document.body.appendChild(casinoOverlay);
+
+  // Set flag to prevent bankruptcy checks while casino is open
+  window.casinoGameOpen = true;
+
+  // Wait for iframe to load, then simulate AI playing
+  const iframe = document.getElementById('casinoFrame');
+  iframe.onload = () => {
+    setTimeout(() => {
+      try {
+        const iframeWindow = iframe.contentWindow;
+
+        // Send initial balance via postMessage
+        iframeWindow.postMessage({
+          type: 'SET_BALANCE',
+          balance: player.money
+        }, '*');
+
+        // Simulate AI playing for 1-5 seconds
+        const playDuration = 1000 + Math.random() * 4000;
+
+        setTimeout(() => {
+          document.body.removeChild(casinoOverlay);
+          window.casinoGameOpen = false;
+          if (callback) callback();
+        }, playDuration);
+
+      } catch (e) {
+        console.error('Error simulating AI casino game:', e);
+        document.body.removeChild(casinoOverlay);
+        window.casinoGameOpen = false;
+        if (callback) callback();
+      }
+    }, 500);
+  };
 }
 
 // Card OK button handler
@@ -5957,6 +6125,11 @@ function playTileMedia(tile, isCasinoMinigame) {
 
 // Show owned property UI
 function showOwnedPropertyUI(tile, canRollAgain = false) {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   document.getElementById('propertyTitle').textContent = tile.name;
   document.getElementById('propertyAddress').textContent = tile.address || '';
   document.getElementById('propertyPrice').textContent = 'OWNED';
@@ -5969,7 +6142,7 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
   // Change button to just OK
   document.getElementById('propertyBuyBtn').style.display = 'none';
   document.getElementById('propertyPassBtn').textContent = 'OK';
-  
+
   // Store canRollAgain state for button handler
   window.currentCanRollAgain = canRollAgain;
   
@@ -6035,6 +6208,11 @@ function showOwnedPropertyUI(tile, canRollAgain = false) {
 
 // Show rent payment UI
 function showRentPaymentUI(tile, owner, rent, canRollAgain = false) {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   document.getElementById('propertyTitle').textContent = tile.name;
   document.getElementById('propertyAddress').textContent = tile.address || '';
   document.getElementById('propertyPrice').textContent = `Rent: $${rent}`;
@@ -6121,12 +6299,39 @@ function showRentPaymentUI(tile, owner, rent, canRollAgain = false) {
   document.getElementById('propertyOverlay').style.display = 'flex';
 }
 
+// Security check: ensure current player is allowed to interact
+function isCurrentPlayerAllowedToInteract() {
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+  // Don't allow AI interaction
+  if (currentPlayer.isAI) {
+    console.error('Security: AI player attempted to interact with UI');
+    return false;
+  }
+
+  // In multiplayer mode, ensure it's the local player's turn
+  if (gameState.gameMode === 'multiplayer') {
+    const localPlayerIndex = gameState.isHost ? 0 : 1;
+    if (gameState.currentPlayerIndex !== localPlayerIndex) {
+      console.error('Security: Player attempted to interact on opponent\'s turn');
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // Show property purchase UI
 function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
+  // Security check
+  if (!isCurrentPlayerAllowedToInteract()) {
+    return;
+  }
+
   document.getElementById('propertyTitle').textContent = tile.name;
   document.getElementById('propertyAddress').textContent = tile.address || '';
   document.getElementById('propertyPrice').textContent = `$${tile.price}`;
-  
+
   // Display base rent (first value in array)
   let rent = 0;
   if (tile.rent && tile.rent.length > 0) {
@@ -6143,7 +6348,7 @@ function showPropertyPurchaseUI(tile, player, position, canRollAgain = false) {
   const isCasinoMinigame = tile.isCasino && tile.casinoGame && tile.casinoGame !== 'baccarat';
   document.getElementById('propertyOverlay').style.display = 'flex';
   playTileMedia(tile, isCasinoMinigame);
-  
+
 
   // Disable roll dice button while property UI is open
   if (rollDiceBtn) {
@@ -6311,6 +6516,7 @@ function endTurn() {
   // Update UI for new player
   updatePlayersList();
   updatePlayerMoney();
+  updatePlayerViewIndicator();
 
   // Always disable roll dice button initially (will be enabled when ready)
   if (rollDiceBtn) {
@@ -6328,8 +6534,8 @@ function endTurn() {
     // Set flag to prevent multiple AI rolls
     window.aiRollScheduled = true;
 
-    // Small randomized delay so it feels human but still snappy
-    const aiRollDelay = 300 + Math.random() * 700;
+    // Bigger randomized delay for fake players to feel more natural
+    const aiRollDelay = 1500 + Math.random() * 2500;
 
     setTimeout(() => {
       // Double-check it's still the AI's turn and turn is not completing
@@ -6369,7 +6575,7 @@ function endTurn() {
             window.aiRollScheduled = false;
             roll3DDice();
           }
-        }, 400);
+        }, 500);
       }
     }, aiRollDelay);
   } else if (nextPlayer && nextPlayer.isInJail && nextPlayer.isHuman) {
