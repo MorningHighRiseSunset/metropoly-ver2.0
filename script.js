@@ -2237,7 +2237,7 @@ function updatePlayerMoney() {
   // This prevents premature bankruptcy when player bets entire balance before game resolves
 }
 
-// Check if game should end (someone reached 10k or went bankrupt)
+// Check if game should end (someone reached 10k, or all but one player bankrupt)
 function checkGameEnd() {
   const winningAmount = 10000;
 
@@ -2251,24 +2251,43 @@ function checkGameEnd() {
     return;
   }
 
+  let winner = null;
+  let solventCount = 0;
+  let lastSolvent = null;
+
   for (const player of gameState.players) {
     if (!Number.isFinite(player.money)) player.money = 0;
     // Round money to 2 decimal places to avoid floating point issues
     player.money = Math.round(player.money * 100) / 100;
 
-    // Check if player won
     if (player.money >= winningAmount) {
-      window.gameOverShown = true;
-      showGameOver(player, true);
-      return;
+      winner = player;
+      break;
     }
+    if (player.money > 0) {
+      solventCount++;
+      lastSolvent = player;
+    }
+  }
 
-    // Check if player went bankrupt (zero or negative balance)
-    if (player.money <= 0) {
-      window.gameOverShown = true;
-      showGameOver(player, false);
-      return;
-    }
+  if (winner) {
+    window.gameOverShown = true;
+    showGameOver(winner, true);
+    return;
+  }
+
+  // Everyone is bankrupt
+  if (solventCount === 0) {
+    window.gameOverShown = true;
+    const broke = gameState.players.find(p => p.money <= 0) || gameState.players[0];
+    showGameOver(broke, false);
+    return;
+  }
+
+  // Last player standing wins (only when more than one player total)
+  if (solventCount === 1 && gameState.players.length > 1) {
+    window.gameOverShown = true;
+    showGameOver(lastSolvent, true, true);
   }
 }
 
@@ -2297,7 +2316,7 @@ function stopGameEndChecker() {
 }
 
 // Show game over UI
-function showGameOver(winner, playerWon) {
+function showGameOver(winner, playerWon, lastStanding = false) {
   gameState.gameStarted = false;
 
   // Stop the periodic checker
@@ -2328,7 +2347,7 @@ function showGameOver(winner, playerWon) {
         ${youWon ? 'GAME OVER YOU WON!' : 'GAME OVER'}
       </h2>
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
-        ${playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
+        ${lastStanding ? `${winner.name} is the last player standing!` : playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
       </p>
       <button id="restartBtn" onclick="location.reload()" style="padding: 16px 48px; background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
         Play Again
@@ -5384,6 +5403,8 @@ document.getElementById('taxOkBtn').addEventListener('click', () => {
 
 // Launch casino game
 function launchCasinoGame(gameType, tile, canRollAgain = false) {
+  // Don't launch minigames after the game is over (overlay would be hidden behind game-over screen)
+  if (window.gameOverShown) return;
   // console.log(`[CASINO DEBUG] ===== LAUNCHING CASINO GAME =====`);
   // console.log(`[CASINO DEBUG] Game type: ${gameType}`);
   // console.log(`[CASINO DEBUG] Tile name: ${tile.name}`);
@@ -6499,6 +6520,15 @@ function endTurn() {
 
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+
+  // Skip bankrupt players (money <= 0) unless they're the only one solvent left
+  let skipGuard = 0;
+  while (skipGuard++ < gameState.players.length) {
+    const candidate = gameState.players[gameState.currentPlayerIndex];
+    const solventCount = gameState.players.filter(p => Number.isFinite(p.money) && p.money > 0).length;
+    if (!candidate || candidate.money > 0 || solventCount <= 1) break;
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+  }
 
   // Reset turn-ended flag for the next player's turn
   setTimeout(() => {
