@@ -538,7 +538,7 @@ function handleOpponentMoneyUpdate(data) {
       return p.name === 'Host';
     }
   });
-  if (opponentIndex !== -1) {
+  if (opponentIndex !== -1 && Number.isFinite(data.money)) {
     const oldMoney = gameState.players[opponentIndex].money;
     gameState.players[opponentIndex].money = data.money;
     updatePlayerMoney();
@@ -1848,7 +1848,7 @@ function initializeGame() {
   if (gameState.isFakeGame && gameState.players[0] && gameState.players[0].isAI) {
     setTimeout(() => {
       roll3DDice();
-    }, 1500);
+    }, 400 + Math.random() * 600);
   }
 
   // Start the periodic game end checker
@@ -2106,6 +2106,10 @@ function updatePlayersList() {
   };
   
   gameState.players.forEach((player, index) => {
+    if (!Number.isFinite(player.money)) {
+      console.warn(`[BALANCE] Corrected non-finite balance for ${player.name} (was ${player.money})`);
+      player.money = 0;
+    }
     const isActive = index === gameState.currentPlayerIndex;
     const playerItem = document.createElement('div');
     playerItem.className = `player-item ${isActive ? 'player-item--active' : ''}`;
@@ -2198,6 +2202,7 @@ function updatePlayerMoney() {
   if (!playerMoney) return;
   const humanPlayer = gameState.players.find(p => p.isHuman);
   if (humanPlayer) {
+    if (!Number.isFinite(humanPlayer.money)) humanPlayer.money = 0;
     // console.log(`[BALANCE DEBUG] Updating display: ${playerMoney.textContent} -> $${humanPlayer.money}`);
     // Don't use || 2500 fallback - if money is undefined/0, show the actual value
     // This prevents masking real balance issues
@@ -2223,6 +2228,7 @@ function checkGameEnd() {
   }
 
   for (const player of gameState.players) {
+    if (!Number.isFinite(player.money)) player.money = 0;
     // Round money to 2 decimal places to avoid floating point issues
     player.money = Math.round(player.money * 100) / 100;
 
@@ -4660,6 +4666,11 @@ function handleLanding(player, position, canRollAgain = false) {
       }
     } else if (owner !== player) {
       let rent;
+      if (tile.rent && tile.rent.length > 0) {
+        rent = tile.rent[0];
+      } else {
+        rent = Math.floor(tile.price * 0.1);
+      }
 
       if (!player.isAI) {
         // If it's a casino property and not disabled, launch game first, then pay rent
@@ -5384,6 +5395,10 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
       // Balance sync callback - don't check game end here, wait until casino closes
       const balanceCallback = (newBalance) => {
         // console.log(`[CASINO DEBUG] Balance callback called: ${currentPlayer.money} -> ${newBalance}`);
+        if (!Number.isFinite(newBalance)) {
+          console.warn('[CASINO DEBUG] Ignoring non-finite balance from minigame:', newBalance);
+          return;
+        }
         currentPlayer.money = Math.round(newBalance * 100) / 100; // Round to 2 decimal places
         updatePlayerMoney();
         updatePlayersList();
@@ -5433,7 +5448,7 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
 
     // Sync balance from casino iframe before closing
     const iframeWindow = document.getElementById('casinoFrame').contentWindow;
-    if (iframeWindow && iframeWindow.__casinoBalance !== undefined) {
+    if (iframeWindow && Number.isFinite(iframeWindow.__casinoBalance)) {
       const casinoBalance = iframeWindow.__casinoBalance;
       currentPlayer.money = Math.round(casinoBalance * 100) / 100; // Round to 2 decimal places
       console.log(`[CASINO DEBUG] Synced balance from casino: $${casinoBalance}`);
@@ -6313,6 +6328,9 @@ function endTurn() {
     // Set flag to prevent multiple AI rolls
     window.aiRollScheduled = true;
 
+    // Small randomized delay so it feels human but still snappy
+    const aiRollDelay = 300 + Math.random() * 700;
+
     setTimeout(() => {
       // Double-check it's still the AI's turn and turn is not completing
       const currentPlayerCheck = gameState.players[gameState.currentPlayerIndex];
@@ -6330,7 +6348,7 @@ function endTurn() {
         window.aiRollScheduled = false;
         roll3DDice();
       } else {
-        console.log('Dice not ready yet, retrying in 1 second...');
+        console.log('Dice not ready yet, retrying shortly...');
         setTimeout(() => {
           // Triple-check it's still the AI's turn and turn is not completing
           const currentPlayerCheck2 = gameState.players[gameState.currentPlayerIndex];
@@ -6351,9 +6369,9 @@ function endTurn() {
             window.aiRollScheduled = false;
             roll3DDice();
           }
-        }, 1000);
+        }, 400);
       }
-    }, 2000);
+    }, aiRollDelay);
   } else if (nextPlayer && nextPlayer.isInJail && nextPlayer.isHuman) {
     // Human player in jail - show jail options UI immediately
     showJailOptionsUI();
