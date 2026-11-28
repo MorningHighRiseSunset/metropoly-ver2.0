@@ -18,7 +18,6 @@ const gameState = {
   opponentPeerId: null, // Opponent's peer ID
   opponentReady: false, // Track if opponent is ready
   opponentToken: null, // Track opponent's selected token
-  minigamePlayCounts: {}, // Track minigame play counts per player (playerIndex -> count)
   opponentModel: null // Track opponent's selected model
 };
 
@@ -1842,9 +1841,6 @@ function initializeGame() {
   // Reset game over flag
   window.gameOverShown = false;
 
-  // Reset minigame play counts
-  gameState.minigamePlayCounts = {};
-
   // Always start at index 0 (Player 1)
   gameState.currentPlayerIndex = 0;
 
@@ -1852,7 +1848,7 @@ function initializeGame() {
   if (gameState.isFakeGame && gameState.players[0] && gameState.players[0].isAI) {
     setTimeout(() => {
       roll3DDice();
-    }, 1500 + Math.random() * 2500);
+    }, 2000 + Math.random() * 3000);
   }
 
   // Start the periodic game end checker
@@ -2114,15 +2110,18 @@ function updatePlayersList() {
       console.warn(`[BALANCE] Corrected non-finite balance for ${player.name} (was ${player.money})`);
       player.money = 0;
     }
-    const isActive = index === gameState.currentPlayerIndex;
+    const isActive = index === gameState.currentPlayerIndex && !player.eliminated;
     const playerItem = document.createElement('div');
     playerItem.className = `player-item ${isActive ? 'player-item--active' : ''}`;
-    
+    if (player.eliminated) {
+      playerItem.style.opacity = '0.4';
+    }
+
     const tokenImage = tokenImages[player.token] || '';
-    
+
     playerItem.innerHTML = `
       <div class="player-info">
-        <div class="player-name">${player.name}</div>
+        <div class="player-name">${player.name}${player.eliminated ? ' (OUT)' : ''}</div>
         <div class="player-money">$${player.money}</div>
       </div>
       ${tokenImage ? `<img src="${tokenImage}" class="player-token-img" alt="${player.token}" style="width: 32px; height: 32px; object-fit: contain;">` : `<div class="player-token">❓</div>`}
@@ -2254,8 +2253,12 @@ function checkGameEnd() {
   let winner = null;
   let solventCount = 0;
   let lastSolvent = null;
+  let humanBroke = null;
 
   for (const player of gameState.players) {
+    // Eliminated players are out of the game - ignore them entirely
+    if (player.eliminated) continue;
+
     if (!Number.isFinite(player.money)) player.money = 0;
     // Round money to 2 decimal places to avoid floating point issues
     player.money = Math.round(player.money * 100) / 100;
@@ -2264,7 +2267,15 @@ function checkGameEnd() {
       winner = player;
       break;
     }
-    if (player.money > 0) {
+
+    if (player.money <= 0) {
+      if (player.isHuman) {
+        humanBroke = player;
+      } else {
+        // Fake players get kicked as soon as they go bankrupt
+        eliminatePlayer(player);
+      }
+    } else {
       solventCount++;
       lastSolvent = player;
     }
@@ -2273,6 +2284,20 @@ function checkGameEnd() {
   if (winner) {
     window.gameOverShown = true;
     showGameOver(winner, true);
+    return;
+  }
+
+  // Real player lost - in fake games they spectate while fake players finish
+  if (humanBroke) {
+    const othersRemain = gameState.players.some(p => p !== humanBroke && !p.eliminated && p.money > 0);
+    if (gameState.isFakeGame && othersRemain) {
+      window.humanLost = true;
+      eliminatePlayer(humanBroke);
+      showDefeatOverlay();
+      return;
+    }
+    window.gameOverShown = true;
+    showGameOver(humanBroke, false);
     return;
   }
 
@@ -2289,6 +2314,30 @@ function checkGameEnd() {
     window.gameOverShown = true;
     showGameOver(lastSolvent, true, true);
   }
+}
+
+// Remove a bankrupt fake player from the game (keeps array index stable for tokens)
+function eliminatePlayer(player) {
+  if (player.eliminated) return;
+  player.eliminated = true;
+  player.isBankrupt = true;
+  player.properties = []; // Release properties back to the bank
+
+  const playerIndex = gameState.players.indexOf(player);
+  addAIMove(player.name, `${player.name} went bankrupt and was eliminated`);
+
+  // Remove their token from the 3D board
+  const tokenData = playerTokenModels.find(t => t.playerIndex === playerIndex);
+  if (tokenData && tokenData.model && board3DGroup) {
+    board3DGroup.remove(tokenData.model);
+  }
+  const tokenIdx = playerTokenModels.findIndex(t => t.playerIndex === playerIndex);
+  if (tokenIdx !== -1) {
+    playerTokenModels.splice(tokenIdx, 1);
+  }
+
+  updatePlayersList();
+  if (typeof updatePlayerViewIndicator === 'function') updatePlayerViewIndicator();
 }
 
 // Periodic checker that runs every 2 seconds to check if player reached 10k+
@@ -2315,12 +2364,53 @@ function stopGameEndChecker() {
   }
 }
 
+// Show defeat overlay - fake players keep playing behind the blur, spectate mode
+function showDefeatOverlay() {
+  document.querySelectorAll('.defeat-overlay').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'defeat-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+  `;
+
+  overlay.innerHTML = `
+    <div style="background: rgba(26, 26, 46, 0.9); border: 2px solid rgba(255, 107, 107, 0.4); border-radius: 24px; padding: 48px 64px; text-align: center; backdrop-filter: blur(20px); max-width: 480px;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        GAME OVER
+      </h2>
+      <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.15rem; margin-bottom: 32px;">
+        You went bankrupt! The game continues without you.
+      </p>
+      <button onclick="location.reload()" style="padding: 16px 48px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
+        Back to Lobby
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
 // Show game over UI
 function showGameOver(winner, playerWon, lastStanding = false) {
   gameState.gameStarted = false;
 
   // Stop the periodic checker
   stopGameEndChecker();
+
+  // Remove defeat overlay if spectating ended
+  document.querySelectorAll('.defeat-overlay, .game-over-overlay').forEach(el => el.remove());
 
   const gameOverOverlay = document.createElement('div');
   gameOverOverlay.className = 'game-over-overlay';
@@ -2349,9 +2439,14 @@ function showGameOver(winner, playerWon, lastStanding = false) {
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 32px;">
         ${lastStanding ? `${winner.name} is the last player standing!` : playerWon ? `${winner.name} reached $10,000!` : `${winner.name} went bankrupt!`}
       </p>
-      <button id="restartBtn" onclick="location.reload()" style="padding: 16px 48px; background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
-        Play Again
-      </button>
+      <div style="display: flex; gap: 16px; justify-content: center;">
+        <button id="restartBtn" onclick="location.reload()" style="padding: 16px 48px; background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
+          Play Again
+        </button>
+        <button id="lobbyBtn" onclick="location.reload()" style="padding: 16px 48px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer;">
+          Back to Lobby
+        </button>
+      </div>
     </div>
   `;
 
@@ -5431,32 +5526,6 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
     }
   }
 
-  // Check minigame play limit (max 5 per player)
-  if (!gameState.minigamePlayCounts[gameState.currentPlayerIndex]) {
-    gameState.minigamePlayCounts[gameState.currentPlayerIndex] = 0;
-  }
-  if (gameState.minigamePlayCounts[gameState.currentPlayerIndex] >= 5) {
-    console.log(`Player ${currentPlayer.name} has reached minigame play limit (5)`);
-    // Skip minigame and proceed with normal flow
-    if (!owner) {
-      showPropertyPurchaseUI(tile, currentPlayer, tile.position, canRollAgain);
-    } else if (owner !== currentPlayer) {
-      let rent;
-      if (tile.rent && tile.rent.length > 0) {
-        rent = tile.rent[0];
-      } else {
-        rent = Math.floor(tile.price * 0.1);
-      }
-      showRentPaymentUI(tile, owner, rent, canRollAgain);
-    } else {
-      showOwnedPropertyUI(tile, canRollAgain);
-    }
-    return;
-  }
-
-  // Increment play count
-  gameState.minigamePlayCounts[gameState.currentPlayerIndex]++;
-
   // console.log(`[CASINO DEBUG] Property owner: ${owner ? owner.name : 'none'}`);
   // console.log(`[CASINO DEBUG] Player balance: ${currentPlayer?.money}`);
 
@@ -5614,80 +5683,13 @@ function launchCasinoGame(gameType, tile, canRollAgain = false) {
   });
 }
 
-// Launch casino game for AI players (visual only, auto-plays)
+// Launch casino game for AI players - simulated invisibly so the real player doesn't see it
 function launchAICasinoGame(gameType, tile, player, callback) {
-  // Create casino game overlay for AI
-  const casinoOverlay = document.createElement('div');
-  casinoOverlay.className = 'casino-overlay';
-  casinoOverlay.id = 'casinoOverlay';
-  casinoOverlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 3000;
-  `;
-
-  const gamePaths = {
-    'baccarat': 'Baccarat/index.html',
-    'blackjack': 'Blackjack/blackjack.html',
-    'poker': 'PokerFP/poker.html',
-    'roulette': 'Roulette/index.html',
-    'craps': 'Craps/craps-game.html',
-    'slots': 'slotMachine/slot-machine.html'
-  };
-
-  const gamePath = gamePaths[gameType] || gamePaths['blackjack'];
-
-  casinoOverlay.innerHTML = `
-    <div class="casino-container" style="width: 95%; height: 95%; max-width: 1400px; position: relative;">
-      <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 24px; font-weight: bold; z-index: 10; text-align: center;">
-        ${player.name} is playing ${gameType.charAt(0).toUpperCase() + gameType.slice(1)}...
-      </div>
-      <iframe id="casinoFrame" src="${gamePath}" style="width: 100%; height: 100%; border: none; border-radius: 0; pointer-events: none;"></iframe>
-    </div>
-  `;
-
-  document.body.appendChild(casinoOverlay);
-
-  // Set flag to prevent bankruptcy checks while casino is open
-  window.casinoGameOpen = true;
-
-  // Wait for iframe to load, then simulate AI playing
-  const iframe = document.getElementById('casinoFrame');
-  iframe.onload = () => {
-    setTimeout(() => {
-      try {
-        const iframeWindow = iframe.contentWindow;
-
-        // Send initial balance via postMessage
-        iframeWindow.postMessage({
-          type: 'SET_BALANCE',
-          balance: player.money
-        }, '*');
-
-        // Simulate AI playing for 1-5 seconds
-        const playDuration = 1000 + Math.random() * 4000;
-
-        setTimeout(() => {
-          document.body.removeChild(casinoOverlay);
-          window.casinoGameOpen = false;
-          if (callback) callback();
-        }, playDuration);
-
-      } catch (e) {
-        console.error('Error simulating AI casino game:', e);
-        document.body.removeChild(casinoOverlay);
-        window.casinoGameOpen = false;
-        if (callback) callback();
-      }
-    }, 500);
-  };
+  console.log(`${player.name} played ${gameType} at ${tile.name} (simulated)`);
+  const playDuration = 1500 + Math.random() * 3500;
+  setTimeout(() => {
+    if (callback) callback();
+  }, playDuration);
 }
 
 // Card OK button handler
@@ -6521,12 +6523,11 @@ function endTurn() {
   // Move to next player
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 
-  // Skip bankrupt players (money <= 0) unless they're the only one solvent left
+  // Skip bankrupt/eliminated players - they never take another turn
   let skipGuard = 0;
   while (skipGuard++ < gameState.players.length) {
     const candidate = gameState.players[gameState.currentPlayerIndex];
-    const solventCount = gameState.players.filter(p => Number.isFinite(p.money) && p.money > 0).length;
-    if (!candidate || candidate.money > 0 || solventCount <= 1) break;
+    if (!candidate || (candidate.money > 0 && !candidate.eliminated)) break;
     gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
   }
 
@@ -6553,6 +6554,17 @@ function endTurn() {
     rollDiceBtn.disabled = true;
   }
 
+  // Game is over - don't schedule any more turns
+  if (window.gameOverShown) return;
+
+  // Defensively skip any eliminated/bankrupt player that slipped through
+  let defendGuard = 0;
+  while (defendGuard++ < gameState.players.length) {
+    const p = gameState.players[gameState.currentPlayerIndex];
+    if (!p || (!p.eliminated && p.money > 0)) break;
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+  }
+
   // Get next player
   const nextPlayer = gameState.players[gameState.currentPlayerIndex];
 
@@ -6565,7 +6577,7 @@ function endTurn() {
     window.aiRollScheduled = true;
 
     // Bigger randomized delay for fake players to feel more natural
-    const aiRollDelay = 1500 + Math.random() * 2500;
+    const aiRollDelay = 2000 + Math.random() * 3000;
 
     setTimeout(() => {
       // Double-check it's still the AI's turn and turn is not completing
@@ -6605,7 +6617,7 @@ function endTurn() {
             window.aiRollScheduled = false;
             roll3DDice();
           }
-        }, 500);
+        }, 800);
       }
     }, aiRollDelay);
   } else if (nextPlayer && nextPlayer.isInJail && nextPlayer.isHuman) {
